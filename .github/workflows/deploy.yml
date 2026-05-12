@@ -1,4 +1,4 @@
-name: Build and Deploy to GitHub Pages
+name: Build and Deploy
 
 on:
   push:
@@ -29,11 +29,9 @@ jobs:
       - name: Build with Next.js 🏗️
         run: npm run build
 
-      - name: Deploy to Pages Repo 🚀
+      - name: Deploy to GitHub Pages 🚀
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: out
-          repository-name: hie-uci/hie-uci.github.io
-          branch: main
-          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: main # Deploying built files back to the same repo/branch (standard for user.github.io)
           force: true
