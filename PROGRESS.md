@@ -75,9 +75,30 @@ The current platform is incredibly solid, but there is immense potential to grow
 
 ---
 
+## Date: May 12, 2026 (Session 4)
+
+### 1. Dedicated "Measurements & Design" Educational Suite
+- **Standalone Portal:** Extracted the tutorial content into a premium, dedicated page (`/measurement-tutorial`) to separate educational video resources from the calculation tools.
+- **Content-First Redesign:** Analyzed 4 key laboratory videos (60GHz Radar, 24GHz Radar, VCO Performance, HFSS-to-PCB) and built custom-tailored UI modules for each.
+- **Antenna PCB Integration Workflow:** Documented the exact 3-step physical integration timeline: *HFSS Export (DXF/GDS) -> KiCad Import (Footprint) -> Gerber Generation*.
+- **Verified Measurement Metadata:** Cross-referenced transcripts and visual frames to ensure 100% accuracy in descriptions (e.g., specifying TCAS-I submission context for VCO measurements and standard-gain horn setups for 60GHz radar).
+- **Channel Growth Integration:** Added a permanent, high-conversion YouTube subscription banner for the `@xuyangliu3768` channel.
+
+### 2. Homepage Visibility & Resource Preview
+- **Dynamic Resources Grid:** Integrated a 4-column "Measurements & Design Tutorials" preview section on the Home page, located strategically below the Silicon Showcase.
+- **Interactive Thumbnails:** Implemented high-resolution YouTube thumbnail fetching with custom hover-scale effects and play-icon overlays using Framer Motion.
+- **Smooth Navigation:** Connected the homepage preview directly to the new tutorial suite for a seamless user journey.
+
+### 3. CI/CD Architecture Standardized (The "Final Fix")
+- **Cleanroom Linting:** Systematically resolved all 40+ ESLint and TypeScript errors across the codebase. Replaced unsafe `any` types with robust interfaces (`LMatchSolution`, `RFBlockNodeData`, etc.), escaped JSX entities, and fixed React effect dependency arrays.
+- **Modern Workflow Migration:** Replaced the legacy cross-repo push script with the **Official GitHub Actions for Pages** workflow.
+- **Zero-Friction Deployment (gh-pages):** Isolated the static build artifacts on a dedicated `gh-pages` branch. This preserves the `main` branch as a pure source-code repository while ensuring the live site at https://hie.eng.uci.edu/ is always synced with the latest build.
+
+---
+
 ## 🔮 Future Directions & Handoff (State Saved)
 
-The **RF Toolbox** is now a fully-featured, world-class web EDA suite. Future iterations could explore:
-1. **Electromagnetic (EM) Solver Integration:** Connecting a cloud-based finite-element method (FEM) or method-of-moments (MoM) solver backend.
-2. **Active Device Synthesis:** Biasing networks and transistor stability analysis (e.g., source mapping circles).
-3. **Advanced TDR Features:** Adding spatial distance calculation based on substrate effective dielectric constant.
+The **HIE Lab Website** is now not just a showcase, but a functional engineering platform and educational hub.
+1. **Tutorial Expansion:** Adding a new category for "Probe Station Basics" and "Cryogenic Measurement Setups".
+2. **Active Device Synthesis:** Biasing networks and transistor stability analysis circles.
+3. **Advanced TDR Features:** Spatial distance conversion based on substrate $T_{pd}$ (Time of Propagation Delay).
