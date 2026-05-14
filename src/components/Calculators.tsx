@@ -964,3 +964,255 @@ export function RadarRangeCalculator() {
     </div>
   );
 }
+
+/* =========================================================================
+   FMCW Radar Calculator
+   ========================================================================= */
+
+export function FMCWRadarCalculator() {
+  const [bw, setBw] = useState<string>('4'); // GHz
+  const [tc, setTc] = useState<string>('20'); // us
+
+  const calcFMCW = () => {
+    const B_GHz = parseFloat(bw);
+    const Tc_us = parseFloat(tc);
+
+    if (isNaN(B_GHz) || isNaN(Tc_us) || B_GHz <= 0 || Tc_us <= 0) return null;
+
+    const B_Hz = B_GHz * 1e9;
+    const Tc_s = Tc_us * 1e-6;
+    const c = 299792458; // m/s
+
+    const rangeRes = c / (2 * B_Hz); // meters
+    const maxUnambiguousRange = (c * Tc_s) / 4; // Assuming typical FMCW limitations or simple T*c/4 heuristic
+
+    return { rangeRes: rangeRes * 100, maxUnambiguousRange }; // cm and m
+  };
+
+  const results = calcFMCW();
+
+  return (
+    <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
+      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">FMCW Radar Parameters</h4>
+      <div className="grid lg:grid-cols-2 gap-8 items-start">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Bandwidth (GHz)</label>
+            <input type="number" step="0.1" value={bw} onChange={(e) => setBw(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Chirp Time Tc (μs)</label>
+            <input type="number" step="1" value={tc} onChange={(e) => setTc(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+          </div>
+        </div>
+        <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
+          <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Results</h5>
+          {results ? (
+            <>
+              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Range Resolution</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.rangeRes.toFixed(2)} cm</span></div>
+              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Max Unambiguous Range (c*Tc/4)</span> <span className="font-mono font-medium">{results.maxUnambiguousRange.toFixed(1)} m</span></div>
+            </>
+          ) : (
+            <div className="text-sm text-gray-400">Invalid input values</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================================
+   Doppler Shift Calculator
+   ========================================================================= */
+
+export function DopplerCalculator() {
+  const [freq, setFreq] = useState<string>('60'); // GHz
+  const [vel, setVel] = useState<string>('30'); // m/s
+
+  const calcDoppler = () => {
+    const f_GHz = parseFloat(freq);
+    const v = parseFloat(vel);
+
+    if (isNaN(f_GHz) || isNaN(v) || f_GHz <= 0) return null;
+
+    const lambda = 0.299792458 / f_GHz; // meters
+    const fd = (2 * v) / lambda; // Hz (assuming direct line of sight approach/recede)
+
+    return { fd: fd / 1000 }; // kHz
+  };
+
+  const results = calcDoppler();
+
+  return (
+    <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
+      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Doppler Shift</h4>
+      <div className="grid lg:grid-cols-2 gap-8 items-start">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Carrier Frequency (GHz)</label>
+            <input type="number" step="0.1" value={freq} onChange={(e) => setFreq(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Radial Velocity (m/s)</label>
+            <input type="number" step="1" value={vel} onChange={(e) => setVel(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+          </div>
+        </div>
+        <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
+          <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Results</h5>
+          {results ? (
+            <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Doppler Shift (fd)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.fd.toFixed(2)} kHz</span></div>
+          ) : (
+            <div className="text-sm text-gray-400">Invalid input values</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================================
+   Phase Noise to Jitter Calculator
+   ========================================================================= */
+
+export function PhaseNoiseCalculator() {
+  const [pn, setPn] = useState<string>('-100'); // dBc/Hz
+  const [fc, setFc] = useState<string>('10'); // GHz
+  const [offset, setOffset] = useState<string>('1'); // MHz
+
+  // Simplistic Spot Jitter estimation
+  const calcJitter = () => {
+    const L_dBc = parseFloat(pn);
+    const f_c = parseFloat(fc) * 1e9;
+    const f_offset = parseFloat(offset) * 1e6;
+
+    if (isNaN(L_dBc) || isNaN(f_c) || isNaN(f_offset) || f_c <= 0 || f_offset <= 0) return null;
+
+    // Jitter from spot phase noise (assuming 1Hz bandwidth for the spot calculation context, or flat integration)
+    // A true jitter calculation requires integrating the phase noise profile. 
+    // Here we provide a spot phase jitter estimation per unit bandwidth:
+    const L_linear = Math.pow(10, L_dBc / 10);
+    const phase_jitter_rad = Math.sqrt(2 * L_linear); // Rad RMS per sqrt(Hz)
+    const time_jitter_fs = (phase_jitter_rad / (2 * Math.PI * f_c)) * 1e15;
+
+    return { time_jitter_fs };
+  };
+
+  const results = calcJitter();
+
+  return (
+    <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
+      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Phase Noise to Jitter (Spot)</h4>
+      <div className="grid lg:grid-cols-2 gap-8 items-start">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Phase Noise L(f) (dBc/Hz)</label>
+            <input type="number" step="1" value={pn} onChange={(e) => setPn(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Carrier Frequency (GHz)</label>
+            <input type="number" step="0.1" value={fc} onChange={(e) => setFc(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+          </div>
+        </div>
+        <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
+          <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Results</h5>
+          {results ? (
+            <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Spot Time Jitter</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.time_jitter_fs.toFixed(3)} fs/√Hz</span></div>
+          ) : (
+            <div className="text-sm text-gray-400">Invalid input values</div>
+          )}
+          <div className="text-xs text-gray-500 mt-2">Note: Spot jitter provides the timing jitter density. Total RMS jitter requires integrating L(f) over an offset bandwidth.</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================================
+   Linearity Converter (P1dB to OIP3)
+   ========================================================================= */
+
+export function LinearityCalculator() {
+  const [p1db, setP1db] = useState<string>('10'); // dBm
+
+  const calcLin = () => {
+    const p1 = parseFloat(p1db);
+    if (isNaN(p1)) return null;
+    return { oip3: p1 + 9.6 };
+  };
+
+  const results = calcLin();
+
+  return (
+    <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
+      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Linearity Estimation (P1dB ↔ OIP3)</h4>
+      <div className="grid lg:grid-cols-2 gap-8 items-start">
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">P1dB (dBm)</label>
+          <input type="number" step="0.1" value={p1db} onChange={(e) => setP1db(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+        </div>
+        <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
+          <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Results</h5>
+          {results ? (
+            <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Estimated OIP3</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.oip3.toFixed(1)} dBm</span></div>
+          ) : (
+            <div className="text-sm text-gray-400">Invalid input</div>
+          )}
+          <div className="text-xs text-gray-500 mt-2">Rule of thumb: OIP3 ≈ P1dB + 9.6 dB.</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================================
+   Thermal Noise Calculator
+   ========================================================================= */
+
+export function ThermalNoiseCalculator() {
+  const [temp, setTemp] = useState<string>('290'); // K
+  const [bw, setBw] = useState<string>('1000'); // MHz
+
+  const calcNoise = () => {
+    const t = parseFloat(temp);
+    const b = parseFloat(bw) * 1e6;
+    if (isNaN(t) || isNaN(b) || t <= 0 || b <= 0) return null;
+
+    const k = 1.380649e-23; // Boltzmann constant
+    const p_W = k * t * b;
+    const p_dBm = 10 * Math.log10(p_W * 1000);
+    const p_density_dBm_Hz = 10 * Math.log10(k * t * 1000);
+
+    return { p_dBm, p_density_dBm_Hz };
+  };
+
+  const results = calcNoise();
+
+  return (
+    <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
+      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Thermal Noise Floor (kTB)</h4>
+      <div className="grid lg:grid-cols-2 gap-8 items-start">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Temperature (K)</label>
+            <input type="number" step="1" value={temp} onChange={(e) => setTemp(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Bandwidth (MHz)</label>
+            <input type="number" step="1" value={bw} onChange={(e) => setBw(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+          </div>
+        </div>
+        <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
+          <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Results</h5>
+          {results ? (
+            <>
+              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Noise Density</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.p_density_dBm_Hz.toFixed(1)} dBm/Hz</span></div>
+              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Total Noise Power</span> <span className="font-mono font-medium">{results.p_dBm.toFixed(1)} dBm</span></div>
+            </>
+          ) : (
+            <div className="text-sm text-gray-400">Invalid input</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

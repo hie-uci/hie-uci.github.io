@@ -6,18 +6,20 @@ import { BlockMath } from 'react-katex';
 import { vswrTable, dielectricsTable, waveguideTable, freqBandsTable } from './data';
 import PageWrapper from '@/components/PageWrapper';
 import SectionHeader from '@/components/SectionHeader';
-import { VSWRCalculator, DBCalculator, MicrostripCalculator, WaveguideCalculator, StriplineCalculator, CPWCalculator, SkinDepthCalculator, PCBViaCalculator, RadarRangeCalculator } from '@/components/Calculators';
+import { VSWRCalculator, DBCalculator, MicrostripCalculator, WaveguideCalculator, StriplineCalculator, CPWCalculator, SkinDepthCalculator, PCBViaCalculator, RadarRangeCalculator, FMCWRadarCalculator, DopplerCalculator, PhaseNoiseCalculator, LinearityCalculator, ThermalNoiseCalculator } from '@/components/Calculators';
 import { ImpedanceMatchingCalculator, ReceiverCascadeCalculator, PatchAntennaCalculator, PhasedArrayCalculator, PLLCalculator } from '@/components/AdvancedCalculators';
 import { InteractiveSmithChart } from '@/components/InteractiveSmithChart';
 import SystemCascadeBuilder from '@/components/SystemCascadeBuilder';
 import SParameterViewer from '@/components/SParameterViewer';
 
 const CATEGORIES = [
-  { id: 'pcb_design', name: 'PCB & Transmission Lines', desc: 'Board-level trace design, substrates, and via parasitics.' },
+  { id: 'system_link', name: 'System & Link Budget', desc: 'Cascade analysis, loop filters, and system-level calculations.' },
+  { id: 'radar_sensing', name: 'Radar & Sensing', desc: 'FMCW, Doppler shift, and Radar Range Equation.' },
   { id: 'antennas_matching', name: 'Antennas & Matching', desc: 'Patch antenna synthesis and automated impedance matching.' },
+  { id: 'pcb_design', name: 'PCB & Transmission Lines', desc: 'Board-level trace design, substrates, and via parasitics.' },
+  { id: 'active_ic', name: 'Active Circuits / IC', desc: 'Phase noise, thermal noise, and linearity conversions.' },
   { id: 's_parameter_tools', name: 'S-Parameter Analysis', desc: 'Touchstone (.sNp) file parsing, charting, and network extraction.' },
-  { id: 'system_fundamentals', name: 'System & Fundamentals', desc: 'Cascade analysis, power conversions, and frequency bands.' },
-  { id: 'components_waveguides', name: 'Components & Waveguides', desc: 'Passive component reactance, attenuators, and waveguides.' },
+  { id: 'fundamentals_refs', name: 'Fundamentals & Quick Refs', desc: 'Power conversions, VSWR, waveguides, and frequency bands.' },
 ];
 
 export default function RFToolboxPage() {
@@ -34,7 +36,7 @@ export default function RFToolboxPage() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeader
             badge="Engineering Resources"
-            title="RF & Microwave Toolbox (Developing)"
+            title="RF & Microwave Toolbox"
             subtitle="Professional calculators and reference formulas for high-frequency hardware design."
           />
 
@@ -61,11 +63,13 @@ export default function RFToolboxPage() {
 
             {/* Content Area */}
             <main className="flex-1 min-w-0 glass-ios rounded-3xl p-6 sm:p-10 border border-white/40 dark:border-white/10">
-              {activeTab === 'pcb_design' && <PCBDesignSection />}
+              {activeTab === 'system_link' && <SystemLinkSection />}
+              {activeTab === 'radar_sensing' && <RadarSensingSection />}
               {activeTab === 'antennas_matching' && <AntennasMatchingSection />}
+              {activeTab === 'pcb_design' && <PCBDesignSection />}
+              {activeTab === 'active_ic' && <ActiveICSection />}
               {activeTab === 's_parameter_tools' && <SParameterSection />}
-              {activeTab === 'system_fundamentals' && <SystemFundamentalsSection />}
-              {activeTab === 'components_waveguides' && <ComponentsWaveguidesSection />}
+              {activeTab === 'fundamentals_refs' && <FundamentalsSection />}
             </main>
           </div>
         </div>
@@ -75,6 +79,68 @@ export default function RFToolboxPage() {
 }
 
 /* ──────────────────────────── SECTIONS ──────────────────────────── */
+
+function SystemLinkSection() {
+  return (
+    <div className="space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div>
+        <h3 className="text-2xl font-bold text-eng-blue dark:text-blue-300 mb-2">System Cascade Chain Builder</h3>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Interactive drag-and-drop block diagram for cascade Gain, Noise Figure, and OIP3/IIP3 analysis.</p>
+        <SystemCascadeBuilder />
+      </div>
+
+      <div>
+        <h3 className="text-2xl font-bold text-eng-blue dark:text-blue-300 mb-2">Receiver Link Budget</h3>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Evaluate detailed gain and noise figure requirements across an RF receiver front-end.</p>
+        <ReceiverCascadeCalculator />
+      </div>
+
+      <div>
+        <h3 className="text-2xl font-bold text-eng-blue dark:text-blue-300 mb-2">PLL Loop Filter Synthesis</h3>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Calculate 3rd order passive loop filters for Phase-Locked Loops and Frequency Synthesizers.</p>
+        <PLLCalculator />
+      </div>
+    </div>
+  );
+}
+
+function RadarSensingSection() {
+  return (
+    <div className="space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div>
+        <h3 className="text-2xl font-bold text-eng-blue dark:text-blue-300 mb-2">Radar Range & Link Budget</h3>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Calculate monostatic radar range and free space path loss (FSPL).</p>
+        <RadarRangeCalculator />
+      </div>
+
+      <div>
+        <h3 className="text-2xl font-bold text-eng-blue dark:text-blue-300 mb-2">FMCW & CW Radar Toolset</h3>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Determine range resolution, unambiguous range, and Doppler shifts for mmWave sensors.</p>
+        <FMCWRadarCalculator />
+        <DopplerCalculator />
+      </div>
+    </div>
+  );
+}
+
+function ActiveICSection() {
+  return (
+    <div className="space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div>
+        <h3 className="text-2xl font-bold text-eng-blue dark:text-blue-300 mb-2">Oscillator & Synthesizer Tools</h3>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Translate phase noise specifications into timing jitter for high-frequency clocks.</p>
+        <PhaseNoiseCalculator />
+      </div>
+
+      <div>
+        <h3 className="text-2xl font-bold text-eng-blue dark:text-blue-300 mb-2">Amplifier & General IC Limits</h3>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Estimate linearity parameters and calculate absolute thermal noise limits for integrated circuits.</p>
+        <LinearityCalculator />
+        <ThermalNoiseCalculator />
+      </div>
+    </div>
+  );
+}
 
 function AntennasMatchingSection() {
   return (
@@ -124,21 +190,12 @@ function PCBDesignSection() {
   );
 }
 
-function SystemFundamentalsSection() {
+function FundamentalsSection() {
   return (
     <div className="space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
-        <h3 className="text-2xl font-bold text-eng-blue dark:text-blue-300 mb-2">System Cascade Chain Builder</h3>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Interactive drag-and-drop block diagram for cascade Gain, Noise Figure, and OIP3/IIP3 analysis.</p>
-        <SystemCascadeBuilder />
-      </div>
-
-      <div>
-        <h3 className="text-2xl font-bold text-eng-blue dark:text-blue-300 mb-2">System Level Calculators</h3>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Tools for signal power, impedance mismatch, receiver cascade analysis, and PLL loop filter synthesis.</p>
-        <RadarRangeCalculator />
-        <ReceiverCascadeCalculator />
-        <PLLCalculator />
+        <h3 className="text-2xl font-bold text-eng-blue dark:text-blue-300 mb-2">Quick Calculators</h3>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Daily utilities for power conversions, standing wave ratios, and component constraints.</p>
         <DBCalculator />
         <VSWRCalculator />
         <SkinDepthCalculator />
@@ -170,27 +227,6 @@ function SystemFundamentalsSection() {
         </div>
       </div>
 
-      <VSWRSection />
-      <BandsSection />
-    </div>
-  );
-}
-
-function SParameterSection() {
-  return (
-    <div className="space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="w-full max-w-5xl mx-auto">
-        <h3 className="text-2xl font-bold text-eng-blue dark:text-blue-300 mb-2">S-Parameter (.sNp) Analysis Hub</h3>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Upload Touchstone files (up to 12 ports) to interactively plot and extract advanced network parameters including Y/Z parameters, Group Delay, Rollett&apos;s Stability Factor, and equivalent circuit models.</p>
-        <SParameterViewer />
-      </div>
-    </div>
-  );
-}
-
-function ComponentsWaveguidesSection() {
-  return (
-    <div className="space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
         <h3 className="text-2xl font-bold text-eng-blue dark:text-blue-300 mb-2">Waveguide Tools</h3>
         <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Cutoff frequency calculators and standard reference tables for rectangular waveguides.</p>
@@ -231,6 +267,21 @@ function ComponentsWaveguidesSection() {
             <BlockMath math="R_1 = Z \frac{\sqrt{N}-1}{\sqrt{N}+1}, \ R_3 = \frac{2Z\sqrt{N}}{N-1}" />
           </FormulaCard>
         </div>
+      </div>
+
+      <VSWRSection />
+      <BandsSection />
+    </div>
+  );
+}
+
+function SParameterSection() {
+  return (
+    <div className="space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="w-full max-w-5xl mx-auto">
+        <h3 className="text-2xl font-bold text-eng-blue dark:text-blue-300 mb-2">S-Parameter (.sNp) Analysis Hub</h3>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Upload Touchstone files (up to 12 ports) to interactively plot and extract advanced network parameters including Y/Z parameters, Group Delay, Rollett&apos;s Stability Factor, and equivalent circuit models.</p>
+        <SParameterViewer />
       </div>
     </div>
   );
