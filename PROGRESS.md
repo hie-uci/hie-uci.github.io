@@ -96,6 +96,24 @@ The current platform is incredibly solid, but there is immense potential to grow
 
 ---
 
+## Date: May 13, 2026 (Session 5)
+
+### 1. Website Redesign & Codebase Audit
+- **README & AGENTS.md Refresh:** Re-wrote project documentation to reflect the latest tech stack (Matter.js, Recharts, XYFlow, KaTeX) and the dual-repo GitHub Pages deployment workflow.
+- **YouTube UI Enhancement:** Upgraded the mobile layout for tutorial videos and optimized Next.js `<Image>` usage, fixing ESLint warnings. Improved the frosted glass styling (`backdrop-blur-2xl`) on the mobile navigation menu for better legibility against complex plasma backgrounds.
+- **Smith Chart UX:** Added a one-click "Clear All" functionality to the Interactive Smith Chart to improve user reset flow.
+
+### 2. RF Toolbox Information Architecture (IA) Restructuring
+- **7-Category Expansion:** Reorganized the toolsets to better align with professional RF engineering workflows: *System & Link Budget*, *Radar & Sensing*, *Antennas & Matching*, *PCB & Transmission Lines*, *Active Circuits / IC*, *S-Parameter Analysis*, and *Fundamentals & Quick Refs*.
+
+### 3. New Advanced Calculators Developed
+- **Radar & Sensing:** Added FMCW Radar calculators (Range Resolution, Max Unambiguous Range), Doppler Shift estimators, and a full Monostatic Radar Range Equation (RRE) / Free Space Path Loss (FSPL) calculator.
+- **Active Circuits / IC:** Integrated tools to convert Spot Phase Noise to Timing Jitter, estimate Linearity (P1dB to OIP3), and calculate Thermal Noise Floor limits (kTB).
+- **2026 Spectrum Updates:** Updated the frequency bands reference table to include the newly allocated 6G Upper Mid-Band (FR3) spectrum (7.125-15.35 GHz).
+- **Privacy Assurance:** Added a visible "100% Client-Side" privacy disclaimer to the S-Parameter Hub to assure engineers that sensitive `.sNp` files are not collected or uploaded to any server.
+
+---
+
 ## 🔮 Future Directions & Handoff (State Saved)
 
 The **HIE Lab Website** is now not just a showcase, but a functional engineering platform and educational hub.
