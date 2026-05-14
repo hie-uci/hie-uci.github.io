@@ -279,8 +279,15 @@ function SParameterSection() {
   return (
     <div className="space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="w-full max-w-5xl mx-auto">
-        <h3 className="text-2xl font-bold text-eng-blue dark:text-blue-300 mb-2">S-Parameter (.sNp) Analysis Hub</h3>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Upload Touchstone files (up to 12 ports) to interactively plot and extract advanced network parameters including Y/Z parameters, Group Delay, Rollett&apos;s Stability Factor, and equivalent circuit models.</p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
+          <h3 className="text-2xl font-bold text-eng-blue dark:text-blue-300">S-Parameter (.sNp) Analysis Hub</h3>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-50 border border-green-200 dark:bg-green-900/20 dark:border-green-800 text-xs font-medium text-green-700 dark:text-green-400 self-start">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg>
+            100% Client-Side (No Data Collected)
+          </div>
+        </div>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Upload Touchstone files (up to 12 ports) to interactively plot and extract advanced network parameters including Y/Z parameters, Group Delay, Rollett&apos;s Stability Factor, and equivalent circuit models.</p>
+        <p className="text-xs text-slate-500 dark:text-slate-500 mb-6 italic">Privacy Note: This tool processes your .sNp files entirely within your web browser. We do not upload, collect, or store any of your measurement or simulation data on our servers.</p>
         <SParameterViewer />
       </div>
     </div>
