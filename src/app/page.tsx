@@ -443,11 +443,11 @@ export default function HomePage() {
             ].map((video, idx) => (
                <Link key={idx} href="/measurement-tutorial" className="group relative rounded-2xl overflow-hidden glass-ios border border-white/40 dark:border-white/10 hover:shadow-lg hover:border-uci-blue/30 transition-all duration-300">
                   <div className="aspect-video bg-slate-200 dark:bg-slate-800 relative">
-                     {/* Using unoptimized Image or img tag for external YouTube thumbnails to avoid next/image domain config issues */}
-                     <img 
+                     <Image 
                        src={`https://img.youtube.com/vi/${video.img}/maxresdefault.jpg`} 
-                       alt={video.title} 
-                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                       alt={video.title}
+                       fill
+                       className="object-cover group-hover:scale-105 transition-transform duration-500" 
                      />
                      <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center">
                         <svg className="w-12 h-12 text-white/80 group-hover:text-white group-hover:scale-110 transition-all duration-300 drop-shadow-md" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
