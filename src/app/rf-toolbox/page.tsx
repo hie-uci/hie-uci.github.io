@@ -6,7 +6,7 @@ import { BlockMath } from 'react-katex';
 import { vswrTable, dielectricsTable, waveguideTable, freqBandsTable } from './data';
 import PageWrapper from '@/components/PageWrapper';
 import SectionHeader from '@/components/SectionHeader';
-import { VSWRCalculator, DBCalculator, MicrostripCalculator, WaveguideCalculator, StriplineCalculator, CPWCalculator, SkinDepthCalculator, PCBViaCalculator } from '@/components/Calculators';
+import { VSWRCalculator, DBCalculator, MicrostripCalculator, WaveguideCalculator, StriplineCalculator, CPWCalculator, SkinDepthCalculator, PCBViaCalculator, RadarRangeCalculator } from '@/components/Calculators';
 import { ImpedanceMatchingCalculator, ReceiverCascadeCalculator, PatchAntennaCalculator, PhasedArrayCalculator, PLLCalculator } from '@/components/AdvancedCalculators';
 import { InteractiveSmithChart } from '@/components/InteractiveSmithChart';
 import SystemCascadeBuilder from '@/components/SystemCascadeBuilder';
@@ -136,6 +136,7 @@ function SystemFundamentalsSection() {
       <div>
         <h3 className="text-2xl font-bold text-eng-blue dark:text-blue-300 mb-2">System Level Calculators</h3>
         <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Tools for signal power, impedance mismatch, receiver cascade analysis, and PLL loop filter synthesis.</p>
+        <RadarRangeCalculator />
         <ReceiverCascadeCalculator />
         <PLLCalculator />
         <DBCalculator />

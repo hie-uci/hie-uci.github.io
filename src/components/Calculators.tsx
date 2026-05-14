@@ -864,3 +864,103 @@ export function PCBViaCalculator() {
     </div>
   );
 }
+
+/* =========================================================================
+   Radar Range Equation & FSPL Calculator
+   ========================================================================= */
+
+export function RadarRangeCalculator() {
+  const [pt, setPt] = useState<string>('10'); // dBm
+  const [gt, setGt] = useState<string>('15'); // dBi
+  const [gr, setGr] = useState<string>('15'); // dBi
+  const [freqStr, setFreqStr] = useState<string>('60'); // GHz
+  const [rcs, setRcs] = useState<string>('10'); // m^2 (Radar Cross Section)
+  const [pmin, setPmin] = useState<string>('-90'); // dBm (Min Detectable Signal)
+
+  const calcRadar = () => {
+    const P_t_dBm = parseFloat(pt);
+    const G_t_dBi = parseFloat(gt);
+    const G_r_dBi = parseFloat(gr);
+    const f_GHz = parseFloat(freqStr);
+    const sigma = parseFloat(rcs);
+    const P_min_dBm = parseFloat(pmin);
+
+    if (isNaN(P_t_dBm) || isNaN(G_t_dBi) || isNaN(G_r_dBi) || isNaN(f_GHz) || f_GHz <= 0 || isNaN(sigma) || isNaN(P_min_dBm)) return null;
+
+    // FSPL calculation (for 100 meter reference to show)
+    const lambda = 0.299792458 / f_GHz; // meters
+    
+    // Convert dBm to Watts
+    const P_t_W = Math.pow(10, (P_t_dBm - 30) / 10);
+    const P_min_W = Math.pow(10, (P_min_dBm - 30) / 10);
+    
+    // Linear gains
+    const G_t = Math.pow(10, G_t_dBi / 10);
+    const G_r = Math.pow(10, G_r_dBi / 10);
+
+    // Radar Equation for Max Range R: R^4 = (Pt * Gt * Gr * lambda^2 * sigma) / ((4*pi)^3 * Pmin)
+    const numerator = P_t_W * G_t * G_r * Math.pow(lambda, 2) * sigma;
+    const denominator = Math.pow(4 * Math.PI, 3) * P_min_W;
+    const R_max = Math.pow(numerator / denominator, 0.25);
+
+    // Free Space Path Loss at 100 meters
+    const FSPL_100m = 20 * Math.log10(100) + 20 * Math.log10(f_GHz * 1e9) + 20 * Math.log10(4 * Math.PI / 0.299792458);
+
+    return { R_max, FSPL_100m };
+  };
+
+  const results = calcRadar();
+
+  return (
+    <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
+      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Radar Range Equation & Free Space Path Loss</h4>
+
+      <div className="grid lg:grid-cols-2 gap-8 items-start">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Tx Power (dBm)</label>
+              <input type="number" step="0.1" value={pt} onChange={(e) => setPt(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Min Det. Signal (dBm)</label>
+              <input type="number" step="0.1" value={pmin} onChange={(e) => setPmin(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Tx Ant. Gain (dBi)</label>
+              <input type="number" step="0.1" value={gt} onChange={(e) => setGt(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Rx Ant. Gain (dBi)</label>
+              <input type="number" step="0.1" value={gr} onChange={(e) => setGr(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Frequency (GHz)</label>
+              <input type="number" step="0.1" value={freqStr} onChange={(e) => setFreqStr(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">RCS σ (m²)</label>
+              <input type="number" step="0.1" value={rcs} onChange={(e) => setRcs(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
+          <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Results</h5>
+          {results ? (
+            <>
+              <div className="flex justify-between items-center mb-4"><span className="text-gray-600 dark:text-gray-400">Max Radar Range</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-2xl">{results.R_max.toFixed(1)} m</span></div>
+              <div className="w-full h-px bg-gray-200 dark:bg-gray-800 my-2"></div>
+              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">FSPL @ 100m</span> <span className="font-mono font-medium">{results.FSPL_100m.toFixed(1)} dB</span></div>
+            </>
+          ) : (
+            <div className="text-sm text-gray-400">Invalid input values</div>
+          )}
+          <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+            Calculates the maximum detection range of a monostatic radar system based on the classical Radar Range Equation. It assumes free space propagation without atmospheric absorption loss.
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

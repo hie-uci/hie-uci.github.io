@@ -33,6 +33,7 @@ export const freqBandsTable = [
   { band: "L Band", freq: "1-2 GHz", wavelength: "15-30 cm", applications: "GPS, Radar, Telecommunications" },
   { band: "S Band", freq: "2-4 GHz", wavelength: "7.5-15 cm", applications: "Wi-Fi, Bluetooth, Weather Radar" },
   { band: "C Band", freq: "4-8 GHz", wavelength: "3.75-7.5 cm", applications: "Satellite, Wi-Fi" },
+  { band: "FR3 (6G UMB)", freq: "7.125-15.35 GHz", wavelength: "1.9-4.2 cm", applications: "6G (WRC-23), JCAS" },
   { band: "X Band", freq: "8-12 GHz", wavelength: "2.5-3.75 cm", applications: "Military Radar, Weather" },
   { band: "Ku Band", freq: "12-18 GHz", wavelength: "1.67-2.5 cm", applications: "Satellite Communications" },
   { band: "K Band", freq: "18-27 GHz", wavelength: "1.11-1.67 cm", applications: "Radar, Astronomy" },
