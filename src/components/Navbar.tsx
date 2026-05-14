@@ -163,7 +163,7 @@ export default function Navbar() {
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
-              className="lg:hidden glass-ios border-t border-white/20 dark:border-white/10"
+              className="lg:hidden backdrop-blur-2xl bg-white/90 dark:bg-slate-900/95 border-t border-white/20 dark:border-white/5 shadow-xl"
             >
               <div className="px-4 py-4 space-y-1">
                 {navLinks.map((link, index) => (

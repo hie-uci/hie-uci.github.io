@@ -245,8 +245,18 @@ export function InteractiveSmithChart({
       </div>
 
       <div className="w-full lg:w-80 flex flex-col gap-4">
-        <div className="bg-white/70 dark:bg-slate-900/50 rounded-xl p-5 border border-gray-200 dark:border-gray-700 backdrop-blur-md">
-          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-4 uppercase tracking-wider">Matching Operations</h3>
+        <div className="bg-white/70 dark:bg-slate-900/50 rounded-xl p-5 border border-gray-200 dark:border-gray-700 backdrop-blur-md flex-1">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Matching Operations</h3>
+            {operations.length > 0 && (
+              <button 
+                onClick={() => setOperations([])}
+                className="text-xs font-semibold text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+              >
+                Clear All
+              </button>
+            )}
+          </div>
           
           <div className="flex gap-2 mb-4">
             <button 
