@@ -2,7 +2,7 @@
 
 **High-speed Integrated Electronics Laboratory — UC Irvine**
 
-🌐 **Live site:** https://hie-uci.github.io
+🌐 **Live site:** [https://hie.eng.uci.edu](https://hie.eng.uci.edu)
 
 📧 **Contact:** Prof. Hamidreza Aghasi (haghasi@uci.edu)
 
@@ -12,7 +12,7 @@
 
 This is the official website for the HIE Lab at UC Irvine, led by Prof. Hamidreza Aghasi. The lab specializes in mm-wave and terahertz integrated circuit design, AI-driven analog design, and emerging device technologies.
 
-The site was migrated from the old UCI WordPress platform (hie.eng.uci.edu) to a custom Next.js application in April 2026.
+The site is built as a modern, static Next.js application, featuring dynamic animations, an interactive RF toolbox, dark mode support, and rich visual components.
 
 ---
 
@@ -41,7 +41,11 @@ npx serve out
 | Framework | Next.js 16 (App Router, Static Export) |
 | UI | React 19 + TypeScript 5 |
 | Styling | Tailwind CSS 4 |
-| Animations | Framer Motion 12 |
+| Animations | Framer Motion 12, Matter.js (Physics) |
+| Visualization | Recharts, XYFlow (Node Builder) |
+| Mathematics | KaTeX |
+| Theming | next-themes (Dark/Light Mode) |
+| Icons | Lucide React, Heroicons |
 | Hosting | GitHub Pages |
 | CI/CD | GitHub Actions |
 
@@ -54,19 +58,26 @@ src/
 ├── app/                    # Pages (file-based routing)
 │   ├── page.tsx           # Homepage
 │   ├── research/          # Research highlights
-│   ├── publications/      # 64 publications with search & filter
+│   ├── research-projects/ # Detailed research projects
+│   ├── publications/      # Publications with search & filter
 │   ├── team/              # Team members
 │   ├── chip-gallery/      # Chip photo gallery
 │   ├── news/              # Lab news timeline
 │   ├── teaching/          # Courses
+│   ├── rf-toolbox/        # Interactive RF tools, calculators, and builders
+│   ├── measurement-tutorial/ # Lab measurement guides
 │   ├── contact/           # Contact info
 │   └── available-positions/  # Open positions
 ├── components/            # Reusable UI components
 │   ├── Navbar.tsx         # Navigation with active indicator
+│   ├── ThemeSwitcher.tsx  # Dark/Light mode toggle
 │   ├── ChipMarquee.tsx    # Chip gallery with lightbox
-│   ├── Lightbox.tsx       # Image zoom viewer
-│   ├── ParticleField.tsx  # Hero particle animation
-│   └── ...                # 10+ more components
+│   ├── SystemCascadeBuilder.tsx # Node-based RF cascade builder
+│   ├── InteractiveSmithChart.tsx # Interactive Smith Chart visualizer
+│   ├── AdvancedCalculators.tsx # RF calculations and formulas
+│   ├── FluidPlasmaBackground.tsx # Advanced animated backgrounds
+│   ├── FallingChipsBackground.tsx # Physics-based chip animations
+│   └── ...                # Many other components (cards, headers, layouts)
 public/
 └── images/                # Static images (chips, members, research, logos)
 ```
@@ -90,51 +101,42 @@ Edit `src/app/team/page.tsx`, add to `phdStudents`, `undergradResearchers`, or a
 ### Add chip photos
 Place images in `public/images/chips/individual/`, then add paths to `ChipMarquee.tsx` and `chip-gallery/page.tsx`.
 
+### Update RF Toolbox / Calculators
+Edit the components in `src/components/` (e.g., `Calculators.tsx`, `AdvancedCalculators.tsx`) or data in `src/app/rf-toolbox/data.ts`.
+
 ---
 
 ## Deployment
 
-Deployment is automatic via GitHub Actions:
-1. Push to `main` branch
-2. GitHub Actions builds the site (~35s)
-3. Deploys to GitHub Pages (~8s)
-4. Site updates at https://hie-uci.github.io
+Deployment is managed via GitHub Actions to GitHub Pages. The custom domain `hie.eng.uci.edu` is configured via `public/CNAME`.
 
-Two repos are kept in sync:
-- `hie-uci/hie-uci.github.io` (primary — serves the site)
-- `hie-uci/HIE-Lab-Website` (backup)
+🚨 **CRITICAL DEPLOYMENT WARNING:** This project uses two remotes: `origin` (source) and `pages` (live site).
 
----
-
-## Content Summary
-
-| Section | Count | Source |
-|---------|-------|--------|
-| Publications | 64 | Synced from hie.eng.uci.edu (April 2026) |
-| News items | 33 | Collected from old website (2019-2025) |
-| Research areas | 5 | mm-Wave Radars, THz Power, Signal Gen, AI+RF, Emerging Devices |
-| Team members | 18 | PI + 6 PhD + 2 undergrad + 3 PhD alumni + 9 other alumni |
-| Chip photos | 14 | Fabricated IC die photos |
+```bash
+# Deploy changes (requires pushing to both remotes)
+npm run build
+git add .
+git commit -m "update"
+git push origin main       # Saves source code
+git push pages main --force # Triggers deployment to GitHub Pages
+```
+> Note: For pushing to `pages`, you might need `git push pages main:main --force`.
 
 ---
 
-## Design Features
+## Design & Features
 
-- 🎨 UCI brand colors (navy blue, gold, teal)
-- ✨ Particle field animation in Hero section
-- 📊 Scroll progress bar (gradient: blue → gold → teal)
-- 🎯 Active page indicator in navigation
-- 🔍 Chip gallery with click-to-zoom lightbox
-- 🃏 Glass morphism cards with refined hover effects
+- 🌗 **Dark Mode / Light Mode Support**
+- 🎨 UCI brand colors (navy blue, gold, teal) integrated with modern styling
+- ✨ Interactive Physics & Animations: Particle fields, fluid plasmas, falling chips (Matter.js)
+- 🧰 **RF Toolbox**: Advanced RF calculators, interactive Smith Charts, node-based system cascade builders
+- 📊 Interactive Data: Recharts-based polar plots and S-Parameter viewers
+- 🃏 Glass morphism UI elements with refined hover effects
 - 📱 Fully responsive (mobile, tablet, desktop)
-- ⚡ Static export — fast loading, no server needed
+- ⚡ Static export — extremely fast loading
 
 ---
 
 ## For AI Agents
 
-See [AGENTS.md](./AGENTS.md) for detailed project guide, architecture, conventions, and pending tasks.
-
----
-
-*Last updated: April 28, 2026*
+See [AGENTS.md](./AGENTS.md) for detailed project guide, architecture, conventions, and further development instructions.
