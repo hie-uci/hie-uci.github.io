@@ -65,7 +65,7 @@ export default function MeasurementTutorialPage() {
                     60GHz Radar Antenna Pattern Measurement
                   </h3>
                   <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-sm">
-                    This demonstration highlights the precise measurement of an antenna radiation pattern for a 60GHz Phase-locked FMCW Radar Transceiver (ESSCIRC published). Characterizing mmWave antennas requires specialized mechanical and RF setups to capture accurate 3D gain profiles.
+                    This demonstration shows the measurement of an antenna radiation pattern for a 60GHz phase-locked FMCW radar transceiver (ESSCIRC & JSSC published).
                   </p>
                   
                   <div className="bg-white/50 dark:bg-slate-900/50 p-5 rounded-xl border border-slate-200 dark:border-slate-700/50">
@@ -76,19 +76,19 @@ export default function MeasurementTutorialPage() {
                     <ul className="space-y-3">
                       <li className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-400">
                         <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
-                        <span><strong>Device Under Test (DUT):</strong> 49-63 GHz FMCW Radar Transceiver with integrated on-chip or packaged antennas.</span>
+                        <span><strong>Device Under Test (DUT):</strong> 49-63 GHz FMCW Radar Transceiver with packaged antennas.</span>
                       </li>
                       <li className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-400">
                         <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
-                        <span><strong>Reference Antenna:</strong> Standard Gain Horn Antenna calibrated for V-band.</span>
+                        <span><strong>Reference Antenna:</strong> Horn antenna calibrated for V-band.</span>
                       </li>
                       <li className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-400">
                         <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
-                        <span><strong>Mechanical Stage:</strong> High-precision rotary stage for azimuth and elevation sweeping.</span>
+                        <span><strong>Mechanical Stage:</strong> High-precision rotary stage for angle sweeping.</span>
                       </li>
                       <li className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-400">
                         <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
-                        <span><strong>Instrumentation:</strong> mmWave Signal Analyzer / Spectrum Analyzer for power detection across angles.</span>
+                        <span><strong>Instrumentation:</strong> Spectrum Analyzer with V-band harmonic mixer for power detection.</span>
                       </li>
                     </ul>
                   </div>
