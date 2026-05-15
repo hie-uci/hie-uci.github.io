@@ -20,10 +20,10 @@ interface ChipData {
 
 const chips: ChipData[] = [
   // --- Radar Systems ---
-  { id: 1, name: 'PMCW Radar', technology: 'CMOS', frequency: 'mm-Wave', category: 'Radar Systems', image: '/images/chips/individual/sheet1-01-pmcw-radar.png', width: 838, height: 544 },
-  { id: 2, name: '49–63 GHz FMCW Radar', technology: 'CMOS', frequency: '49–63 GHz', category: 'Radar Systems', image: '/images/chips/individual/sheet1-04-49-63-ghz-fmcw-radar.png', width: 835, height: 445 },
-  { id: 3, name: '23–27 & 69–81 GHz MIMO FMCW Radar', technology: 'CMOS', frequency: '23–81 GHz', category: 'Radar Systems', image: '/images/chips/individual/sheet2-01-23-27-and-69-81-ghz-mimo-fmcw-radar.png', width: 760, height: 564 },
-  { id: 4, name: 'Monostatic 50–60 GHz FMCW Radar', technology: 'CMOS', frequency: '50–60 GHz', category: 'Radar Systems', image: '/images/chips/individual/sheet2-02-monostatic-50-60-ghz-fmcw-radar.png', width: 834, height: 472 },
+  { id: 1, name: 'Doppler-Assisted PMCW Radar', technology: '65nm CMOS', frequency: 'mm-Wave', category: 'Radar Systems', image: '/images/chips/individual/sheet1-01-pmcw-radar.png', width: 838, height: 544 },
+  { id: 2, name: '49–63 GHz FMCW Radar', technology: '22nm CMOS', frequency: '49–63 GHz', category: 'Radar Systems', image: '/images/chips/individual/sheet1-04-49-63-ghz-fmcw-radar.png', width: 835, height: 445 },
+  { id: 3, name: '23–27 & 69–81 GHz MIMO FMCW Radar', technology: '65nm CMOS', frequency: '23–27, 69-81 GHz', category: 'Radar Systems', image: '/images/chips/individual/sheet2-01-23-27-and-69-81-ghz-mimo-fmcw-radar.png', width: 760, height: 564 },
+  { id: 4, name: 'Monostatic 50–60 GHz FMCW Radar', technology: '65nm CMOS', frequency: '50–60 GHz', category: 'Radar Systems', image: '/images/chips/individual/sheet2-02-monostatic-50-60-ghz-fmcw-radar.png', width: 834, height: 472 },
   
   // --- High-Power & Amplifiers ---
   { id: 5, name: '110–143 GHz PA (19 dBm Psat)', technology: '65nm CMOS', frequency: '110–143 GHz', category: 'Power Generation & PA', image: '/images/chips/individual/sheet1-03-110-143-ghz-pa-in-65nm-cmos.png', width: 838, height: 513 },
