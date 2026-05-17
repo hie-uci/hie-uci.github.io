@@ -1,5 +1,19 @@
 # HIE Lab Website - Progress Update
 
+## Date: May 17, 2026
+
+### 1. Logo Redesign & Optimization
+- **New Laboratory Logo:** Replaced the legacy circular logo with a modern, rectangular, typography-focused design ("HIE") featuring a prominent golden "I" surrounded by high-frequency wave graphics. 
+- **Auto-Cropping Script:** Created and utilized a Python `PIL` script to automatically detect and crop the transparent bounding box of the AI-generated logo, removing excess padding to ensure maximum visibility in UI components.
+- **Favicon Generation:** Wrote a Python script to convert the rectangular logo into a square, transparent, and padded `favicon.ico` (multi-resolution), completely replacing the default Next.js/Vercel black triangle in the browser tab.
+
+### 2. Homepage Hero Redesign
+- **Prominent Display:** Removed the squished logo from the small inline UCI badge. Instead, introduced a standalone, prominent display of the new HIE logo directly above the main title to serve as the core brand focal point (sized at `120x40`).
+- **Badge Simplification:** Simplified the "UCI EECS / Samueli School of Engineering" badge to pure text to avoid crowding and improve visual hierarchy.
+- **Navbar Visibility Fix:** Removed aggressive SVG filters (`#clean-logo-edges`) from the Navbar logo component. This filter was causing the transparent PNG to vanish in light/day mode. The new logo now renders perfectly across both light and dark themes.
+
+---
+
 ## Date: April 28, 2026
 
 ### 1. Physics-Based Interactive Backgrounds
