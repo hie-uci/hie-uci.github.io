@@ -178,9 +178,9 @@ export default function HomePage() {
             <Image
               src="/images/logo/hie-logo.png"
               alt="HIE Lab Logo"
-              width={28}
-              height={28}
-              className="rounded-full"
+              width={64}
+              height={24}
+              className="object-contain mix-blend-multiply dark:mix-blend-normal"
             />
             <a href="https://engineering.uci.edu/dept/eecs" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-eng-blue dark:text-blue-300 hover:text-uci-blue transition-colors">UC Irvine EECS</a>
             <div className="w-1 h-1 rounded-full bg-uci-gold" />
