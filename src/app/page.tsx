@@ -173,13 +173,13 @@ export default function HomePage() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.1, duration: 0.5 }}
-            className="flex justify-center mb-8 pointer-events-auto"
+            className="flex justify-center mb-6 pointer-events-auto"
           >
             <Image
               src="/images/logo/hie-logo.png"
               alt="HIE Lab Logo"
-              width={240}
-              height={80}
+              width={120}
+              height={40}
               className="object-contain dark:drop-shadow-[0_0_20px_rgba(56,189,248,0.2)]"
               priority
             />
