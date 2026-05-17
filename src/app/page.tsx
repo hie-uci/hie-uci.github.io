@@ -168,22 +168,32 @@ export default function HomePage() {
           style={{ opacity: heroOpacity, y: heroY }}
           className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-24 pb-20 pointer-events-none"
         >
-          {/* UCI Badge */}
+          {/* HIE Prominent Logo */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
+            initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="inline-flex items-center gap-3 px-4 py-2 rounded-full glass-ios mb-8 pointer-events-auto"
+            transition={{ delay: 0.1, duration: 0.5 }}
+            className="flex justify-center mb-8 pointer-events-auto"
           >
             <Image
               src="/images/logo/hie-logo.png"
               alt="HIE Lab Logo"
-              width={64}
-              height={24}
-              className="object-contain mix-blend-multiply dark:mix-blend-normal"
+              width={240}
+              height={80}
+              className="object-contain dark:drop-shadow-[0_0_20px_rgba(56,189,248,0.2)]"
+              priority
             />
+          </motion.div>
+
+          {/* UCI Badge */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="inline-flex items-center gap-3 px-5 py-2 rounded-full glass-ios mb-8 pointer-events-auto"
+          >
             <a href="https://engineering.uci.edu/dept/eecs" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-eng-blue dark:text-blue-300 hover:text-uci-blue transition-colors">UC Irvine EECS</a>
-            <div className="w-1 h-1 rounded-full bg-uci-gold" />
+            <div className="w-1.5 h-1.5 rounded-full bg-uci-gold" />
             <a href="https://engineering.uci.edu" target="_blank" rel="noopener noreferrer" className="text-sm text-eecs-teal dark:text-teal-400 hover:text-uci-blue transition-colors">Samueli School of Engineering</a>
           </motion.div>
 

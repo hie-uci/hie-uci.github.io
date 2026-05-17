@@ -45,14 +45,6 @@ export default function Navbar() {
 
   return (
     <>
-      {/* SVG Filter for Logo Edge Clean-up in Dark Mode */}
-      <svg style={{ position: 'absolute', width: 0, height: 0, pointerEvents: 'none' }} aria-hidden="true">
-        <filter id="clean-logo-edges">
-          {/* Aggressive erosion to cut off the white halo */}
-          <feMorphology operator="erode" radius="1.5" in="SourceGraphic" result="eroded" />
-        </filter>
-      </svg>
-
       {/* Scroll Progress Bar */}
       <motion.div
         className="fixed top-0 left-0 right-0 h-[3px] z-[60] origin-left"
@@ -81,7 +73,7 @@ export default function Navbar() {
   alt="HIE Lab logo" 
   width={300} 
   height={60} 
-  className="h-12 sm:h-14 lg:h-16 w-auto object-contain transition-all duration-500 group-hover:opacity-90 dark:saturate-150 dark:brightness-110 [filter:url(#clean-logo-edges)] dark:drop-shadow-[0_0_15px_rgba(56,189,248,0.5)]" 
+  className="h-12 sm:h-14 lg:h-16 w-auto object-contain transition-all duration-500 group-hover:opacity-90 dark:saturate-150 dark:brightness-110 dark:drop-shadow-[0_0_15px_rgba(56,189,248,0.5)]" 
   priority
 />
             </Link>
