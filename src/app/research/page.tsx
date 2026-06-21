@@ -55,9 +55,12 @@ const projects: Project[] = [
       'To address these challenges, our research explores multi-band, phase\u2013frequency-locked millimeter-wave radars that combine wideband operation with precise frequency synthesis and phase coherence across multiple sub-bands. These scalable radar front-ends enable fine-resolution 3D imaging and adaptive sensing across centimeter-to-meter ranges while maintaining compactness and energy efficiency. In parallel, we investigate new classes of wideband active sensors and emerging device technologies that together form the foundation of intelligent, low-power sensing architectures for next-generation cyber-physical systems.',
     ],
     applications: [
-      'High-precision vital signs monitoring',
+      'Intelligent factory',
+      'Vital signs monitoring',
+      'High precision imaging',
       'Human-robot interaction',
       'Chemical sensing',
+      'Infrastructure deformation',
       '3D defect detection',
     ],
     publications: ['RFIC 2026', 'TMTT 2026', 'JSSC 2025', 'TCAS-I 2024', 'ESSCIRC 2023', 'RFIC 2022', 'IEEE Comm. Mag. 2020'],
