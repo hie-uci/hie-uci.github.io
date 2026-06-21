@@ -60,7 +60,7 @@ const projects: Project[] = [
       'Chemical sensing',
       '3D defect detection',
     ],
-    publications: ['JSSC 2025', 'ESSCIRC 2023', 'IEEE Comm. Mag. 2020', 'RFIC 2022', 'JSSC 2024'],
+    publications: ['RFIC 2026', 'TMTT 2026', 'JSSC 2025', 'JSSC 2024', 'ESSCIRC 2023', 'RFIC 2022', 'IEEE Comm. Mag. 2020'],
     color: 'from-uci-blue to-eecs-teal',
     iconVariant: 'radar',
     galleryImages: [
