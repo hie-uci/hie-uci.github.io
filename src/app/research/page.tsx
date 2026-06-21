@@ -60,15 +60,17 @@ const projects: Project[] = [
       'Chemical sensing',
       '3D defect detection',
     ],
-    publications: ['RFIC 2026', 'TMTT 2026', 'JSSC 2025', 'JSSC 2024', 'ESSCIRC 2023', 'RFIC 2022', 'IEEE Comm. Mag. 2020'],
+    publications: ['RFIC 2026', 'TMTT 2026', 'JSSC 2025', 'TCAS-I 2024', 'ESSCIRC 2023', 'RFIC 2022', 'IEEE Comm. Mag. 2020'],
     color: 'from-uci-blue to-eecs-teal',
     iconVariant: 'radar',
     galleryImages: [
-      { src: '/images/research/radar-1.png', alt: 'Radar system architecture' },
-      { src: '/images/research/radar-2.png', alt: 'Radar measurement results' },
-      { src: '/images/research/radar-3.png', alt: 'Radar signal processing' },
-      { src: '/images/research/radar-4.png', alt: 'Radar prototype' },
-      { src: '/images/research/radar-5.png', alt: 'Radar performance metrics' },
+      { src: '/images/research/radar-5.png', alt: 'Radar App1' },
+      { src: '/images/research/radar_precise_applications.png', alt: 'Radar App2' },
+      { src: '/images/research/radar_DB_MIMO_setup.png', alt: 'Radar Meas Setup' },
+      { src: '/images/research/radar_angular_resolution.png', alt: 'Radar Angular Resolution' },
+      { src: '/images/research/radar_DAPMCW.png', alt: 'Radar Chip3' },
+      { src: '/images/research/radar_DB_MIMO.png', alt: 'Radar Chip2' },
+      { src: '/images/research/radar-1.png', alt: 'Radar Chip1' },
     ],
     icon: (
       <svg viewBox="0 0 64 64" fill="none" className="w-full h-full">
