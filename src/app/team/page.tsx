@@ -63,7 +63,6 @@ const phdStudents: Member[] = [
 ];
 
 const undergradResearchers: Member[] = [
-  { name: 'Wei Dai', initials: 'WD', image: '/images/members/undergrad-wei-dai.png', focus: 'Digital and analog circuits', bio: 'Pursuing BSc in Electrical Engineering at UCI with specialization in Electronic Circuit Design.', gradientFrom: 'from-uci-blue-light', gradientTo: 'to-eecs-teal' },
   { name: 'Albert Huang', initials: 'AH', image: '/images/members/undergrad-albert-huang.png', focus: 'Analog circuit design', bio: 'Pursuing BSc in Electrical and Computer Engineering at UCI, specializing in Electronic Circuit Design, Semiconductors, and RF, Antennas, and Microwaves.', gradientFrom: 'from-uci-gold', gradientTo: 'to-uci-blue' },
 ];
 
@@ -86,6 +85,7 @@ const otherAlumni: Alumnus[] = [
   { name: 'Xuzhe Zhao', initials: 'XZ', image: '/images/members/alumni-xuzhe-zhao.png', detail: 'M.S.' },
   { name: 'Tanqin He', initials: 'TH', image: '/images/members/alumni-tanqin-he.png', detail: 'M.S.' },
   { name: 'Pooya Khajeh', initials: 'PK', image: '/images/members/alumni-pooya.jpg', detail: 'M.S.', now: 'R&D Test Engineer, Broadcom' },
+  { name: 'Wei Dai', initials: 'WD', image: '/images/members/undergrad-wei-dai.png', detail: 'B.Sc.' },
   { name: 'Mengjie (Kaylee) Xie', initials: 'MX', image: '/images/members/alumni-annika.png', detail: 'B.Sc.', now: 'Graduate Student, Stanford' },
   { name: 'Kelly Aung Lu', initials: 'KL', image: '/images/members/alumni-kaylee.jpg', detail: 'B.Sc.' },
   { name: 'Annika Ageles Del Rosario', initials: 'AA', image: '/images/members/alumni-kelly.jpg', detail: 'B.Sc.', now: 'Hardware Engineer, Western Digital' },
