@@ -66,6 +66,8 @@ interface Publication {
 
 const publications: Publication[] = [
   // ===== SELECTED JOURNAL PUBLICATIONS (22) =====
+  // #24
+  { authors: 'M. Berahman, A. Montazar, Y. Huang, H. Aghasi', title: 'Gigahertz frequency mixing and multiplication in an all-van der Waals ambipolar MoTe2 transistor', venue: 'Applied Physics Letters', year: 2026, type: 'journal', status: 'Published', link: 'https://pubs.aip.org/aip/apl/article/128/25/253504/3396329' },
   // #23
   { authors: 'X. Liu, Z. Zhang and H. Aghasi', title: 'A 25/75 GHz 2TX-4RX FMCW Radar Transceiver Utilizing Non-uniform Linear Arrays and Phase Dithering to Achieve 5.1° Angular Resolution', venue: 'IEEE TMTT', year: 2026, type: 'journal', status: 'Published', link: 'https://ieeexplore.ieee.org/document/11483145' },
   // #22
@@ -113,7 +115,7 @@ const publications: Publication[] = [
   // #1
   { authors: 'Z. Zhang, X. Liu, Y. Huang, H. Aghasi', title: 'A Doppler-Assisted 76 GHz PMCW Radar with Meter-Scale Unambiguous Range and μm-Scale Range Accuracy', venue: 'IEEE RFIC', year: 2026, type: 'conference' },
   // #2
-  { authors: 'Y. Huang, A. Mehradfar, S. Avestimehr, H. R. Aghasi', title: 'EM-Aware Physical Synthesis: Neural Inductor Modeling and Intelligent Placement & Routing for RF Circuits', venue: 'IEEE ISCAS', year: 2026, type: 'conference', link: 'https://arxiv.org/abs/2602.11461' },
+  { authors: 'Y. Huang, A. Mehradfar, S. Avestimehr, H. R. Aghasi', title: 'EM-Aware Physical Synthesis: Neural Inductor Modeling and Intelligent Placement & Routing for RF Circuits', venue: 'IEEE ISCAS', year: 2026, type: 'conference', link: 'https://ieeexplore.ieee.org/abstract/document/11562320' },
   // #3
   { authors: 'M. Maktoomi, X. Liu, H. R. Aghasi', title: 'A 110-142 GHz 19 dBm Psat Power Amplifier with Enhanced-Power Cascode Stage and 4-Way Dual-Coupled Slotline Combiner in 65-nm CMOS', venue: 'IEEE RWW', year: 2025, type: 'conference', highlight: 'Best Student Paper Award nominee', link: 'https://ieeexplore.ieee.org/document/10431872' },
   // #4
