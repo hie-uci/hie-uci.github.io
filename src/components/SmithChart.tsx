@@ -1,15 +1,12 @@
 'use client';
 
-import React from 'react';
-
 export interface SmithChartProps {
   points?: { r: number; x: number; label?: string; color?: string }[];
   paths?: { start: { r: number; x: number }; end: { r: number; x: number }; color?: string }[];
   gammaTrajectories?: { points: { real: number; imag: number }[]; color?: string; name?: string }[];
-  z0?: number;
 }
 
-export function SmithChart({ points = [], paths = [], gammaTrajectories = [], z0 = 50 }: SmithChartProps) {
+export function SmithChart({ points = [], paths = [], gammaTrajectories = [] }: SmithChartProps) {
   // SVG coordinates: Center is (0,0), radius is 1.
   // Real axis: Left is -1 (short), Right is +1 (open).
   // Gamma = (Z/Z0 - 1) / (Z/Z0 + 1)

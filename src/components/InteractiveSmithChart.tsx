@@ -176,7 +176,6 @@ export function InteractiveSmithChart({
 
               if (op.type === 'series') {
                 const r = startZ.r;
-                const cx = r / (1 + r);
                 const radius = 1 / (1 + r);
                 const sweep = endZ.x > startZ.x ? 0 : 1; 
                 
@@ -192,7 +191,6 @@ export function InteractiveSmithChart({
               } else {
                 const yStart = zToY(startZ.r, startZ.x);
                 const g = yStart.g;
-                const cx = -g / (1 + g);
                 const radius = 1 / (1 + g);
                 
                 const yEnd = zToY(endZ.r, endZ.x);

@@ -23,6 +23,68 @@ interface PlotDataPoint {
   [key: string]: number | string;
 }
 
+type ChartType = 'S' | 'Z' | 'Y' | 'L' | 'C' | 'Q' | 'ESR' | 'Rp' | 'VSWR' | 'GD' | 'K';
+type SParamViewType = 'Magnitude' | 'Phase' | 'Real' | 'Imag';
+
+interface TooltipPayloadEntry {
+  dataKey?: string | number;
+  name?: string | number;
+  value?: number | string;
+  color?: string;
+}
+
+function numericValue(point: PlotDataPoint, key: string): number {
+  const value = point[key];
+  return typeof value === 'number' ? value : Number(value);
+}
+
+function SParameterTooltip({
+  active,
+  payload,
+  label,
+  chartType,
+  sParamViewType,
+}: {
+  active?: boolean;
+  payload?: TooltipPayloadEntry[];
+  label?: number | string;
+  chartType: ChartType;
+  sParamViewType: SParamViewType;
+}) {
+  if (!active || !payload?.length) {
+    return null;
+  }
+
+  return (
+    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded-lg shadow-lg">
+      <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mb-2">{`${label} GHz`}</p>
+      {payload.map((entry, index) => {
+        const dataKey = String(entry.dataKey ?? '');
+        const isComplex = dataKey.includes('_Magnitude') || dataKey.includes('_Phase') || dataKey.includes('_Real') || dataKey.includes('_Imag');
+        const name = isComplex ? dataKey.split('_')[0] : String(entry.name ?? '');
+
+        let unit = '';
+        if (chartType === 'S') unit = sParamViewType === 'Magnitude' ? 'dB' : sParamViewType === 'Phase' ? '°' : '';
+        else if (chartType === 'Z' || chartType === 'Y' || chartType === 'ESR' || chartType === 'Rp') {
+          if (chartType === 'Y') unit = 'S';
+          else unit = 'Ω';
+          if (isComplex && sParamViewType === 'Phase') unit = '°';
+        }
+        else if (chartType === 'L') unit = 'nH';
+        else if (chartType === 'C') unit = 'pF';
+        else if (chartType === 'GD') unit = 'ps';
+        else if (chartType === 'VSWR' || chartType === 'K' || chartType === 'Q') unit = '';
+
+        return (
+          <p key={index} className="text-sm font-medium" style={{ color: entry.color }}>
+            {name}: {entry.value} {unit}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function SParameterViewer() {
   const [data, setData] = useState<PlotDataPoint[]>([]);
   const [tdrData, setTdrData] = useState<TDRPoint[]>([]);
@@ -32,8 +94,8 @@ export default function SParameterViewer() {
   const [isPassive, setIsPassive] = useState<boolean>(true);
   
   const [analysisGroup, setAnalysisGroup] = useState<'S' | 'ZY' | 'Comp' | 'Sys'>('S');
-  const [chartType, setChartType] = useState<'S' | 'Z' | 'Y' | 'L' | 'C' | 'Q' | 'ESR' | 'Rp' | 'VSWR' | 'GD' | 'K'>('S');
-  const [sParamViewType, setSParamViewType] = useState<'Magnitude' | 'Phase' | 'Real' | 'Imag'>('Magnitude');
+  const [chartType, setChartType] = useState<ChartType>('S');
+  const [sParamViewType, setSParamViewType] = useState<SParamViewType>('Magnitude');
   const [sParamMode, setSParamMode] = useState<'Single' | 'Mixed'>('Single');
   
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
@@ -219,7 +281,7 @@ export default function SParameterViewer() {
     return [];
   }, [data, chartType, sParamMode, numPorts]);
 
-  const handleChartTypeChange = (type: 'S' | 'Z' | 'Y' | 'L' | 'C' | 'Q' | 'ESR' | 'Rp' | 'VSWR' | 'GD' | 'K') => {
+  const handleChartTypeChange = (type: ChartType) => {
     setChartType(type);
     if (data.length > 0) {
       if (type === 'S' || type === 'Z' || type === 'Y') {
@@ -262,38 +324,19 @@ export default function SParameterViewer() {
     );
   };
 
-  const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: { dataKey: string; name: string; value: number; color: string }[]; label?: number | string }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded-lg shadow-lg">
-          <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mb-2">{`${label} GHz`}</p>
-          {payload.map((entry, index) => {
-            const isComplex = entry.dataKey.includes('_Magnitude') || entry.dataKey.includes('_Phase') || entry.dataKey.includes('_Real') || entry.dataKey.includes('_Imag');
-            const name = isComplex ? entry.dataKey.split('_')[0] : entry.name;
-            
-            let unit = '';
-            if (chartType === 'S') unit = sParamViewType === 'Magnitude' ? 'dB' : sParamViewType === 'Phase' ? '°' : '';
-            else if (chartType === 'Z' || chartType === 'Y' || chartType === 'ESR' || chartType === 'Rp') {
-              if (chartType === 'Y') unit = 'S';
-              else unit = 'Ω';
-              if (isComplex && (sParamViewType === 'Phase')) unit = '°';
-            }
-            else if (chartType === 'L') unit = 'nH';
-            else if (chartType === 'C') unit = 'pF';
-            else if (chartType === 'GD') unit = 'ps';
-            else if (chartType === 'VSWR' || chartType === 'K' || chartType === 'Q') unit = '';
+  const s11SmithPoints = useMemo(
+    () => data
+      .map(d => ({ real: numericValue(d, 'S11_Real'), imag: numericValue(d, 'S11_Imag') }))
+      .filter(point => Number.isFinite(point.real) && Number.isFinite(point.imag)),
+    [data]
+  );
 
-            return (
-              <p key={index} className="text-sm font-medium" style={{ color: entry.color }}>
-                {name}: {entry.value} {unit}
-              </p>
-            );
-          })}
-        </div>
-      );
-    }
-    return null;
-  };
+  const s22SmithPoints = useMemo(
+    () => data
+      .map(d => ({ real: numericValue(d, 'S22_Real'), imag: numericValue(d, 'S22_Imag') }))
+      .filter(point => Number.isFinite(point.real) && Number.isFinite(point.imag)),
+    [data]
+  );
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-5xl mx-auto p-4 md:p-6 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-200 dark:border-slate-800">
@@ -517,7 +560,7 @@ export default function SParameterViewer() {
                     domain={['auto', 'auto']}
                     stroke="#94a3b8"
                   />
-                  <Tooltip content={<CustomTooltip />} />
+                  <Tooltip content={<SParameterTooltip chartType={chartType} sParamViewType={sParamViewType} />} />
                   <Legend verticalAlign="top" height={40} wrapperStyle={{ fontSize: '14px', fontWeight: 500 }} />
                   {selectedKeys.map((key, i) => (
                     <Line 
@@ -555,12 +598,12 @@ export default function SParameterViewer() {
                  <SmithChart 
                    gammaTrajectories={[
                      {
-                       points: data.map(d => ({ real: d.S11_Real, imag: d.S11_Imag })),
+                       points: s11SmithPoints,
                        color: '#3b82f6',
                        name: 'S11'
                      },
                      ...(numPorts >= 2 ? [{
-                       points: data.map(d => ({ real: d.S22_Real, imag: d.S22_Imag })),
+                       points: s22SmithPoints,
                        color: '#ef4444',
                        name: 'S22'
                      }] : [])
@@ -597,8 +640,11 @@ export default function SParameterViewer() {
                       stroke="#94a3b8"
                     />
                     <Tooltip 
-                      formatter={(val: number | string, name: string) => [typeof val === 'number' ? val.toFixed(2) : val, name === 'impedance' ? 'Z(t) [Ω]' : name]}
-                      labelFormatter={(label: number | string) => typeof label === 'number' ? `${label.toFixed(3)} ns` : label}
+                      formatter={(val, name) => [
+                        typeof val === 'number' ? val.toFixed(2) : val,
+                        name === 'impedance' ? 'Z(t) [Ω]' : name,
+                      ]}
+                      labelFormatter={(label) => typeof label === 'number' ? `${label.toFixed(3)} ns` : label}
                     />
                     <Legend verticalAlign="top" height={40} />
                     <Line 

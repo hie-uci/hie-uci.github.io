@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { InlineMath, BlockMath } from 'react-katex';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 
 /* =========================================================================
@@ -36,6 +35,9 @@ interface SubstrateSelectorProps {
 
 function SubstrateSelector({ er, setEr, height, setHeight, thickness, setThickness, showThickness = false }: SubstrateSelectorProps) {
   const [matId, setMatId] = useState('fr4_tg130');
+  const isCustomCopperThickness = showThickness
+    && thickness !== undefined
+    && !COPPER_WEIGHTS.some(c => c.thickness_mm.toString() === thickness);
   
   const handleMatChange = (id: string) => {
     setMatId(id);
@@ -84,12 +86,16 @@ function SubstrateSelector({ er, setEr, height, setHeight, thickness, setThickne
         {showThickness && (
           <div className="col-span-2">
             <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Copper Weight / Thickness</label>
-            <select value={thickness} onChange={(e) => setThickness && setThickness(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono">
+            <select
+              value={isCustomCopperThickness ? 'custom' : thickness}
+              onChange={(e) => setThickness && setThickness(e.target.value === 'custom' ? '' : e.target.value)}
+              className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono"
+            >
               {COPPER_WEIGHTS.map(c => <option key={c.id} value={c.thickness_mm}>{c.label}</option>)}
               <option value="custom">Custom (Input below)</option>
             </select>
-            {thickness === 'custom' && (
-              <input type="number" step="0.001" value={thickness} onChange={(e) => setThickness && setThickness(e.target.value)} className="w-full mt-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" placeholder="Enter thickness in mm" />
+            {isCustomCopperThickness && (
+              <input type="number" step="0.001" value={thickness ?? ''} onChange={(e) => setThickness && setThickness(e.target.value)} className="w-full mt-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" placeholder="Enter thickness in mm" />
             )}
           </div>
         )}
@@ -1111,6 +1117,10 @@ export function PhaseNoiseCalculator() {
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Carrier Frequency (GHz)</label>
             <input type="number" step="0.1" value={fc} onChange={(e) => setFc(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Offset Frequency (MHz)</label>
+            <input type="number" step="0.1" value={offset} onChange={(e) => setOffset(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
           </div>
         </div>
         <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">

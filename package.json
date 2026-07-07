@@ -6,33 +6,40 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test src/lib/*.test.ts",
+    "validate": "npm run lint && npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
-    "@xyflow/react": "^12.10.2",
-    "framer-motion": "^12.34.0",
-    "katex": "^0.16.45",
-    "lucide-react": "^1.12.0",
+    "@xyflow/react": "^12.11.2",
+    "framer-motion": "^12.42.2",
+    "katex": "^0.17.0",
+    "lucide-react": "^1.23.0",
     "matter-js": "^0.20.0",
-    "next": "16.1.6",
+    "next": "^16.2.10",
     "next-themes": "^0.4.6",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
     "react-katex": "^3.1.0",
-    "recharts": "^3.8.1"
+    "recharts": "^3.9.2"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
+    "@tailwindcss/postcss": "^4.3.2",
     "@types/katex": "^0.16.8",
     "@types/matter-js": "^0.20.2",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@types/node": "^20.19.43",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
     "@types/react-katex": "^3.0.4",
-    "eslint": "^9",
-    "eslint-config-next": "16.1.6",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.2.10",
+    "tailwindcss": "^4.3.2",
+    "tsx": "^4.23.0",
+    "typescript": "^5.9.3"
+  },
+  "overrides": {
+    "postcss": "^8.5.16"
   }
 }

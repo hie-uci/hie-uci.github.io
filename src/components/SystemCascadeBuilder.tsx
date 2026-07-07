@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   ReactFlow,
   Controls,
@@ -18,7 +18,7 @@ import {
   Panel
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { calculateCascade, CascadeBlock, CascadeResult } from '@/lib/cascadeMath';
+import { calculateCascade, CascadeBlock } from '@/lib/cascadeMath';
 import { parseTouchstone, ParseResult } from '@/lib/sParameterEngine';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
@@ -184,8 +184,7 @@ export default function SystemCascadeBuilder() {
     const startNodes = nodes.filter(n => incomingEdgeCount[n.id] === 0);
     
     if (startNodes.length === 0) {
-      setCascadeResult(null);
-      return;
+      return null;
     }
 
     // Follow the first valid chain found
@@ -291,7 +290,7 @@ export default function SystemCascadeBuilder() {
                       <Tooltip 
                         contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', fontSize: '12px', color: '#f3f4f6' }}
                         labelFormatter={(val) => `Freq: ${(Number(val) / 1e9).toFixed(2)} GHz`}
-                        formatter={(val: number | string) => [Number(val).toFixed(2) + ' dB/dBm']}
+                        formatter={(val) => [`${Number(val).toFixed(2)} dB/dBm`]}
                       />
                       <Legend wrapperStyle={{ fontSize: '10px' }} />
                       <Line type="monotone" dataKey="cascadedGain" name="Gain" stroke="#3b82f6" dot={false} strokeWidth={2} />

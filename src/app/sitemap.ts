@@ -9,11 +9,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const routes = [
     '',
     '/research',
+    '/research-projects',
     '/publications',
     '/team',
     '/chip-gallery',
     '/news',
     '/teaching',
+    '/rf-toolbox',
+    '/measurement-tutorial',
     '/contact',
     '/available-positions',
   ];

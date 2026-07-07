@@ -27,9 +27,10 @@ export default function ParticleField({ className = '' }: { className?: string }
     const colors = ['#0064a4', '#ffd200', '#528188', '#00386d'];
 
     const resize = () => {
-      canvas.width = canvas.offsetWidth * window.devicePixelRatio;
-      canvas.height = canvas.offsetHeight * window.devicePixelRatio;
-      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = canvas.offsetWidth * dpr;
+      canvas.height = canvas.offsetHeight * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
 
     const initParticles = () => {
@@ -93,12 +94,15 @@ export default function ParticleField({ className = '' }: { className?: string }
     initParticles();
     draw();
 
-    window.addEventListener('resize', () => {
+    const handleResize = () => {
       resize();
       initParticles();
-    });
+    };
+
+    window.addEventListener('resize', handleResize);
 
     return () => {
+      window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationId);
     };
   }, []);

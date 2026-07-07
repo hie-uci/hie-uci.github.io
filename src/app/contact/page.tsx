@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { motion } from 'framer-motion';
 import PageWrapper from '@/components/PageWrapper';
 import SectionHeader from '@/components/SectionHeader';
@@ -68,6 +68,20 @@ function FloatingTextarea({ label, name, required }: { label: string; name: stri
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    const formData = new FormData(e.currentTarget);
+    const name = String(formData.get('name') ?? '').trim();
+    const email = String(formData.get('email') ?? '').trim();
+    const subject = String(formData.get('subject') ?? 'HIE Lab inquiry').trim() || 'HIE Lab inquiry';
+    const message = String(formData.get('message') ?? '').trim();
+    const body = [`Name: ${name}`, `Email: ${email}`, '', message].join('\n');
+
+    window.location.href = `mailto:haghasi@uci.edu?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    setSubmitted(true);
+  };
 
   return (
     <PageWrapper>
@@ -192,10 +206,7 @@ export default function ContactPage() {
                 <h3 className="text-lg font-bold text-eng-blue mb-6">Send a Message</h3>
                 {!submitted ? (
                   <form
-                    onSubmit={e => {
-                      e.preventDefault();
-                      setSubmitted(true);
-                    }}
+                    onSubmit={handleSubmit}
                     className="space-y-4"
                   >
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -224,13 +235,13 @@ export default function ContactPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
-                    <h4 className="text-lg font-bold text-gray-800 mb-2">Message Sent!</h4>
-                    <p className="text-gray-500 text-sm mb-4">Thank you for reaching out. We will get back to you soon.</p>
+                    <h4 className="text-lg font-bold text-gray-800 mb-2">Email Draft Opened</h4>
+                    <p className="text-gray-500 text-sm mb-4">Please review and send the prepared email from your mail app.</p>
                     <button
                       onClick={() => setSubmitted(false)}
                       className="text-uci-blue font-medium text-sm hover:underline"
                     >
-                      Send another message
+                      Prepare another email
                     </button>
                   </motion.div>
                 )}
