@@ -29,7 +29,8 @@ const stagger = {
 interface ProjectImage {
   src: string;
   alt: string;
-  isGif?: boolean;
+  videoSrc?: string;
+  posterSrc?: string;
 }
 
 interface Project {
@@ -198,9 +199,19 @@ const projects: Project[] = [
     color: 'from-uci-blue to-eng-blue',
     iconVariant: 'ai',
     galleryImages: [
-      { src: '/images/research/ai-beam-control.gif', alt: 'AI-driven beam control animation', isGif: true },
+      {
+        src: '/images/research/ai-beam-control-poster.jpg',
+        videoSrc: '/images/research/ai-beam-control.mp4',
+        posterSrc: '/images/research/ai-beam-control-poster.jpg',
+        alt: 'AI-driven beam control animation',
+      },
       { src: '/images/research/ai-combined-figs.jpg', alt: 'AI circuit design combined figures' },
-      { src: '/images/research/ai-animation.gif', alt: 'AI design flow animation', isGif: true },
+      {
+        src: '/images/research/ai-animation-poster.jpg',
+        videoSrc: '/images/research/ai-animation.mp4',
+        posterSrc: '/images/research/ai-animation-poster.jpg',
+        alt: 'AI design flow animation',
+      },
     ],
     icon: (
       <svg viewBox="0 0 64 64" fill="none" className="w-full h-full">
@@ -272,11 +283,12 @@ const projects: Project[] = [
 function ProjectCard({ project, index }: { project: Project; index: number }) {
   return (
     <motion.div
+      id={`project-${project.id}`}
       initial={{ opacity: 0, y: 60 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-80px' }}
       transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-      className="relative"
+      className="relative scroll-mt-24"
     >
       {/* Connecting line between projects */}
       {index < projects.length - 1 && (
@@ -350,13 +362,27 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
                     key={imgIdx}
                     className="relative aspect-[4/3] rounded-lg overflow-hidden shadow-sm border border-gray-100 group/img bg-slate-warm"
                   >
-                    <Image
-                      src={img.src}
-                      alt={img.alt}
-                      fill
-                      className="object-cover transition-transform duration-300 group-hover/img:scale-110"
-                      {...(img.isGif ? { unoptimized: true } : {})}
-                    />
+                    {img.videoSrc ? (
+                      <video
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover/img:scale-110"
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        preload="metadata"
+                        poster={img.posterSrc ?? img.src}
+                        aria-label={img.alt}
+                      >
+                        <source src={img.videoSrc} type="video/mp4" />
+                      </video>
+                    ) : (
+                      <Image
+                        src={img.src}
+                        alt={img.alt}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover/img:scale-110"
+                      />
+                    )}
                   </div>
                 ))}
               </div>
