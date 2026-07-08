@@ -521,38 +521,34 @@ export default function HomePage() {
                   y: -10,
                 }}
                 transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                className={`group relative flex min-h-[460px] flex-col overflow-hidden rounded-2xl border border-white/70 bg-white/85 shadow-[0_18px_60px_rgba(0,56,109,0.10)] backdrop-blur-xl transition-[transform,box-shadow,border-color] duration-500 dark:border-white/10 dark:bg-slate-950/70 dark:shadow-[0_18px_60px_rgba(0,0,0,0.30)] hover:border-uci-blue/35 hover:shadow-[0_24px_70px_rgba(0,100,164,0.18)] ${
+                className={`group relative flex min-h-[470px] flex-col overflow-hidden rounded-2xl border border-white/70 bg-white/90 shadow-[0_18px_60px_rgba(0,56,109,0.10)] backdrop-blur-xl transition-[transform,box-shadow,border-color] duration-500 dark:border-white/10 dark:bg-slate-950/75 dark:shadow-[0_18px_60px_rgba(0,0,0,0.30)] hover:border-uci-blue/35 hover:shadow-[0_24px_70px_rgba(0,100,164,0.18)] ${
                   i < 2 ? 'lg:col-span-3' : 'lg:col-span-2'
                 } ${
                   i === 4 ? 'md:col-span-2 lg:col-span-2' : ''
                 }`}
               >
-                {/* Number badge */}
-                <div className="absolute top-4 right-4 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-white/35 bg-white/20 text-xs font-bold text-white/90 shadow-sm backdrop-blur-md">
-                  {String(i + 1).padStart(2, '0')}
-                </div>
-
-                <div className={`relative h-56 overflow-hidden border-b border-white/50 bg-gradient-to-br ${area.gradient} dark:border-white/10`}>
+                <div className="relative h-60 overflow-hidden border-b border-slate-200/80 bg-slate-50 dark:border-white/10 dark:bg-slate-900/80">
                   <ResearchVisual variant={area.iconVariant} />
-
-                  <div className="absolute left-4 top-4 z-10 inline-flex items-center gap-2 rounded-full border border-white/25 bg-black/25 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/90 backdrop-blur-md">
-                    <span className="h-1.5 w-1.5 rounded-full bg-uci-gold shadow-[0_0_10px_rgba(255,210,0,0.8)]" />
-                    {area.eyebrow}
-                  </div>
-
-                  <div aria-hidden="true" className="absolute bottom-4 right-4 z-10 flex h-16 w-16 items-center justify-center rounded-full border border-white/25 bg-white/15 text-white/90 shadow-2xl backdrop-blur-md transition-transform duration-500 group-hover:scale-105">
-                    <AnimatedResearchIcon variant={area.iconVariant} className="h-9 w-9 text-white drop-shadow-lg" />
-                  </div>
-
-                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent" />
-                  <div className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
-                    <div className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-white/45 to-transparent" style={{ animation: 'scan-line 2s ease-in-out infinite' }} />
-                  </div>
                 </div>
 
                 <div className="relative flex flex-1 flex-col p-6">
-                  <div className="mb-4 inline-flex w-fit items-center rounded-md border border-uci-blue/10 bg-uci-blue/5 px-2.5 py-1 text-xs font-semibold text-uci-blue dark:border-blue-300/15 dark:bg-blue-300/10 dark:text-blue-200">
-                    {area.metric}
+                  <div className="mb-5 flex items-start justify-between gap-4">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-uci-blue/10 bg-uci-blue/5 text-uci-blue dark:border-blue-300/15 dark:bg-blue-300/10 dark:text-blue-200">
+                        <AnimatedResearchIcon variant={area.iconVariant} className="h-6 w-6" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
+                          {area.eyebrow}
+                        </div>
+                        <div className="mt-1 inline-flex w-fit items-center rounded-md border border-uci-blue/10 bg-uci-blue/5 px-2.5 py-1 text-xs font-semibold text-uci-blue dark:border-blue-300/15 dark:bg-blue-300/10 dark:text-blue-200">
+                          {area.metric}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-xs font-bold text-slate-500 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
+                      {String(i + 1).padStart(2, '0')}
+                    </div>
                   </div>
                   <h3 className="mb-2 text-xl font-bold text-eng-blue transition-colors duration-300 [text-wrap:pretty] group-hover:text-uci-blue dark:text-gray-100 dark:group-hover:text-blue-300">
                     {area.title}
