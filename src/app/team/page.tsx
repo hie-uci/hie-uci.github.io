@@ -12,7 +12,7 @@ const director = {
   name: 'Prof. Hamidreza Aghasi',
   initials: 'HA',
   image: '/images/members/pi-aghasi.jpeg',
-  title: 'Assistant Professor of EECS',
+  title: 'Associate Professor of EECS',
   email: 'haghasi@uci.edu',
   phone: '(949)-824-8810',
   education: 'B.Sc. in Electrical Engineering, Sharif University of Technology, Tehran, Iran (2011); M.S. and Ph.D. in Electrical Engineering, Cornell University (2015, 2017)',

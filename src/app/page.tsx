@@ -303,7 +303,7 @@ export default function HomePage() {
                     </div>
                     <div>
                       <h3 className="text-lg font-bold">Prof. Hamidreza Aghasi</h3>
-                      <p className="text-sm text-white/70">Assistant Professor, EECS</p>
+                      <p className="text-sm text-white/70">Associate Professor, EECS</p>
                     </div>
                   </div>
                   <div className="space-y-3 text-sm text-white/80 leading-relaxed">
