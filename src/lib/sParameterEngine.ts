@@ -9,6 +9,7 @@ export const cMul = (a: Complex, b: Complex): Complex => ({
   real: a.real * b.real - a.imag * b.imag,
   imag: a.real * b.imag + a.imag * b.real
 });
+export const cConj = (a: Complex): Complex => ({ real: a.real, imag: -a.imag });
 export const cDiv = (a: Complex, b: Complex): Complex => {
   const den = b.real * b.real + b.imag * b.imag;
   if (den === 0) return { real: 0, imag: 0 };
@@ -21,6 +22,54 @@ export const cDiv = (a: Complex, b: Complex): Complex => {
 export const cMag = (a: Complex): number => Math.sqrt(a.real * a.real + a.imag * a.imag);
 export const cPhase = (a: Complex): number => Math.atan2(a.imag, a.real);
 export const cDB = (a: Complex): number => 20 * Math.log10(cMag(a) + 1e-15);
+
+const cScaleReal = (a: Complex, scalar: number): Complex => ({ real: a.real * scalar, imag: a.imag * scalar });
+
+function complexVectorNorm(v: Complex[]): number {
+  return Math.sqrt(v.reduce((sum, value) => sum + value.real * value.real + value.imag * value.imag, 0));
+}
+
+function multiplyByGramMatrix(S: Complex[][], v: Complex[]): Complex[] {
+  const n = S.length;
+  const sv: Complex[] = [];
+  for (let i = 0; i < n; i++) {
+    let sum = { real: 0, imag: 0 };
+    for (let j = 0; j < n; j++) {
+      sum = cAdd(sum, cMul(S[i][j], v[j]));
+    }
+    sv.push(sum);
+  }
+
+  const result: Complex[] = [];
+  for (let j = 0; j < n; j++) {
+    let sum = { real: 0, imag: 0 };
+    for (let i = 0; i < n; i++) {
+      sum = cAdd(sum, cMul(cConj(S[i][j]), sv[i]));
+    }
+    result.push(sum);
+  }
+  return result;
+}
+
+export function spectralNorm(S: Complex[][]): number {
+  const n = S.length;
+  if (n === 0) return 0;
+
+  let v = new Array(n).fill(null).map(() => ({ real: 1 / Math.sqrt(n), imag: 0 }));
+  for (let iter = 0; iter < 80; iter++) {
+    const next = multiplyByGramMatrix(S, v);
+    const norm = complexVectorNorm(next);
+    if (norm < 1e-15) return 0;
+    v = next.map(value => cScaleReal(value, 1 / norm));
+  }
+
+  const hv = multiplyByGramMatrix(S, v);
+  let rayleigh = { real: 0, imag: 0 };
+  for (let i = 0; i < n; i++) {
+    rayleigh = cAdd(rayleigh, cMul(cConj(v[i]), hv[i]));
+  }
+  return Math.sqrt(Math.max(rayleigh.real, 0));
+}
 
 // Matrix operations
 export const mIdentity = (n: number): Complex[][] => {
@@ -171,17 +220,27 @@ export interface SParamMatrix {
   Rp?: number[];
   K?: number;
   groupDelay?: number; // in seconds
+  passivitySingularValue?: number;
 }
 
 export interface ParseResult {
   points: SParamMatrix[];
   isPassive: boolean;
+  maxPassivitySingularValue: number;
+  warnings?: string[];
 }
 
 export function parseTouchstone(content: string, numPorts: number): ParseResult {
   const lines = content.split('\n');
   let optionLine = '';
   const dataTokens: string[] = [];
+  const warnings: string[] = [];
+
+  const addWarning = (message: string) => {
+    if (!warnings.includes(message)) {
+      warnings.push(message);
+    }
+  };
 
   for (const line of lines) {
     let raw = line.trim();
@@ -194,6 +253,24 @@ export function parseTouchstone(content: string, numPorts: number): ParseResult 
 
     if (raw.startsWith('#')) {
       optionLine = raw;
+      continue;
+    }
+
+    if (raw.startsWith('[')) {
+      const upper = raw.toUpperCase();
+      if (upper.startsWith('[VERSION]')) {
+        addWarning('Touchstone 2.0 keyword detected. This viewer parses full-matrix network data only and ignores advanced v2 metadata.');
+      } else if (upper.startsWith('[NUMBER OF PORTS]')) {
+        const match = raw.match(/\]\s*(\d+)/);
+        const declaredPorts = match ? parseInt(match[1]) : null;
+        if (declaredPorts !== null && declaredPorts !== numPorts) {
+          addWarning(`File declares ${declaredPorts} ports, but the extension/parser selected ${numPorts} ports.`);
+        }
+      } else if (upper.startsWith('[REFERENCE]')) {
+        addWarning('Per-port Touchstone reference impedances are not applied; calculations use a single scalar R from the option line.');
+      } else if (upper.startsWith('[MATRIX FORMAT]') && !upper.includes('FULL')) {
+        addWarning('LOWER/UPPER matrix Touchstone data is not expanded; use FULL matrix data for accurate parsing.');
+      }
       continue;
     }
 
@@ -228,6 +305,7 @@ export function parseTouchstone(content: string, numPorts: number): ParseResult 
   
   let i = 0;
   let isPassive = true;
+  let maxPassivitySingularValue = 0;
 
   while (i + tokensPerPoint <= dataTokens.length) {
     const fVal = parseFloat(dataTokens[i]);
@@ -256,16 +334,13 @@ export function parseTouchstone(content: string, numPorts: number): ParseResult 
       }
     }
     
-    // Check passivity (+0.1 dB margin = 1.011579 linear mag)
-    for (let r = 0; r < numPorts; r++) {
-      for (let c = 0; c < numPorts; c++) {
-        if (cMag(matrix[r][c]) > 1.011579) {
-          isPassive = false;
-        }
-      }
+    const passivitySingularValue = spectralNorm(matrix);
+    maxPassivitySingularValue = Math.max(maxPassivitySingularValue, passivitySingularValue);
+    if (passivitySingularValue > 1.011579) {
+      isPassive = false;
     }
 
-    points.push({ frequency: f, matrix, z0 });
+    points.push({ frequency: f, matrix, z0, passivitySingularValue });
     i += tokensPerPoint;
   }
 
@@ -278,7 +353,7 @@ export function parseTouchstone(content: string, numPorts: number): ParseResult 
     const vswr: number[] = [];
     for (let p = 0; p < numPorts; p++) {
       const mag = cMag(S[p][p]);
-      vswr.push((1 + mag) / (1 - mag + 1e-15));
+      vswr.push(mag < 1 ? (1 + mag) / (1 - mag) : Number.POSITIVE_INFINITY);
     }
     points[k].vswr = vswr;
 
@@ -330,7 +405,7 @@ export function parseTouchstone(content: string, numPorts: number): ParseResult 
     points[0].groupDelay = points[1].groupDelay;
   }
 
-  return { points, isPassive };
+  return { points, isPassive, maxPassivitySingularValue, warnings };
 }
 
 function createComplex(v1: string, v2: string, format: string): Complex {

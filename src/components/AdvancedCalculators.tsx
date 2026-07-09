@@ -584,6 +584,9 @@ export function PLLCalculator() {
           ) : (
             <div className="text-sm text-gray-400">Invalid input values</div>
           )}
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            Type-II charge-pump PLL approximation using Kpd = Icp/(2π) and Kvco in Hz/V. Verify final loop dynamics in a PLL simulator before tapeout or hardware release.
+          </div>
         </div>
       </div>
     </div>

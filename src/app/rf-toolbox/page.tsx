@@ -97,7 +97,7 @@ function SystemLinkSection() {
 
       <div>
         <h3 className="text-2xl font-bold text-eng-blue dark:text-blue-300 mb-2">PLL Loop Filter Synthesis</h3>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Calculate 3rd order passive loop filters for Phase-Locked Loops and Frequency Synthesizers.</p>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Estimate 2nd order passive charge-pump PLL loop filters with explicit bandwidth and phase-margin assumptions.</p>
         <PLLCalculator />
       </div>
     </div>
@@ -115,7 +115,7 @@ function RadarSensingSection() {
 
       <div>
         <h3 className="text-2xl font-bold text-eng-blue dark:text-blue-300 mb-2">FMCW & CW Radar Toolset</h3>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Determine range resolution, unambiguous range, and Doppler shifts for mmWave sensors.</p>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Determine range resolution, IF-limited range, and Doppler shifts for mmWave sensors.</p>
         <FMCWRadarCalculator />
         <DopplerCalculator />
       </div>
@@ -286,7 +286,7 @@ function SParameterSection() {
             100% Client-Side (No Data Collected)
           </div>
         </div>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Upload Touchstone files (up to 12 ports) to interactively plot and extract advanced network parameters including Y/Z parameters, Group Delay, Rollett&apos;s Stability Factor, and equivalent circuit models.</p>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Upload Touchstone v1/full-matrix files (up to 12 ports) to interactively plot and extract network parameters including Y/Z parameters, Group Delay, Rollett&apos;s Stability Factor, and equivalent circuit models.</p>
         <p className="text-xs text-slate-500 dark:text-slate-500 mb-6 italic">Privacy Note: This tool processes your .sNp files entirely within your web browser. We do not upload, collect, or store any of your measurement or simulation data on our servers.</p>
         <SParameterViewer />
       </div>

@@ -34,6 +34,21 @@ interface RFBlockNodeData {
   [key: string]: unknown; // For ReactFlow internal usage if needed
 }
 
+const COMPONENT_PRESETS: Record<string, Pick<RFBlockNodeData, 'gain' | 'nf' | 'oip3'>> = {
+  LNA: { gain: 15, nf: 1.5, oip3: 20 },
+  Mixer: { gain: -6, nf: 6, oip3: 15 },
+  Filter: { gain: -2, nf: 2, oip3: 100 },
+  PA: { gain: 20, nf: 6, oip3: 35 },
+  Attenuator: { gain: -6, nf: 6, oip3: 100 },
+};
+
+function formatSummaryFrequency(frequency?: number): string {
+  if (frequency === undefined) return '';
+  if (frequency >= 1e9) return `@ ${(frequency / 1e9).toFixed(3)} GHz`;
+  if (frequency >= 1e6) return `@ ${(frequency / 1e6).toFixed(3)} MHz`;
+  return `@ ${frequency.toFixed(0)} Hz`;
+}
+
 // Custom Node for RF Block
 const RFBlockNode = ({ data, id }: NodeProps<Node<RFBlockNodeData>>) => {
   return (
@@ -71,10 +86,10 @@ const RFBlockNode = ({ data, id }: NodeProps<Node<RFBlockNodeData>>) => {
           />
         </div>
         <div className="flex flex-col gap-1 mt-1 border-t border-gray-200 dark:border-gray-700 pt-2">
-          <label className="text-gray-600 dark:text-gray-400 font-medium text-[10px]">.s2p File (Overrides Gain)</label>
+          <label className="text-gray-600 dark:text-gray-400 font-medium text-[10px]">.sNp File (S21 Overrides Gain)</label>
           <input 
             type="file" 
-            accept=".s2p,.s1p,.s3p,.s4p"
+            accept=".s2p,.s3p,.s4p,.s5p,.s6p,.s7p,.s8p,.s9p,.s10p,.s11p,.s12p"
             className="text-[10px] w-full text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900/30 dark:file:text-blue-400 cursor-pointer"
             onChange={(e) => {
               const file = e.target.files?.[0];
@@ -127,6 +142,10 @@ export default function SystemCascadeBuilder() {
     // Basic detection of ports from extension (e.g. .s2p -> 2)
     const extMatch = fileName.match(/\.s(\d+)p$/i);
     const numPorts = extMatch ? parseInt(extMatch[1]) : 2;
+    if (numPorts < 2) {
+      alert("Cascade gain extraction needs at least a 2-port Touchstone file so S21 is available.");
+      return;
+    }
     
     try {
       const parsed = parseTouchstone(content, numPorts);
@@ -161,30 +180,38 @@ export default function SystemCascadeBuilder() {
   const onConnect = useCallback((params: Connection) => setEdges((eds) => addEdge({ ...params, animated: true }, eds)), [setEdges]);
 
   // Compute cascade path and results
-  const cascadeResult = useMemo(() => {
+  const cascadeAnalysis = useMemo(() => {
+    const warnings: string[] = [];
     if (nodes.length === 0) {
-      return null;
+      return { result: null, warnings };
     }
 
     const incomingEdgeCount: Record<string, number> = {};
-    const outgoingEdges: Record<string, string> = {};
+    const outgoingEdges: Record<string, string[]> = {};
     
     nodes.forEach(n => {
       incomingEdgeCount[n.id] = 0;
+      outgoingEdges[n.id] = [];
     });
 
     edges.forEach(e => {
       if (incomingEdgeCount[e.target] !== undefined) {
         incomingEdgeCount[e.target]++;
       }
-      outgoingEdges[e.source] = e.target;
+      if (outgoingEdges[e.source]) {
+        outgoingEdges[e.source].push(e.target);
+      }
     });
 
     // Find start nodes
     const startNodes = nodes.filter(n => incomingEdgeCount[n.id] === 0);
     
     if (startNodes.length === 0) {
-      return null;
+      return { result: null, warnings: ['No valid left-to-right cascade chain found. Check for cycles or missing input blocks.'] };
+    }
+
+    if (startNodes.length > 1) {
+      warnings.push('Multiple source blocks detected. Results use the first source chain only.');
     }
 
     // Follow the first valid chain found
@@ -206,22 +233,33 @@ export default function SystemCascadeBuilder() {
           sParamFileName: node.data.sParamFileName,
         });
       }
-      currentNodeId = outgoingEdges[currentNodeId];
+      const nextNodes: string[] = outgoingEdges[currentNodeId] ?? [];
+      if (nextNodes.length > 1) {
+        warnings.push(`Branching detected after ${node?.data.name ?? currentNodeId}. Results use the first outgoing branch only.`);
+      }
+      currentNodeId = nextNodes[0];
+      if (currentNodeId && visited.has(currentNodeId)) {
+        warnings.push('Cycle detected. Results stop before the repeated block.');
+      }
     }
 
     if (chain.length > 0) {
-      return calculateCascade(chain);
+      return { result: calculateCascade(chain), warnings };
     } 
-    return null;
+    return { result: null, warnings };
   }, [nodes, edges]);
+
+  const cascadeResult = cascadeAnalysis.result;
+  const summaryFrequencyLabel = formatSummaryFrequency(cascadeResult?.summaryFrequency);
 
   const addBlock = (name: string) => {
     const newNodeId = `node_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+    const preset = COMPONENT_PRESETS[name] ?? { gain: 0, nf: 0, oip3: 100 };
     const newNode: Node<RFBlockNodeData> = {
       id: newNodeId,
       type: 'rfBlock',
       position: { x: Math.random() * 100 + 100, y: Math.random() * 100 + 100 },
-      data: { name, gain: 0, nf: 0, oip3: 0 },
+      data: { name, ...preset },
     };
     setNodes((nds) => [...nds, newNode]);
   };
@@ -275,6 +313,11 @@ export default function SystemCascadeBuilder() {
           </h3>
           {cascadeResult ? (
             <div className="flex flex-col gap-3">
+              {cascadeAnalysis.warnings.length > 0 && (
+                <div className="bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 p-3 rounded-xl border border-amber-200 dark:border-amber-800/40 text-xs leading-relaxed">
+                  {cascadeAnalysis.warnings[0]}
+                </div>
+              )}
               {cascadeResult.sweptResults && cascadeResult.sweptResults.length > 0 && (
                 <div className="bg-white dark:bg-gray-800 p-2 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm w-full h-48 mb-2">
                   <ResponsiveContainer width="100%" height="100%">
@@ -301,21 +344,21 @@ export default function SystemCascadeBuilder() {
                 </div>
               )}
               <div className="bg-white dark:bg-gray-800 p-3.5 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm flex justify-between items-center">
-                <div className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wider">Gain {cascadeResult.sweptResults ? "(DC/Center)" : ""}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wider">Gain {summaryFrequencyLabel}</div>
                 <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{cascadeResult.cascadedGain.toFixed(2)} <span className="text-xs font-normal text-gray-500">dB</span></div>
               </div>
               <div className="bg-white dark:bg-gray-800 p-3.5 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm flex justify-between items-center">
-                <div className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wider">NF {cascadeResult.sweptResults ? "(DC/Center)" : ""}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wider">NF {summaryFrequencyLabel}</div>
                 <div className="text-lg font-bold text-red-600 dark:text-red-400">{cascadeResult.cascadedNF.toFixed(2)} <span className="text-xs font-normal text-gray-500">dB</span></div>
               </div>
               <div className="bg-white dark:bg-gray-800 p-3.5 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm flex justify-between items-center">
-                <div className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wider">OIP3 {cascadeResult.sweptResults ? "(DC/Center)" : ""}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wider">OIP3 {summaryFrequencyLabel}</div>
                 <div className="text-lg font-bold text-green-600 dark:text-green-400">
                   {isFinite(cascadeResult.cascadedOIP3) ? cascadeResult.cascadedOIP3.toFixed(2) : '---'} <span className="text-xs font-normal text-gray-500">dBm</span>
                 </div>
               </div>
               <div className="bg-white dark:bg-gray-800 p-3.5 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm flex justify-between items-center">
-                <div className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wider">IIP3 {cascadeResult.sweptResults ? "(DC/Center)" : ""}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wider">IIP3 {summaryFrequencyLabel}</div>
                 <div className="text-lg font-bold text-green-600 dark:text-green-400">
                   {isFinite(cascadeResult.cascadedIIP3) ? cascadeResult.cascadedIIP3.toFixed(2) : '---'} <span className="text-xs font-normal text-gray-500">dBm</span>
                 </div>

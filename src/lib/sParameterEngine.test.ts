@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { cDB, cMag, parseTouchstone, sToMixedMode } from './sParameterEngine';
+import { cDB, cMag, parseTouchstone, spectralNorm, sToMixedMode } from './sParameterEngine';
 
 const closeTo = (actual: number, expected: number, tolerance = 1e-9) => {
   assert.ok(
@@ -20,6 +20,7 @@ describe('parseTouchstone', () => {
 
     assert.equal(parsed.points.length, 2);
     assert.equal(parsed.isPassive, false);
+    assert.ok(parsed.maxPassivitySingularValue > 1);
     closeTo(parsed.points[0].frequency, 1e9);
     closeTo(parsed.points[0].z0, 50);
 
@@ -42,6 +43,32 @@ describe('parseTouchstone', () => {
 
     const dbParsed = parseTouchstone('# GHz S DB R 50\n1 -6 0', 1);
     closeTo(cDB(dbParsed.points[0].matrix[0][0]), -6);
+  });
+
+  it('checks multiport passivity with spectral norm instead of per-entry magnitude only', () => {
+    const parsed = parseTouchstone(`
+# GHz S RI R 50
+1.0 0.8 0.0 0.8 0.0 0.8 0.0 0.8 0.0
+`, 2);
+
+    assert.equal(parsed.isPassive, false);
+    closeTo(spectralNorm(parsed.points[0].matrix), 1.6, 1e-9);
+    closeTo(parsed.maxPassivitySingularValue, 1.6, 1e-9);
+  });
+
+  it('parses simple Touchstone 2.0 network data with warnings for unsupported metadata', () => {
+    const parsed = parseTouchstone(`
+[Version] 2.0
+# GHz S RI R 50
+[Number of Ports] 2
+[Reference] 50 50
+[Network Data]
+1.0 0.1 0.0 0.2 0.0 0.0 0.0 0.1 0.0
+`, 2);
+
+    assert.equal(parsed.points.length, 1);
+    assert.ok(parsed.warnings?.some(warning => warning.includes('Touchstone 2.0')));
+    assert.ok(parsed.warnings?.some(warning => warning.includes('Per-port Touchstone reference')));
   });
 });
 

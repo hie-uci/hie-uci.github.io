@@ -92,6 +92,8 @@ export default function SParameterViewer() {
   const [fileName, setFileName] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [isPassive, setIsPassive] = useState<boolean>(true);
+  const [parseWarnings, setParseWarnings] = useState<string[]>([]);
+  const [maxPassivitySingularValue, setMaxPassivitySingularValue] = useState<number | null>(null);
   
   const [analysisGroup, setAnalysisGroup] = useState<'S' | 'ZY' | 'Comp' | 'Sys'>('S');
   const [chartType, setChartType] = useState<ChartType>('S');
@@ -107,6 +109,7 @@ export default function SParameterViewer() {
 
     setFileName(file.name);
     setError('');
+    setParseWarnings([]);
     
     const match = file.name.match(/\.s(\d+)p$/i);
     let ports = 2;
@@ -124,6 +127,8 @@ export default function SParameterViewer() {
         throw new Error('Could not parse any valid frequency points. Check file format.');
       }
       setIsPassive(parsed.isPassive);
+      setParseWarnings(parsed.warnings ?? []);
+      setMaxPassivitySingularValue(parsed.maxPassivitySingularValue);
       
       const plotData = parsed.points.map(pt => {
         const f = pt.frequency;
@@ -247,6 +252,8 @@ export default function SParameterViewer() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error parsing Touchstone file.');
       setData([]);
+      setParseWarnings([]);
+      setMaxPassivitySingularValue(null);
     }
   };
 
@@ -255,6 +262,8 @@ export default function SParameterViewer() {
     setTdrData([]);
     setFileName('');
     setError('');
+    setParseWarnings([]);
+    setMaxPassivitySingularValue(null);
     setSelectedKeys([]);
   };
 
@@ -344,7 +353,7 @@ export default function SParameterViewer() {
         <div>
           <h2 className="text-2xl font-bold text-slate-800 dark:text-white">S-Parameter Viewer & Calculator</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Upload a Touchstone file (.sNp) to view S-parameters, L, C, and Q.
+            Upload a Touchstone v1/full-matrix file (.sNp) to view S-parameters, L, C, Q, and system metrics.
           </p>
         </div>
         
@@ -375,7 +384,18 @@ export default function SParameterViewer() {
       {data.length > 0 && !isPassive && (
         <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 rounded-lg flex items-center gap-3 text-sm font-medium border border-yellow-200 dark:border-yellow-800/30">
           <ShieldAlert size={18} className="shrink-0" />
-          <span>Warning: File contains non-passive data (Magnitude &gt; 0 dB). This is normal for active components like Amplifiers, but check your calibration if this is a passive structure.</span>
+          <span>Warning: The S-matrix passivity check exceeded unity spectral norm{maxPassivitySingularValue !== null ? ` (max σ=${maxPassivitySingularValue.toFixed(3)})` : ''}. This is normal for active components, but check calibration if this is a passive structure.</span>
+        </div>
+      )}
+
+      {parseWarnings.length > 0 && (
+        <div className="p-4 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 rounded-lg flex items-start gap-3 text-sm font-medium border border-amber-200 dark:border-amber-800/30">
+          <AlertCircle size={18} className="shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            {parseWarnings.map((warning) => (
+              <div key={warning}>{warning}</div>
+            ))}
+          </div>
         </div>
       )}
 

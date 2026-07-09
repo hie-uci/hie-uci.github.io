@@ -205,6 +205,7 @@ export function DBCalculator() {
   const calcPower = () => {
     const val = parseFloat(powerInput);
     if (isNaN(val)) return null;
+    if ((powerUnit === 'mW' || powerUnit === 'W') && val <= 0) return null;
 
     let dBm = 0;
     if (powerUnit === 'dBm') dBm = val;
@@ -816,7 +817,7 @@ export function PCBViaCalculator() {
     // C (pF) = 1.41 * εr * T * D / (D_clearance - D)
     const C_pF = (1.41 * e * h_in * pad_in) / (anti_in - pad_in);
     
-    // Z = sqrt(L/C)
+    // LC impedance scale = sqrt(L/C). This is not a distributed transmission-line Z0.
     const Z_ohms = Math.sqrt((L_nH * 1e-9) / (C_pF * 1e-12));
     
     // f_res = 1 / (2pi * sqrt(LC))
@@ -856,7 +857,7 @@ export function PCBViaCalculator() {
             <>
               <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Via Inductance (L)</span> <span className="font-mono font-medium">{results.L_nH.toFixed(4)} nH</span></div>
               <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Via Capacitance (C)</span> <span className="font-mono font-medium">{results.C_pF.toFixed(4)} pF</span></div>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Characteristic Impedance (Z₀)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.Z_ohms.toFixed(2)} Ω</span></div>
+              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">LC Impedance Scale √(L/C)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.Z_ohms.toFixed(2)} Ω</span></div>
               <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Resonant Frequency</span> <span className="font-mono font-medium">{results.fres_GHz.toFixed(2)} GHz</span></div>
             </>
           ) : (
@@ -978,21 +979,29 @@ export function RadarRangeCalculator() {
 export function FMCWRadarCalculator() {
   const [bw, setBw] = useState<string>('4'); // GHz
   const [tc, setTc] = useState<string>('20'); // us
+  const [ifBw, setIfBw] = useState<string>('10'); // MHz
 
   const calcFMCW = () => {
     const B_GHz = parseFloat(bw);
     const Tc_us = parseFloat(tc);
+    const ifBw_MHz = parseFloat(ifBw);
 
-    if (isNaN(B_GHz) || isNaN(Tc_us) || B_GHz <= 0 || Tc_us <= 0) return null;
+    if (isNaN(B_GHz) || isNaN(Tc_us) || isNaN(ifBw_MHz) || B_GHz <= 0 || Tc_us <= 0 || ifBw_MHz <= 0) return null;
 
     const B_Hz = B_GHz * 1e9;
     const Tc_s = Tc_us * 1e-6;
+    const ifBw_Hz = ifBw_MHz * 1e6;
     const c = 299792458; // m/s
 
     const rangeRes = c / (2 * B_Hz); // meters
-    const maxUnambiguousRange = (c * Tc_s) / 4; // Assuming typical FMCW limitations or simple T*c/4 heuristic
+    const chirpSlope = B_Hz / Tc_s; // Hz/s
+    const maxRange = (ifBw_Hz * c) / (2 * chirpSlope);
 
-    return { rangeRes: rangeRes * 100, maxUnambiguousRange }; // cm and m
+    return {
+      rangeRes: rangeRes * 100,
+      chirpSlopeMHzPerUs: chirpSlope / 1e12,
+      maxRange,
+    }; // cm, MHz/us, m
   };
 
   const results = calcFMCW();
@@ -1010,17 +1019,25 @@ export function FMCWRadarCalculator() {
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Chirp Time Tc (μs)</label>
             <input type="number" step="1" value={tc} onChange={(e) => setTc(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
           </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">IF / ADC Bandwidth (MHz)</label>
+            <input type="number" step="0.1" value={ifBw} onChange={(e) => setIfBw(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+          </div>
         </div>
         <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
           <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Results</h5>
           {results ? (
             <>
               <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Range Resolution</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.rangeRes.toFixed(2)} cm</span></div>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Max Unambiguous Range (c*Tc/4)</span> <span className="font-mono font-medium">{results.maxUnambiguousRange.toFixed(1)} m</span></div>
+              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Chirp Slope</span> <span className="font-mono font-medium">{results.chirpSlopeMHzPerUs.toFixed(2)} MHz/μs</span></div>
+              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">IF-Limited Max Range</span> <span className="font-mono font-medium">{results.maxRange.toFixed(2)} m</span></div>
             </>
           ) : (
             <div className="text-sm text-gray-400">Invalid input values</div>
           )}
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            Max range uses the beat-frequency limit: Rmax = fIF,max·c/(2S), where S = B/Tc.
+          </div>
         </div>
       </div>
     </div>
@@ -1100,7 +1117,7 @@ export function PhaseNoiseCalculator() {
     const phase_jitter_rad = Math.sqrt(2 * L_linear); // Rad RMS per sqrt(Hz)
     const time_jitter_fs = (phase_jitter_rad / (2 * Math.PI * f_c)) * 1e15;
 
-    return { time_jitter_fs };
+    return { time_jitter_fs, offsetMHz: f_offset / 1e6 };
   };
 
   const results = calcJitter();
@@ -1126,7 +1143,7 @@ export function PhaseNoiseCalculator() {
         <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
           <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Results</h5>
           {results ? (
-            <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Spot Time Jitter</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.time_jitter_fs.toFixed(3)} fs/√Hz</span></div>
+            <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Spot Jitter Density @ {results.offsetMHz.toFixed(3)} MHz</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.time_jitter_fs.toFixed(3)} fs/√Hz</span></div>
           ) : (
             <div className="text-sm text-gray-400">Invalid input values</div>
           )}

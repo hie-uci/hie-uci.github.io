@@ -23,6 +23,7 @@ export interface CascadeResult {
   cascadedNF: number; // dB
   cascadedIIP3: number; // dBm
   cascadedOIP3: number; // dBm
+  summaryFrequency?: number;
   sweptResults?: SweptCascadeResult[];
 }
 
@@ -33,8 +34,11 @@ function getGainAtFreq(block: CascadeBlock, targetFreq: number): number {
   
   const points = block.sParamData.points;
   const numPorts = points[0].matrix.length;
-  // If 2-port use S21, if 1-port use S11
-  const getMag = (pt: SParamMatrix) => cMag(numPorts > 1 ? pt.matrix[1][0] : pt.matrix[0][0]);
+  if (numPorts < 2) {
+    return block.gain;
+  }
+
+  const getMag = (pt: SParamMatrix) => cMag(pt.matrix[1][0]); // S21, port 1 -> port 2
   
   if (targetFreq <= points[0].frequency) {
     return 20 * Math.log10(getMag(points[0]) + 1e-15);
@@ -60,7 +64,17 @@ function getGainAtFreq(block: CascadeBlock, targetFreq: number): number {
   return block.gain;
 }
 
-export function calculateCascade(blocks: CascadeBlock[]): CascadeResult {
+function getCascadeFrequencies(blocks: CascadeBlock[]): number[] {
+  const frequencies = new Set<number>();
+  blocks.forEach(b => {
+    if (b.sParamData && b.sParamData.points.length > 0 && b.sParamData.points[0].matrix.length >= 2) {
+      b.sParamData.points.forEach(p => frequencies.add(p.frequency));
+    }
+  });
+  return Array.from(frequencies).sort((a, b) => a - b);
+}
+
+function computeCascadeAtFrequency(blocks: CascadeBlock[], frequency?: number): Omit<CascadeResult, 'summaryFrequency' | 'sweptResults'> {
   if (blocks.length === 0) {
     return { cascadedGain: 0, cascadedNF: 0, cascadedIIP3: 0, cascadedOIP3: 0 };
   }
@@ -73,14 +87,16 @@ export function calculateCascade(blocks: CascadeBlock[]): CascadeResult {
 
   for (let i = 0; i < blocks.length; i++) {
     const block = blocks[i];
+    const gainDB = frequency === undefined ? block.gain : getGainAtFreq(block, frequency);
     
     // Convert to linear values
-    const linGain = Math.pow(10, block.gain / 10);
+    const linGain = Math.pow(10, gainDB / 10);
     const linNF = Math.pow(10, block.nf / 10);
     
     // block OIP3 -> block IIP3
-    const iip3DBm = block.oip3 - block.gain;
-    const linIIP3 = Math.pow(10, iip3DBm / 10);
+    const linIIP3 = Number.isFinite(block.oip3)
+      ? Math.pow(10, (block.oip3 - gainDB) / 10)
+      : Number.POSITIVE_INFINITY;
 
     if (i === 0) {
       currentLinNF = linNF;
@@ -91,64 +107,45 @@ export function calculateCascade(blocks: CascadeBlock[]): CascadeResult {
     }
 
     accumulatedLinearGain *= linGain;
-    totalGainDB += block.gain;
+    totalGainDB += gainDB;
   }
 
   const cascadedNFDB = 10 * Math.log10(currentLinNF);
-  const cascadedIIP3Linear = 1 / currentLinIIP3Inv;
-  const cascadedIIP3DBm = 10 * Math.log10(cascadedIIP3Linear);
+  const cascadedIIP3DBm = currentLinIIP3Inv > 0
+    ? 10 * Math.log10(1 / currentLinIIP3Inv)
+    : Number.POSITIVE_INFINITY;
   const cascadedOIP3DBm = cascadedIIP3DBm + totalGainDB;
-
-  // Now calculate swept results if any block has sParamData
-  const frequencies = new Set<number>();
-  blocks.forEach(b => {
-    if (b.sParamData) {
-      b.sParamData.points.forEach(p => frequencies.add(p.frequency));
-    }
-  });
-
-  let sweptResults: SweptCascadeResult[] | undefined = undefined;
-
-  if (frequencies.size > 0) {
-    const sortedFreqs = Array.from(frequencies).sort((a, b) => a - b);
-    sweptResults = sortedFreqs.map(f => {
-      let totalG = 0;
-      let linNF = 0;
-      let linIIP3Inv = 0;
-      let accLinGain = 1;
-
-      for (let i = 0; i < blocks.length; i++) {
-        const b = blocks[i];
-        const gainAtF = getGainAtFreq(b, f);
-        const lGain = Math.pow(10, gainAtF / 10);
-        const lNf = Math.pow(10, b.nf / 10);
-        const lIip3 = Math.pow(10, (b.oip3 - gainAtF) / 10);
-
-        if (i === 0) {
-          linNF = lNf;
-          linIIP3Inv = 1 / lIip3;
-        } else {
-          linNF += (lNf - 1) / accLinGain;
-          linIIP3Inv += accLinGain / lIip3;
-        }
-        accLinGain *= lGain;
-        totalG += gainAtF;
-      }
-      return {
-        frequency: f,
-        cascadedGain: totalG,
-        cascadedNF: 10 * Math.log10(linNF),
-        cascadedIIP3: 10 * Math.log10(1 / linIIP3Inv),
-        cascadedOIP3: 10 * Math.log10(1 / linIIP3Inv) + totalG
-      };
-    });
-  }
 
   return {
     cascadedGain: totalGainDB,
     cascadedNF: cascadedNFDB,
     cascadedIIP3: cascadedIIP3DBm,
     cascadedOIP3: cascadedOIP3DBm,
+  };
+}
+
+export function calculateCascade(blocks: CascadeBlock[], options: { summaryFrequency?: number } = {}): CascadeResult {
+  const sortedFreqs = getCascadeFrequencies(blocks);
+  const summaryFrequency = options.summaryFrequency ?? sortedFreqs[Math.floor(sortedFreqs.length / 2)];
+  const summary = computeCascadeAtFrequency(blocks, summaryFrequency);
+  let sweptResults: SweptCascadeResult[] | undefined = undefined;
+
+  if (sortedFreqs.length > 0) {
+    sweptResults = sortedFreqs.map(f => {
+      const result = computeCascadeAtFrequency(blocks, f);
+      return {
+        frequency: f,
+        cascadedGain: result.cascadedGain,
+        cascadedNF: result.cascadedNF,
+        cascadedIIP3: result.cascadedIIP3,
+        cascadedOIP3: result.cascadedOIP3,
+      };
+    });
+  }
+
+  return {
+    ...summary,
+    summaryFrequency,
     sweptResults,
   };
 }
