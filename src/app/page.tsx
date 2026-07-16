@@ -35,6 +35,7 @@ type ResearchArea = {
   title: string;
   description: string;
   iconVariant: 'radar' | 'thz' | 'siggen' | 'ai' | 'device';
+  projectId: number;
   gradient: string;
   eyebrow: string;
   metric: string;
@@ -43,16 +44,18 @@ type ResearchArea = {
 const researchAreas: ResearchArea[] = [
   {
     title: 'Multi-Band mm-Wave Radars',
-    description: 'Phase-frequency-locked radar architectures for vital signs monitoring, human-robot interaction, and 3D defect detection.',
+    description: 'FMCW and PMCW radar architectures that resolve range, angle, motion, and micro-motion through coherent target returns.',
     iconVariant: 'radar',
+    projectId: 1,
     gradient: 'from-[#0064a4]/95 via-[#00386d]/85 to-[#203043]/95',
     eyebrow: 'Coherent Sensing',
-    metric: '23-232 GHz',
+    metric: 'FMCW + PMCW',
   },
   {
     title: 'Sub-THz & THz Power Generation',
     description: 'Breaking transistor frequency limits with Volterra-Weiner theory-based design methodology across MOSFET, BJT, HBT, and HEMT.',
     iconVariant: 'thz',
+    projectId: 2,
     gradient: 'from-[#203043]/95 via-[#0064a4]/75 to-[#528188]/90',
     eyebrow: 'Beyond fmax',
     metric: '0.32-0.92 THz',
@@ -61,6 +64,7 @@ const researchAreas: ResearchArea[] = [
     title: 'Wideband Signal Generation',
     description: 'Novel oscillator structures overcoming phase-noise degradation for mm-wave and THz communications and sensing.',
     iconVariant: 'siggen',
+    projectId: 3,
     gradient: 'from-[#00386d]/95 via-[#0064a4]/80 to-[#528188]/90',
     eyebrow: 'Low Phase Noise',
     metric: 'Wide tuning',
@@ -69,6 +73,7 @@ const researchAreas: ResearchArea[] = [
     title: 'AI-Driven Analog/RF Design',
     description: 'Layout-aware ML pipelines, graph-based predictors, and attention-guided beam control for radar and circuit synthesis.',
     iconVariant: 'ai',
+    projectId: 4,
     gradient: 'from-[#0064a4]/90 via-[#203043]/90 to-[#528188]/85',
     eyebrow: 'ML + Hardware',
     metric: 'Layout-aware',
@@ -77,6 +82,7 @@ const researchAreas: ResearchArea[] = [
     title: 'Emerging Device Technologies',
     description: 'All-spin-logic smart detector cells and Janus 2D material tunneling FETs with sub-60 mV/dec switching.',
     iconVariant: 'device',
+    projectId: 5,
     gradient: 'from-[#528188]/95 via-[#00386d]/75 to-[#203043]/95',
     eyebrow: 'Device Physics',
     metric: 'Sub-60 mV/dec',
@@ -547,7 +553,7 @@ export default function HomePage() {
                       </div>
                     </div>
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-xs font-bold text-slate-500 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
-                      {String(i + 1).padStart(2, '0')}
+                      {String(area.projectId).padStart(2, '0')}
                     </div>
                   </div>
                   <h3 className="mb-2 text-xl font-bold text-eng-blue transition-colors duration-300 [text-wrap:pretty] group-hover:text-uci-blue dark:text-gray-100 dark:group-hover:text-blue-300">
@@ -555,7 +561,7 @@ export default function HomePage() {
                   </h3>
                   <p className="mb-5 text-sm leading-relaxed text-slate-800 dark:text-slate-200">{area.description}</p>
                   <Link
-                    href="/research"
+                    href={`/research#project-${area.projectId}`}
                     aria-label={`Learn more about ${area.title}`}
                     className="mt-auto inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-uci-blue transition-[color,transform] duration-300 hover:translate-x-0.5 hover:text-eng-blue dark:text-blue-300 dark:hover:text-blue-200"
                   >

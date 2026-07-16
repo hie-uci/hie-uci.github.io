@@ -50,10 +50,10 @@ const projects: Project[] = [
   {
     id: 1,
     title: 'Multi-Band Millimeter-Wave Radars',
-    tagline: 'Phase-frequency-locked mm-wave radar for sensing and imaging',
+    tagline: 'Coherent FMCW and PMCW radar for sensing and imaging',
     description: [
       'The internet-driven communication networks revolutionized human access to information during the past three decades. Building on advances in communication, security, and sensing technologies, cyber-physical systems are now poised to transform machine-to-machine and human-to-machine interactions. Realization of local-area sensing networks for such infrastructures requires tight integration of sensing, computation, control, and networking within physical entities. Emerging applications\u2014such as high-precision vital signs monitoring, human-robot interaction, chemical sensing, and 3D defect detection\u2014demand massive networks of portable miniaturized sensors capable of resolving range, angular, and cross-range dimensions with high fidelity.',
-      'To address these challenges, our research explores multi-band, phase\u2013frequency-locked millimeter-wave radars that combine wideband operation with precise frequency synthesis and phase coherence across multiple sub-bands. These scalable radar front-ends enable fine-resolution 3D imaging and adaptive sensing across centimeter-to-meter ranges while maintaining compactness and energy efficiency. In parallel, we investigate new classes of wideband active sensors and emerging device technologies that together form the foundation of intelligent, low-power sensing architectures for next-generation cyber-physical systems.',
+      'To address these challenges, our research explores stepped-chirp and multi-band FMCW radars for precise range and angle sensing, together with Doppler-assisted PMCW architectures for motion and micro-motion measurement. In every case, the measurement is a closed physical loop: the transmitter illuminates a target, the target scatters part of that energy back, and coherent receive channels recover range, angle, and motion from the returned signal. These scalable radar front ends enable fine-resolution imaging and adaptive sensing across centimeter-to-meter ranges while maintaining compactness and energy efficiency.',
     ],
     applications: [
       'Intelligent factory',
@@ -68,6 +68,10 @@ const projects: Project[] = [
     color: 'from-uci-blue to-eecs-teal',
     iconVariant: 'radar',
     galleryImages: [
+      {
+        src: '/images/research/visuals/research-radar-target-interaction-v3.webp',
+        alt: 'HIE millimeter-wave radar illuminating static and moving targets with reflected signals returning to the receive channels',
+      },
       { src: '/images/research/radar-5.png', alt: 'Radar App1' },
       { src: '/images/research/radar_precise_applications.png', alt: 'Radar App2' },
       { src: '/images/research/radar_DB_MIMO_setup.png', alt: 'Radar Meas Setup' },
