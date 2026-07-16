@@ -59,6 +59,7 @@ export default function ChipGalleryPage() {
         <CircuitBackground density={35} variant="ic-layout" interactive={false} />
         <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6">
           <SectionHeader
+            as="h1"
             title="Chip Gallery"
             subtitle="High-resolution die photographs of integrated circuits designed and fabricated by the HIE Lab"
             badge="Silicon Showcase"
@@ -136,7 +137,7 @@ export default function ChipGalleryPage() {
                     </div>
                     {/* Info */}
                     <div className="p-6">
-                      <h3 className="font-bold text-eng-blue text-xl leading-snug">{chip.name}</h3>
+                      <h2 className="font-bold text-eng-blue text-xl leading-snug">{chip.name}</h2>
                       <div className="mt-3 flex flex-wrap gap-2.5">
                         <span className="px-3 py-1 rounded-full bg-uci-blue/8 text-uci-blue text-sm font-medium border border-uci-blue/10">
                           {chip.technology}

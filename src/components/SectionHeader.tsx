@@ -8,9 +8,19 @@ interface SectionHeaderProps {
   badge?: string;
   centered?: boolean;
   light?: boolean;
+  as?: 'h1' | 'h2';
 }
 
-export default function SectionHeader({ title, subtitle, badge, centered = true, light = false }: SectionHeaderProps) {
+export default function SectionHeader({
+  title,
+  subtitle,
+  badge,
+  centered = true,
+  light = false,
+  as = 'h2',
+}: SectionHeaderProps) {
+  const Heading = as;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
@@ -28,11 +38,11 @@ export default function SectionHeader({ title, subtitle, badge, centered = true,
           {badge}
         </span>
       )}
-      <h2 className={`text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight ${
+      <Heading className={`text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight ${
         light ? 'text-white' : 'text-eng-blue dark:text-white'
       }`}>
         {title}
-      </h2>
+      </Heading>
       {subtitle && (
         <p className={`mt-4 text-lg max-w-2xl ${centered ? 'mx-auto' : ''} ${
           light ? 'text-white/70' : 'text-slate-800 dark:text-slate-300'

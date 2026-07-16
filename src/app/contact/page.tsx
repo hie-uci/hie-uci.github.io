@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import PageWrapper from '@/components/PageWrapper';
 import SectionHeader from '@/components/SectionHeader';
 import CircuitBackground from '@/components/CircuitBackground';
@@ -14,8 +15,10 @@ function FloatingInput({ label, type = 'text', name, required }: { label: string
   return (
     <div className="relative">
       <input
+        id={`contact-${name}`}
         type={type}
         name={name}
+        autoComplete={name === 'name' ? 'name' : name === 'email' ? 'email' : undefined}
         required={required}
         value={value}
         onChange={e => setValue(e.target.value)}
@@ -24,6 +27,7 @@ function FloatingInput({ label, type = 'text', name, required }: { label: string
         className="w-full px-4 pt-6 pb-2 bg-white border-2 border-gray-200 rounded-xl outline-none transition-all duration-200 text-gray-800 focus:border-uci-blue focus:shadow-[0_0_0_3px_rgba(0,100,164,0.1)]"
       />
       <label
+        htmlFor={`contact-${name}`}
         className={`absolute left-4 transition-all duration-200 pointer-events-none ${
           isActive
             ? 'top-2 text-xs font-semibold text-uci-blue'
@@ -44,6 +48,7 @@ function FloatingTextarea({ label, name, required }: { label: string; name: stri
   return (
     <div className="relative">
       <textarea
+        id={`contact-${name}`}
         name={name}
         required={required}
         rows={5}
@@ -54,6 +59,7 @@ function FloatingTextarea({ label, name, required }: { label: string; name: stri
         className="w-full px-4 pt-6 pb-2 bg-white border-2 border-gray-200 rounded-xl outline-none transition-all duration-200 text-gray-800 resize-none focus:border-uci-blue focus:shadow-[0_0_0_3px_rgba(0,100,164,0.1)]"
       />
       <label
+        htmlFor={`contact-${name}`}
         className={`absolute left-4 transition-all duration-200 pointer-events-none ${
           isActive
             ? 'top-2 text-xs font-semibold text-uci-blue'
@@ -90,6 +96,7 @@ export default function ContactPage() {
         <CircuitBackground density={25} variant="thz-waves" />
         <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6">
           <SectionHeader
+            as="h1"
             title="Contact Us"
             subtitle="Get in touch with the HIE Lab at UC Irvine"
             badge="Reach Out"
@@ -112,7 +119,7 @@ export default function ContactPage() {
                 viewport={{ once: true }}
                 className="glass rounded-2xl p-6 shadow-lg"
               >
-                <h3 className="text-lg font-bold text-eng-blue mb-5">Contact Information</h3>
+                <h2 className="text-lg font-bold text-eng-blue mb-5">Contact Information</h2>
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-lg bg-uci-blue/10 flex items-center justify-center flex-shrink-0">
@@ -203,7 +210,10 @@ export default function ContactPage() {
                 viewport={{ once: true }}
                 className="glass rounded-2xl p-6 sm:p-8 shadow-lg"
               >
-                <h3 className="text-lg font-bold text-eng-blue mb-6">Send a Message</h3>
+                <h2 className="text-lg font-bold text-eng-blue mb-2">Prepare an Email</h2>
+                <p className="mb-6 text-sm text-gray-500">
+                  This form opens a pre-filled draft in your default email application; it does not send automatically.
+                </p>
                 {!submitted ? (
                   <form
                     onSubmit={handleSubmit}
@@ -221,7 +231,7 @@ export default function ContactPage() {
                       type="submit"
                       className="w-full py-3 bg-gradient-to-r from-uci-blue to-uci-blue-light text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-shadow"
                     >
-                      Send Message
+                      Open Email Draft
                     </motion.button>
                   </form>
                 ) : (
@@ -235,7 +245,7 @@ export default function ContactPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
-                    <h4 className="text-lg font-bold text-gray-800 mb-2">Email Draft Opened</h4>
+                    <h3 className="text-lg font-bold text-gray-800 mb-2">Email Draft Opened</h3>
                     <p className="text-gray-500 text-sm mb-4">Please review and send the prepared email from your mail app.</p>
                     <button
                       onClick={() => setSubmitted(false)}
@@ -262,52 +272,20 @@ export default function ContactPage() {
                       <path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-2 .89-2 2v11c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z" />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-bold text-eng-blue">Available Positions</h3>
+                  <h2 className="text-lg font-bold text-eng-blue">Available Positions</h2>
                 </div>
 
                 <p className="text-gray-600 leading-relaxed mb-5">
-                  We are always looking for motivated students and researchers to join the HIE Lab.
-                  If you are passionate about pushing the boundaries of integrated electronics,
-                  we would love to hear from you.
+                  Review the current postdoctoral, graduate, and undergraduate research pathways,
+                  including relevant backgrounds and the materials to send with an inquiry.
                 </p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
-                  {[
-                    { title: 'Ph.D. Positions', icon: '🎓', desc: 'Fully funded doctoral research' },
-                    { title: 'Postdoc', icon: '🔬', desc: 'Postdoctoral research opportunities' },
-                    { title: 'Undergrad Research', icon: '📚', desc: 'Undergraduate research projects' },
-                  ].map((pos, i) => (
-                    <div key={i} className="p-4 bg-gradient-to-br from-white to-uci-blue/5 rounded-xl border border-uci-blue/10 hover:shadow-md hover:shadow-uci-blue/8 transition-shadow duration-300">
-                      <p className="text-2xl mb-2">{pos.icon}</p>
-                      <h4 className="font-bold text-sm text-eng-blue">{pos.title}</h4>
-                      <p className="text-xs text-gray-500 mt-1">{pos.desc}</p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="bg-navy/5 rounded-xl p-4">
-                  <h4 className="font-semibold text-sm text-eng-blue mb-2">Desired Qualifications</h4>
-                  <ul className="space-y-1.5 text-sm text-gray-600">
-                    <li className="flex items-start gap-2">
-                      <svg className="w-4 h-4 text-eecs-teal flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      Strong background in analog/RF circuit design
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <svg className="w-4 h-4 text-eecs-teal flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      Experience in signal processing or electromagnetics
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <svg className="w-4 h-4 text-eecs-teal flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      Knowledge of machine learning or computational methods (a plus)
-                    </li>
-                  </ul>
-                </div>
+                <Link
+                  href="/available-positions"
+                  className="inline-flex items-center gap-2 rounded-xl bg-uci-gold px-5 py-2.5 text-sm font-bold text-eng-blue transition-transform hover:-translate-y-0.5"
+                >
+                  View positions and application details
+                  <span aria-hidden="true">→</span>
+                </Link>
               </motion.div>
             </div>
           </div>

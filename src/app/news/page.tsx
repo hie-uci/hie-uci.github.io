@@ -6,61 +6,9 @@ import PageWrapper from '@/components/PageWrapper';
 import SectionHeader from '@/components/SectionHeader';
 import CircuitBackground from '@/components/CircuitBackground';
 import WaveformDivider from '@/components/WaveformDivider';
+import { labNews, type NewsCategory } from '@/data/news';
 
-type Category = 'award' | 'defense' | 'publication' | 'conference' | 'milestone';
-
-interface NewsItem {
-  date: string;
-  month: number;
-  year: number;
-  title: string;
-  category: Category;
-}
-
-const newsItems: NewsItem[] = [
-  // 2025
-  { date: 'Oct 2025', month: 10, year: 2025, title: "Hedayat's IEEE RWW paper among finalists for best student paper award", category: 'award' },
-  { date: 'Sep 2025', month: 9, year: 2025, title: 'Xuyang successfully defends his Ph.D. dissertation', category: 'defense' },
-  { date: 'Sep 2025', month: 9, year: 2025, title: 'IEEE Radar Conference paper top 5 nominated for best student paper award (Allen and Xuyang)', category: 'award' },
-  { date: 'Jul 2025', month: 7, year: 2025, title: 'Mahdi presented two articles at IEEE APS 2025', category: 'conference' },
-  { date: 'Apr 2025', month: 4, year: 2025, title: 'FALCON accepted to NeurIPS 2025', category: 'milestone' },
-  { date: 'Feb 2025', month: 2, year: 2025, title: "Xuyang's JSSC paper on phase-locked radar transceiver published", category: 'publication' },
-  { date: 'Feb 2025', month: 2, year: 2025, title: 'Sub-THz communication paper published in Nature Communications Engineering', category: 'publication' },
-  // 2024
-  { date: 'Dec 2024', month: 12, year: 2024, title: "Behnam's TCAS-I paper on low-noise mm-wave VCOs published", category: 'publication' },
-  { date: 'Oct 2024', month: 10, year: 2024, title: "Xuyang's TCAS-II paper on ultra-low-power Class-D VCOs published", category: 'publication' },
-  { date: 'Sep 2024', month: 9, year: 2024, title: 'Behnam successfully defends his Ph.D. dissertation', category: 'defense' },
-  { date: 'Jun 2024', month: 6, year: 2024, title: "Amin's NeurIPS ML4PS Workshop paper received Reproducibility Award", category: 'award' },
-  { date: 'Mar 2024', month: 3, year: 2024, title: 'Xuyang and Hedayat advanced to doctoral candidacy', category: 'milestone' },
-  // 2023
-  { date: 'Oct 2023', month: 10, year: 2023, title: "Behnam's TCAS-I publication on mm-wave VCO design", category: 'publication' },
-  { date: 'Jul 2023', month: 7, year: 2023, title: "Amin's IEEE MWTL paper on hybrid CMOS-polyimide force-sensing array published", category: 'publication' },
-  { date: 'Mar 2023', month: 3, year: 2023, title: 'Hedayat receives IEEE MTT-S Pre-Doctoral Fellowship', category: 'award' },
-  { date: 'Feb 2023', month: 2, year: 2023, title: "Hedayat's broadband terahertz antenna paper published in IEEE Access", category: 'publication' },
-  { date: 'Jan 2023', month: 1, year: 2023, title: 'Collaborative paper with FIU accepted in IEEE TAP', category: 'publication' },
-  // 2022
-  { date: 'Dec 2022', month: 12, year: 2022, title: 'MFLEX Inc. sponsors lab for multi-phase research proposal', category: 'milestone' },
-  { date: 'Nov 2022', month: 11, year: 2022, title: 'Behnam receives NSF Travel Grant Award to attend IEEE ESSCIRC', category: 'award' },
-  { date: 'Oct 2022', month: 10, year: 2022, title: "Hedayat's first journal paper accepted in IEEE TCAS-II", category: 'publication' },
-  { date: 'Sep 2022', month: 9, year: 2022, title: 'Collaborative paper accepted in IEEE TAP on sub-THz stacked-patch antenna', category: 'publication' },
-  { date: 'Jul 2022', month: 7, year: 2022, title: 'Hedayat receives IEEE CICC Student Education Grant 2022', category: 'award' },
-  { date: 'Jun 2022', month: 6, year: 2022, title: "Behnam and Xuyang's 76–82 GHz VCO paper accepted at IEEE RFIC", category: 'conference' },
-  { date: 'Mar 2022', month: 3, year: 2022, title: "Hedayat's first HIE Lab paper accepted in IEEE MWTL", category: 'publication' },
-  { date: 'Feb 2022', month: 2, year: 2022, title: 'Xuyang and Hedayat pass Ph.D. preliminary exams', category: 'milestone' },
-  // 2021
-  { date: 'Dec 2021', month: 12, year: 2021, title: 'mm-Wave Radars-on-Chip paper published in IEEE Communications Magazine', category: 'publication' },
-  // 2020
-  { date: 'Sep 2020', month: 9, year: 2020, title: 'Xuyang Liu joins HIE Lab as Ph.D. student', category: 'milestone' },
-  { date: 'Sep 2020', month: 9, year: 2020, title: 'Hedayat Maktoomi joins HIE Lab as Ph.D. student', category: 'milestone' },
-  // 2019
-  { date: 'Jun 2019', month: 6, year: 2019, title: 'UCI Samueli School highlights our Applied Physics Reviews article', category: 'milestone' },
-  { date: 'May 2019', month: 5, year: 2019, title: 'Applied Physics Reviews article featured as Editor\'s Pick', category: 'award' },
-  { date: 'Apr 2019', month: 4, year: 2019, title: 'IEEE TAP paper selected as featured article', category: 'award' },
-  { date: 'Mar 2019', month: 3, year: 2019, title: 'Hafsah Arain joins HIE Lab as undergraduate researcher', category: 'milestone' },
-  { date: 'Jan 2019', month: 1, year: 2019, title: 'Marcus Clark Wong joins HIE Lab as undergraduate researcher', category: 'milestone' },
-];
-
-const categoryConfig: Record<Category, { color: string; bg: string; border: string; icon: React.ReactNode; label: string }> = {
+const categoryConfig: Record<NewsCategory, { color: string; bg: string; border: string; icon: React.ReactNode; label: string }> = {
   award: {
     color: 'text-uci-gold',
     bg: 'bg-uci-gold/10',
@@ -118,12 +66,12 @@ const categoryConfig: Record<Category, { color: string; bg: string; border: stri
   },
 };
 
-const categories: Category[] = ['award', 'defense', 'publication', 'conference', 'milestone'];
+const categories: NewsCategory[] = ['award', 'defense', 'publication', 'conference', 'milestone'];
 
 export default function NewsPage() {
-  const [filter, setFilter] = useState<Category | 'all'>('all');
+  const [filter, setFilter] = useState<NewsCategory | 'all'>('all');
 
-  const filtered = filter === 'all' ? newsItems : newsItems.filter(n => n.category === filter);
+  const filtered = filter === 'all' ? labNews : labNews.filter(n => n.category === filter);
 
   const years = [...new Set(filtered.map(n => n.year))].sort((a, b) => b - a);
 
@@ -134,6 +82,7 @@ export default function NewsPage() {
         <CircuitBackground density={30} variant="radar" />
         <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6">
           <SectionHeader
+            as="h1"
             title="News & Highlights"
             subtitle="Latest achievements, publications, and milestones from the HIE Lab"
             badge="Stay Updated"
@@ -149,6 +98,7 @@ export default function NewsPage() {
           <div className="flex flex-wrap gap-2 justify-center">
             <button
               onClick={() => setFilter('all')}
+              aria-pressed={filter === 'all'}
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
                 filter === 'all'
                   ? 'bg-eng-blue text-white shadow-md'
@@ -161,6 +111,7 @@ export default function NewsPage() {
               <button
                 key={cat}
                 onClick={() => setFilter(cat)}
+                aria-pressed={filter === cat}
                 className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-1.5 ${
                   filter === cat
                     ? `${categoryConfig[cat].bg} ${categoryConfig[cat].color} border ${categoryConfig[cat].border} shadow-md`
@@ -194,9 +145,9 @@ export default function NewsPage() {
                   className="flex items-center gap-4 mb-8"
                 >
                   <div className="h-px flex-1 bg-gradient-to-r from-transparent to-uci-blue/20" />
-                  <span className="text-2xl font-bold text-eng-blue bg-white px-6 py-2 rounded-full shadow-md border border-uci-blue/10">
+                  <h2 className="text-2xl font-bold text-eng-blue bg-white px-6 py-2 rounded-full shadow-md border border-uci-blue/10">
                     {year}
-                  </span>
+                  </h2>
                   <div className="h-px flex-1 bg-gradient-to-l from-transparent to-uci-blue/20" />
                 </motion.div>
 
@@ -232,7 +183,18 @@ export default function NewsPage() {
                               {config.icon}
                               {config.label}
                             </span>
-                            <p className="text-gray-800 font-medium text-sm leading-relaxed">{item.title}</p>
+                            {item.link ? (
+                              <a
+                                href={item.link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-gray-800 font-medium text-sm leading-relaxed hover:text-uci-blue hover:underline underline-offset-2"
+                              >
+                                {item.title}
+                              </a>
+                            ) : (
+                              <p className="text-gray-800 font-medium text-sm leading-relaxed">{item.title}</p>
+                            )}
                             <span className="text-xs text-gray-400 mt-2 block">{item.date}</span>
                           </div>
                         </div>
@@ -246,7 +208,18 @@ export default function NewsPage() {
                                 {config.icon}
                                 {config.label}
                               </span>
-                              <p className="text-gray-800 font-medium leading-relaxed">{item.title}</p>
+                              {item.link ? (
+                                <a
+                                  href={item.link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-gray-800 font-medium leading-relaxed hover:text-uci-blue hover:underline underline-offset-2"
+                                >
+                                  {item.title}
+                                </a>
+                              ) : (
+                                <p className="text-gray-800 font-medium leading-relaxed">{item.title}</p>
+                              )}
                               <span className="text-xs text-gray-400 mt-2 block">{item.date}</span>
                             </div>
                           </div>

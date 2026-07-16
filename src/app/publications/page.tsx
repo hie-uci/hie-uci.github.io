@@ -5,6 +5,7 @@ import { motion, AnimatePresence, useSpring, useTransform } from 'framer-motion'
 import PageWrapper from '@/components/PageWrapper';
 import SectionHeader from '@/components/SectionHeader';
 import CircuitBackground from '@/components/CircuitBackground';
+import { serializeJsonLd, SITE_URL } from '@/lib/metadata';
 
 // --------------- components ---------------
 
@@ -21,7 +22,7 @@ function AnimatedCounter({ value }: { value: number }) {
   return <>{current}</>;
 }
 
-function Sparkline({ data, color }: { data: number[]; color: string }) {
+function Sparkline({ data, color, label }: { data: number[]; color: string; label: string }) {
   const max = Math.max(...data, 1);
   const points = data.map((v, i) => ({
     x: (i / (data.length - 1)) * 100,
@@ -31,7 +32,7 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
   const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
 
   return (
-    <svg viewBox="0 0 100 100" className="w-16 h-8 opacity-40">
+    <svg viewBox="0 0 100 100" className="w-16 h-8 opacity-40" role="img" aria-label={label}>
       <motion.path
         d={path}
         fill="none"
@@ -181,6 +182,60 @@ const publications: Publication[] = [
   { authors: 'H. R. Aghasi', title: 'Cornell University – EDS Seminar Series', venue: 'Ithaca, NY', year: 2016, type: 'talk' },
 ];
 
+const publicationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: 'HIE Lab Publications',
+  url: `${SITE_URL}/publications/`,
+  itemListElement: publications
+    .filter((publication) =>
+      Boolean(publication.link) &&
+      (publication.type === 'journal' || publication.type === 'conference'),
+    )
+    .map((publication, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      item: {
+        '@type': 'ScholarlyArticle',
+        headline: publication.title,
+        datePublished: String(publication.year),
+        url: publication.link,
+        author: publication.authors
+          .replace(/,?\s+and\s+/g, ', ')
+          .split(',')
+          .map((name) => ({ '@type': 'Person', name: name.trim() })),
+        isPartOf: {
+          '@type': 'Periodical',
+          name: publication.venue,
+        },
+      },
+    })),
+};
+
+const latestPublicationYear = Math.max(...publications.map((publication) => publication.year));
+const publicationTrendYears = Array.from(
+  { length: 7 },
+  (_, index) => latestPublicationYear - 6 + index,
+);
+const publicationStats: Record<PubType, number> = {
+  journal: 0,
+  conference: 0,
+  patent: 0,
+  talk: 0,
+};
+const publicationTrends: Record<PubType, number[]> = {
+  journal: publicationTrendYears.map(() => 0),
+  conference: publicationTrendYears.map(() => 0),
+  patent: publicationTrendYears.map(() => 0),
+  talk: publicationTrendYears.map(() => 0),
+};
+
+for (const publication of publications) {
+  publicationStats[publication.type] += 1;
+  const trendIndex = publicationTrendYears.indexOf(publication.year);
+  if (trendIndex >= 0) publicationTrends[publication.type][trendIndex] += 1;
+}
+
 // --------------- helpers ---------------
 
 const filterTabs: { label: string; value: PubType | 'all' }[] = [
@@ -243,21 +298,18 @@ export default function PublicationsPage() {
     return entries;
   }, [filtered]);
 
-  // Stats
-  const stats = useMemo(() => ({
-    journals: publications.filter((p) => p.type === 'journal').length,
-    conferences: publications.filter((p) => p.type === 'conference').length,
-    patents: publications.filter((p) => p.type === 'patent').length,
-    talks: publications.filter((p) => p.type === 'talk').length,
-  }), []);
-
   return (
     <PageWrapper>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(publicationJsonLd) }}
+      />
       {/* Hero */}
       <section className="relative bg-gradient-to-b from-eng-blue via-navy to-eng-blue py-24 overflow-hidden">
         <CircuitBackground density={50} />
         <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6">
           <SectionHeader
+            as="h1"
             title="Publications"
             subtitle="Peer-reviewed research in mm-wave, THz electronics, and machine-learning-driven IC design."
             badge="Research Output"
@@ -275,27 +327,27 @@ export default function PublicationsPage() {
             {[
               { 
                 label: 'Journals', 
-                count: stats.journals, 
+                count: publicationStats.journal,
                 color: 'text-uci-gold',
-                sparkData: [2, 3, 2, 4, 5, 6, 8] // Mock trend data
+                sparkData: publicationTrends.journal,
               },
               { 
                 label: 'Conferences', 
-                count: stats.conferences, 
+                count: publicationStats.conference,
                 color: 'text-eecs-teal-light',
-                sparkData: [3, 4, 3, 5, 8, 10, 12] 
+                sparkData: publicationTrends.conference,
               },
               { 
                 label: 'Patents', 
-                count: stats.patents, 
+                count: publicationStats.patent,
                 color: 'text-uci-gold',
-                sparkData: [0, 0, 1, 0, 1, 1, 2]
+                sparkData: publicationTrends.patent,
               },
               { 
                 label: 'Talks', 
-                count: stats.talks, 
+                count: publicationStats.talk,
                 color: 'text-purple-300',
-                sparkData: [1, 2, 2, 3, 4, 5, 17]
+                sparkData: publicationTrends.talk,
               },
             ].map((s) => (
               <div key={s.label} className="relative glass-ios p-4 rounded-2xl flex flex-col items-center group hover:bg-white/10 transition-colors">
@@ -303,7 +355,11 @@ export default function PublicationsPage() {
                   <p className={`text-3xl sm:text-4xl font-bold ${s.color}`}>
                     <AnimatedCounter value={s.count} />
                   </p>
-                  <Sparkline data={s.sparkData} color="currentColor" />
+                  <Sparkline
+                    data={s.sparkData}
+                    color="currentColor"
+                    label={`${s.label} per year, ${publicationTrendYears[0]}–${latestPublicationYear}`}
+                  />
                 </div>
                 <p className="text-white/60 text-[10px] uppercase tracking-widest font-bold">{s.label}</p>
               </div>

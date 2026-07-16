@@ -62,6 +62,7 @@ export default function RFToolboxPage() {
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeader
+            as="h1"
             badge="Engineering Resources"
             title="RF & Microwave Toolbox"
             subtitle="Professional calculators and reference formulas for high-frequency hardware design."
@@ -95,7 +96,7 @@ export default function RFToolboxPage() {
             </aside>
 
             {/* Content Area */}
-            <main className="flex-1 min-w-0 glass-ios rounded-3xl p-6 sm:p-10 border border-white/40 dark:border-white/10">
+            <div className="flex-1 min-w-0 glass-ios rounded-3xl p-6 sm:p-10 border border-white/40 dark:border-white/10">
               {activeTab === 'system_link' && <SystemLinkSection />}
               {activeTab === 'radar_sensing' && <RadarSensingSection />}
               {activeTab === 'antennas_matching' && <AntennasMatchingSection />}
@@ -103,7 +104,7 @@ export default function RFToolboxPage() {
               {activeTab === 'active_ic' && <ActiveICSection />}
               {activeTab === 's_parameter_tools' && <SParameterSection />}
               {activeTab === 'fundamentals_refs' && <FundamentalsSection />}
-            </main>
+            </div>
           </div>
           <aside className="mt-8 rounded-2xl border border-slate-200 bg-white/60 p-5 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-400">
             <h2 className="mb-2 text-sm font-bold text-eng-blue dark:text-blue-300">Model provenance & engineering use</h2>

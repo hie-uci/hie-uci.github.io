@@ -82,6 +82,7 @@ export default function TeachingPage() {
         <CircuitBackground density={25} variant="ic-layout" />
         <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6">
           <SectionHeader
+            as="h1"
             title="Teaching"
             subtitle="Courses taught at UC Irvine and Cornell University"
             badge="Education"
@@ -102,7 +103,7 @@ export default function TeachingPage() {
           >
             <Image src="/images/teaching/uci-logo.png" alt="UC Irvine logo" width={48} height={48} className="w-12 h-12 rounded-xl object-contain" />
             <div>
-              <h3 className="text-2xl font-bold text-eng-blue">University of California, Irvine</h3>
+              <h2 className="text-2xl font-bold text-eng-blue">University of California, Irvine</h2>
               <p className="text-gray-500">Associate Professor, EECS Department</p>
             </div>
           </motion.div>
@@ -128,7 +129,7 @@ export default function TeachingPage() {
           >
             <Image src="/images/teaching/cornell-logo.png" alt="Cornell University logo" width={48} height={48} className="w-12 h-12 rounded-xl object-contain" />
             <div>
-              <h3 className="text-2xl font-bold text-red-800">Cornell University</h3>
+              <h2 className="text-2xl font-bold text-red-800">Cornell University</h2>
               <p className="text-gray-500">Instructor, ECE Department</p>
             </div>
           </motion.div>

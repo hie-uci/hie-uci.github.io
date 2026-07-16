@@ -12,6 +12,7 @@ import ChipMarquee from '@/components/ChipMarquee';
 import FluidPlasmaBackground from '@/components/FluidPlasmaBackground';
 import ResearchVisual from '@/components/ResearchVisual';
 import MagneticWrapper from '@/components/MagneticWrapper';
+import { labNews, newsCategoryLabels } from '@/data/news';
 
 /* ──────────────────────────── helpers ──────────────────────────── */
 
@@ -89,15 +90,7 @@ const researchAreas: ResearchArea[] = [
   },
 ];
 
-const newsItems = [
-  { date: 'Oct 2025', text: "Hedayat's RWW paper selected as finalist for best student paper award.", tag: 'Award' },
-  { date: 'Sep 2025', text: 'Xuyang successfully defends his PhD dissertation. Congratulations, Dr. Liu!', tag: 'Milestone' },
-  { date: 'Sep 2025', text: 'IEEE Radar Conference paper by Allen and Xuyang nominated in top 5 for best student paper.', tag: 'Award' },
-  { date: 'Sep 2025', text: 'Mahdi presents two articles at IEEE APS 2025. Congratulations, Mahdi!', tag: 'Publication' },
-  { date: 'Apr 2025', text: 'FALCON accepted to NeurIPS 2025 — bridging AI and analog circuit design.', tag: 'Publication' },
-  { date: 'Mar 2025', text: "Xuyang's IEEE JSSC paper on phase-locked stepped-chirp radar transceiver is published.", tag: 'Publication' },
-  { date: 'Feb 2025', text: 'Sub-THz Communication Systems paper appears in Nature Communications Engineering.', tag: 'Publication' },
-];
+const latestNewsItems = labNews.slice(0, 7);
 
 const venues = ['JSSC', 'ISSCC', 'NeurIPS', 'Nature Comm.', 'RFIC', 'ESSCIRC', 'TCAS'];
 
@@ -246,7 +239,7 @@ export default function HomePage() {
             </MagneticWrapper>
             <MagneticWrapper strength={0.4}>
               <Link
-                href="/contact#positions"
+                href="/available-positions"
                 className="group inline-flex items-center gap-2 px-7 py-3.5 glass-ios text-foreground font-semibold rounded-xl transition-transform duration-300 hover:-translate-y-0.5"
               >
                 Join Our Team
@@ -387,7 +380,7 @@ export default function HomePage() {
                   <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-uci-blue/10 to-eecs-teal/10 flex items-center justify-center text-uci-blue dark:text-blue-400 mb-3 group-hover:from-uci-blue/20 group-hover:to-eecs-teal/20 transition-colors">
                     {theme.icon}
                   </div>
-                  <h4 className="font-semibold text-eng-blue dark:text-gray-100 mb-1">{theme.label}</h4>
+                  <h3 className="font-semibold text-eng-blue dark:text-gray-100 mb-1">{theme.label}</h3>
                   <p className="text-sm text-slate-900 dark:text-slate-200">{theme.desc}</p>
                 </motion.div>
               ))}
@@ -470,7 +463,7 @@ export default function HomePage() {
                      </div>
                   </div>
                   <div className="p-4">
-                     <h4 className="font-semibold text-sm text-slate-800 dark:text-slate-200 line-clamp-2 group-hover:text-uci-blue transition-colors">{video.title}</h4>
+                     <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-200 line-clamp-2 group-hover:text-uci-blue transition-colors">{video.title}</h3>
                   </div>
                </Link>
             ))}
@@ -562,10 +555,10 @@ export default function HomePage() {
                   <p className="mb-5 text-sm leading-relaxed text-slate-800 dark:text-slate-200">{area.description}</p>
                   <Link
                     href={`/research#project-${area.projectId}`}
-                    aria-label={`Learn more about ${area.title}`}
+                    aria-label={`Explore ${area.title}`}
                     className="mt-auto inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-uci-blue transition-[color,transform] duration-300 hover:translate-x-0.5 hover:text-eng-blue dark:text-blue-300 dark:hover:text-blue-200"
                   >
-                    Learn more
+                    Explore {area.eyebrow}
                     <svg className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
@@ -593,7 +586,7 @@ export default function HomePage() {
             variants={stagger}
             className="max-w-3xl mx-auto space-y-4"
           >
-            {newsItems.map((item, i) => (
+            {latestNewsItems.map((item, i) => (
               <motion.div
                 key={i}
                 variants={fadeUp}
@@ -607,16 +600,27 @@ export default function HomePage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                      item.tag === 'Award'
+                      item.category === 'award'
                         ? 'bg-uci-gold/15 text-yellow-700 dark:text-yellow-500'
-                        : item.tag === 'Milestone'
+                        : item.category === 'milestone'
                         ? 'bg-eecs-teal/10 text-eecs-teal dark:text-teal-400'
                         : 'bg-uci-blue/10 text-uci-blue dark:text-blue-400'
                     }`}>
-                      {item.tag}
+                      {newsCategoryLabels[item.category]}
                     </span>
                   </div>
-                  <p className="text-sm text-slate-950 dark:text-slate-100 leading-relaxed">{item.text}</p>
+                  {item.link ? (
+                    <a
+                      href={item.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-slate-950 dark:text-slate-100 leading-relaxed hover:text-uci-blue dark:hover:text-blue-300 hover:underline underline-offset-2"
+                    >
+                      {item.title}
+                    </a>
+                  ) : (
+                    <p className="text-sm text-slate-950 dark:text-slate-100 leading-relaxed">{item.title}</p>
+                  )}
                 </div>
               </motion.div>
             ))}
@@ -749,7 +753,7 @@ export default function HomePage() {
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Link
-                href="/contact#positions"
+                href="/available-positions"
                 className="group inline-flex items-center gap-2 px-7 py-3.5 bg-uci-gold text-eng-blue font-bold rounded-xl shadow-lg shadow-uci-gold/20 hover:shadow-xl hover:shadow-uci-gold/30 transition-all duration-300 hover:-translate-y-0.5 hover:glow-gold"
               >
                 View Open Positions

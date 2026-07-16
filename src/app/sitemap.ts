@@ -5,11 +5,9 @@ export const dynamic = 'force-static';
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://hie.eng.uci.edu';
 
-  // Define all your main routes here
   const routes = [
     '',
     '/research',
-    '/research-projects',
     '/publications',
     '/team',
     '/chip-gallery',
@@ -22,9 +20,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
   ];
 
   return routes.map((route) => ({
-    url: `${baseUrl}${route}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly',
-    priority: route === '' ? 1 : 0.8,
+    url: route === '' ? baseUrl : `${baseUrl}${route}/`,
+    changeFrequency:
+      route === '' || route === '/news' || route === '/publications'
+        ? 'monthly' as const
+        : 'yearly' as const,
+    priority: route === '' ? 1 : route === '/research' || route === '/publications' ? 0.9 : 0.7,
   }));
 }

@@ -46,7 +46,7 @@ const chipBackdrops = [
 
 export default function PageWrapper({ children, className = '' }: PageWrapperProps) {
   return (
-    <motion.div
+    <motion.main
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
@@ -104,6 +104,6 @@ export default function PageWrapper({ children, className = '' }: PageWrapperPro
       <div className="relative z-10">
         {children}
       </div>
-    </motion.div>
+    </motion.main>
   );
 }

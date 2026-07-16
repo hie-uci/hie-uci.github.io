@@ -5,6 +5,7 @@ import Image from 'next/image';
 import PageWrapper from '@/components/PageWrapper';
 import SectionHeader from '@/components/SectionHeader';
 import CircuitBackground from '@/components/CircuitBackground';
+import { serializeJsonLd, SITE_URL } from '@/lib/metadata';
 
 // --------------- data ---------------
 
@@ -40,6 +41,33 @@ const director = {
     'Jacobs Fellowship (2012)',
     'Cornell ECE Innovation Award (2013)',
     'Cornell Scale-Up and Prototyping Award (2017)',
+  ],
+};
+
+const directorJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  '@id': `${SITE_URL}/team/#hamidreza-aghasi`,
+  name: 'Hamidreza Aghasi',
+  honorificPrefix: 'Prof.',
+  image: `${SITE_URL}${director.image}`,
+  jobTitle: director.title,
+  email: director.email,
+  telephone: director.phone,
+  url: `${SITE_URL}/team/`,
+  affiliation: {
+    '@type': 'CollegeOrUniversity',
+    name: 'University of California, Irvine',
+    url: 'https://uci.edu',
+  },
+  memberOf: {
+    '@id': `${SITE_URL}/#organization`,
+  },
+  knowsAbout: [
+    'Millimeter-wave integrated circuits',
+    'Terahertz electronics',
+    'Radar systems',
+    'AI-driven circuit design',
   ],
 };
 
@@ -195,11 +223,15 @@ function AlumnusCard({ alumnus, large = false }: { alumnus: Alumnus; large?: boo
 export default function TeamPage() {
   return (
     <PageWrapper>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(directorJsonLd) }}
+      />
       {/* Hero */}
       <section className="relative bg-gradient-to-b from-eng-blue via-navy to-eng-blue py-24 overflow-hidden">
         <CircuitBackground density={50} />
         <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6">
-          <SectionHeader title="Our Team" subtitle="Meet the researchers driving innovation in high-frequency integrated electronics at UCI." badge="People" centered light />
+          <SectionHeader as="h1" title="Our Team" subtitle="Meet the researchers driving innovation in high-frequency integrated electronics at UCI." badge="People" centered light />
         </div>
       </section>
 
@@ -220,15 +252,15 @@ export default function TeamPage() {
                   <span>{director.phone}</span>
                 </div>
                 <div className="mt-4">
-                  <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Education</h4>
+                  <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Education</h3>
                   <p className="text-sm text-gray-500 leading-relaxed">{director.education}</p>
                 </div>
                 <div className="mt-3">
-                  <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Research Focus</h4>
+                  <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Research Focus</h3>
                   <p className="text-sm text-gray-500 leading-relaxed">{director.expertise}</p>
                 </div>
                 <div className="mt-3">
-                  <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Experience</h4>
+                  <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Experience</h3>
                   <ul className="space-y-1">
                     {director.experience.map((e) => (
                       <li key={e} className="text-sm text-gray-500 flex items-start gap-2">
@@ -239,7 +271,7 @@ export default function TeamPage() {
                   </ul>
                 </div>
                 <div className="mt-3">
-                  <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Professional Service</h4>
+                  <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Professional Service</h3>
                   <ul className="space-y-1">
                     {director.service.map((s) => (
                       <li key={s} className="text-sm text-gray-500 flex items-start gap-2">
@@ -250,7 +282,7 @@ export default function TeamPage() {
                   </ul>
                 </div>
                 <div className="mt-3">
-                  <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Memberships</h4>
+                  <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Memberships</h3>
                   <div className="flex flex-wrap gap-2">
                     {director.memberships.map((m) => (
                       <span key={m} className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-navy/5 text-navy border border-navy/10">
@@ -260,7 +292,7 @@ export default function TeamPage() {
                   </div>
                 </div>
                 <div className="mt-4">
-                  <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">Awards & Honors</h4>
+                  <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">Awards & Honors</h3>
                   <ul className="space-y-1.5">
                     {director.achievements.map((a) => (
                       <li key={a} className="text-sm text-gray-500 flex items-start gap-2">

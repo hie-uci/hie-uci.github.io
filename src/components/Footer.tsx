@@ -13,7 +13,7 @@ const moreLinks = [
   { name: 'Teaching', href: '/teaching' },
   { name: 'Chip Gallery', href: '/chip-gallery' },
   { name: 'Contact', href: '/contact' },
-  { name: 'Available Positions', href: '/contact#positions' },
+  { name: 'Available Positions', href: '/available-positions' },
 ];
 
 export default function Footer() {
