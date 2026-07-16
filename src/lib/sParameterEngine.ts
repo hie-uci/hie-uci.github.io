@@ -153,8 +153,20 @@ export const mInverse = (A: Complex[][]): Complex[][] | null => {
   return inv;
 };
 
-export const sToZ = (S: Complex[][], z0: number): Complex[][] | null => {
+function normalizePortReferences(z0: number | number[], n: number): number[] | null {
+  const values = Array.isArray(z0) ? z0 : new Array(n).fill(z0);
+  if (values.length !== n || values.some(value => !Number.isFinite(value) || value <= 0)) return null;
+  return values;
+}
+
+function scaleMatrixSides(A: Complex[][], left: number[], right: number[]): Complex[][] {
+  return A.map((row, i) => row.map((value, j) => cScaleReal(value, left[i] * right[j])));
+}
+
+export const sToZ = (S: Complex[][], z0: number | number[]): Complex[][] | null => {
   const n = S.length;
+  const references = normalizePortReferences(z0, n);
+  if (!references) return null;
   const I = mIdentity(n);
   const I_minus_S = mSub(I, S);
   const I_plus_S = mAdd(I, S);
@@ -162,12 +174,15 @@ export const sToZ = (S: Complex[][], z0: number): Complex[][] | null => {
   const inv = mInverse(I_minus_S);
   if (!inv) return null;
 
-  const Z = mMul(I_plus_S, inv);
-  return mScale(Z, { real: z0, imag: 0 });
+  const normalizedZ = mMul(I_plus_S, inv);
+  const roots = references.map(Math.sqrt);
+  return scaleMatrixSides(normalizedZ, roots, roots);
 };
 
-export const sToY = (S: Complex[][], z0: number): Complex[][] | null => {
+export const sToY = (S: Complex[][], z0: number | number[]): Complex[][] | null => {
   const n = S.length;
+  const references = normalizePortReferences(z0, n);
+  if (!references) return null;
   const I = mIdentity(n);
   const I_minus_S = mSub(I, S);
   const I_plus_S = mAdd(I, S);
@@ -175,20 +190,34 @@ export const sToY = (S: Complex[][], z0: number): Complex[][] | null => {
   const inv = mInverse(I_plus_S);
   if (!inv) return null;
 
-  const Y = mMul(I_minus_S, inv);
-  return mScale(Y, { real: 1 / z0, imag: 0 });
+  const normalizedY = mMul(I_minus_S, inv);
+  const inverseRoots = references.map(value => 1 / Math.sqrt(value));
+  return scaleMatrixSides(normalizedY, inverseRoots, inverseRoots);
 };
 
-// Converts 4-port single-ended S-parameters to Mixed-Mode S-parameters.
-// Assumes Ports 1,2 = Diff Port 1; Ports 3,4 = Diff Port 2.
-export const sToMixedMode = (S: Complex[][]): Complex[][] | null => {
+export type MixedModePairing = '12-34' | '13-24' | '14-23';
+
+const MIXED_MODE_PAIRS: Record<MixedModePairing, [[number, number], [number, number]]> = {
+  '12-34': [[0, 1], [2, 3]],
+  '13-24': [[0, 2], [1, 3]],
+  '14-23': [[0, 3], [1, 2]],
+};
+
+// Converts four real-reference single-ended ports into two differential/common pairs.
+export const sToMixedMode = (S: Complex[][], pairing: MixedModePairing = '12-34'): Complex[][] | null => {
   if (S.length !== 4) return null;
-  
+  const [pair1, pair2] = MIXED_MODE_PAIRS[pairing];
+  const row = (positive: number, negative: number, common: boolean) => {
+    const values = [0, 0, 0, 0];
+    values[positive] = 1;
+    values[negative] = common ? 1 : -1;
+    return values;
+  };
   const M_vals = [
-    [ 1, -1,  0,  0 ], // Sdd1
-    [ 0,  0,  1, -1 ], // Sdd2
-    [ 1,  1,  0,  0 ], // Scc1
-    [ 0,  0,  1,  1 ]  // Scc2
+    row(pair1[0], pair1[1], false),
+    row(pair2[0], pair2[1], false),
+    row(pair1[0], pair1[1], true),
+    row(pair2[0], pair2[1], true),
   ];
   const s2 = 1.0 / Math.sqrt(2);
   
@@ -213,12 +242,15 @@ export interface SParamMatrix {
   frequency: number; // Hz
   matrix: Complex[][]; // NxN
   z0: number;
+  portZ0?: number[];
   vswr?: number[];
   Y?: Complex[][];
   Z?: Complex[][];
   ESR?: number[];
   Rp?: number[];
   K?: number;
+  deltaMagnitude?: number;
+  unconditionallyStable?: boolean;
   groupDelay?: number; // in seconds
   passivitySingularValue?: number;
 }
@@ -228,6 +260,7 @@ export interface ParseResult {
   isPassive: boolean;
   maxPassivitySingularValue: number;
   warnings?: string[];
+  errors?: string[];
 }
 
 export function parseTouchstone(content: string, numPorts: number): ParseResult {
@@ -235,11 +268,24 @@ export function parseTouchstone(content: string, numPorts: number): ParseResult 
   let optionLine = '';
   const dataTokens: string[] = [];
   const warnings: string[] = [];
+  const errors: string[] = [];
+  let isTouchstone2 = false;
+  let inNetworkData = false;
+  let inNoiseData = false;
+  let collectingReferences = false;
+  let matrixFormat = 'FULL';
+  let twoPortDataOrder: '21_12' | '12_21' = '21_12';
+  let sawTwoPortDataOrder = false;
+  let declaredFrequencyCount: number | null = null;
+  const keywordReferences: number[] = [];
 
   const addWarning = (message: string) => {
     if (!warnings.includes(message)) {
       warnings.push(message);
     }
+  };
+  const addError = (message: string) => {
+    if (!errors.includes(message)) errors.push(message);
   };
 
   for (const line of lines) {
@@ -257,31 +303,60 @@ export function parseTouchstone(content: string, numPorts: number): ParseResult 
     }
 
     if (raw.startsWith('[')) {
-      const upper = raw.toUpperCase();
-      if (upper.startsWith('[VERSION]')) {
-        addWarning('Touchstone 2.0 keyword detected. This viewer parses full-matrix network data only and ignores advanced v2 metadata.');
-      } else if (upper.startsWith('[NUMBER OF PORTS]')) {
-        const match = raw.match(/\]\s*(\d+)/);
-        const declaredPorts = match ? parseInt(match[1]) : null;
+      collectingReferences = false;
+      const match = raw.match(/^\[([^\]]+)\]\s*(.*)$/);
+      if (!match) continue;
+      const keyword = match[1].trim().toUpperCase();
+      const value = match[2].trim();
+      if (keyword === 'VERSION') {
+        isTouchstone2 = true;
+      } else if (keyword === 'NUMBER OF PORTS') {
+        const declaredPorts = /^\d+$/.test(value) ? parseInt(value) : null;
         if (declaredPorts !== null && declaredPorts !== numPorts) {
-          addWarning(`File declares ${declaredPorts} ports, but the extension/parser selected ${numPorts} ports.`);
+          addError(`File declares ${declaredPorts} ports, but the filename extension selected ${numPorts} ports.`);
         }
-      } else if (upper.startsWith('[REFERENCE]')) {
-        addWarning('Per-port Touchstone reference impedances are not applied; calculations use a single scalar R from the option line.');
-      } else if (upper.startsWith('[MATRIX FORMAT]') && !upper.includes('FULL')) {
-        addWarning('LOWER/UPPER matrix Touchstone data is not expanded; use FULL matrix data for accurate parsing.');
+      } else if (keyword === 'REFERENCE') {
+        keywordReferences.push(...value.split(/\s+/).map(Number).filter(Number.isFinite));
+        collectingReferences = keywordReferences.length < numPorts;
+      } else if (keyword === 'MATRIX FORMAT') {
+        matrixFormat = value.toUpperCase() || 'FULL';
+      } else if (keyword === 'TWO-PORT DATA ORDER') {
+        sawTwoPortDataOrder = true;
+        const normalized = value.toUpperCase();
+        if (normalized === '12_21' || normalized === '21_12') twoPortDataOrder = normalized;
+        else addError(`Unsupported [Two-Port Data Order] value: ${value || '(empty)'}.`);
+      } else if (keyword === 'NUMBER OF FREQUENCIES') {
+        declaredFrequencyCount = /^\d+$/.test(value) ? parseInt(value) : null;
+        if (declaredFrequencyCount === null) addError('Invalid [Number of Frequencies] value.');
+      } else if (keyword === 'MIXED-MODE ORDER') {
+        addError('Mixed-mode ordered Touchstone data is not accepted as single-ended network data; convert [Mixed-Mode Order] explicitly before upload.');
+      } else if (keyword === 'NETWORK DATA') {
+        isTouchstone2 = true;
+        inNetworkData = true;
+        inNoiseData = false;
+      } else if (keyword === 'NOISE DATA') {
+        inNetworkData = false;
+        inNoiseData = true;
+      } else if (keyword === 'END') {
+        inNetworkData = false;
+        inNoiseData = false;
       }
       continue;
     }
 
-    // Split by whitespace
     const tokens = raw.split(/\s+/);
-    dataTokens.push(...tokens);
+    if (collectingReferences && !inNetworkData) {
+      keywordReferences.push(...tokens.map(Number).filter(Number.isFinite));
+      collectingReferences = keywordReferences.length < numPorts;
+    } else if (!inNoiseData && (!isTouchstone2 || inNetworkData)) {
+      dataTokens.push(...tokens);
+    }
   }
 
   let freqMultiplier = 1e9; // default GHz
   let format = 'MA';
-  let z0 = 50;
+  let parameterType = 'S';
+  const optionReferences: number[] = [];
 
   if (optionLine) {
     const opts = optionLine.substring(1).trim().toUpperCase().split(/\s+/);
@@ -294,11 +369,39 @@ export function parseTouchstone(content: string, numPorts: number): ParseResult 
       else if (opt === 'DB') format = 'DB';
       else if (opt === 'MA') format = 'MA';
       else if (opt === 'RI') format = 'RI';
-      else if (opt === 'R' && i + 1 < opts.length) {
-        z0 = parseFloat(opts[i+1]);
+      else if (['S', 'Y', 'Z', 'H', 'G'].includes(opt)) parameterType = opt;
+      else if (opt === 'R') {
+        for (let j = i + 1; j < opts.length; j++) {
+          const reference = Number(opts[j]);
+          if (!Number.isFinite(reference)) break;
+          optionReferences.push(reference);
+        }
+        break;
       }
     }
   }
+
+  if (parameterType !== 'S') addError(`Unsupported Touchstone parameter type ${parameterType}; this tool accepts S-parameters only.`);
+  if (matrixFormat !== 'FULL') addError(`Unsupported [Matrix Format] ${matrixFormat}; only FULL matrices are accepted.`);
+  if (isTouchstone2 && numPorts === 2 && !sawTwoPortDataOrder) {
+    addWarning('The v2 file omits required [Two-Port Data Order]; legacy 21_12 ordering was assumed.');
+  }
+
+  const rawReferences = keywordReferences.length ? keywordReferences : optionReferences;
+  const portZ0 = rawReferences.length === 0
+    ? new Array(numPorts).fill(50)
+    : rawReferences.length === 1
+      ? new Array(numPorts).fill(rawReferences[0])
+      : rawReferences.slice(0, numPorts);
+  if (portZ0.length !== numPorts || portZ0.some(value => !Number.isFinite(value) || value <= 0)) {
+    addError(`Expected one or ${numPorts} positive real reference impedances, received ${rawReferences.length}.`);
+  }
+
+  if (errors.length) {
+    return { points: [], isPassive: true, maxPassivitySingularValue: 0, warnings, errors };
+  }
+
+  const z0 = portZ0[0];
 
   const points: SParamMatrix[] = [];
   const tokensPerPoint = 1 + 2 * numPorts * numPorts;
@@ -308,10 +411,27 @@ export function parseTouchstone(content: string, numPorts: number): ParseResult 
   let maxPassivitySingularValue = 0;
 
   while (i + tokensPerPoint <= dataTokens.length) {
+    const numericRecord = dataTokens.slice(i, i + tokensPerPoint).map(Number);
+    if (numericRecord.some(value => !Number.isFinite(value))) {
+      addError('Network data contains a non-numeric or non-finite value; no zero substitution was performed.');
+      break;
+    }
     const fVal = parseFloat(dataTokens[i]);
     if (isNaN(fVal)) break; // Malformed data
 
     const f = fVal * freqMultiplier;
+    if (!Number.isFinite(f) || f < 0) {
+      addError('Frequency values must be finite and non-negative.');
+      break;
+    }
+    if (points.length && f <= points[points.length - 1].frequency) {
+      if (!isTouchstone2 && numPorts === 2) {
+        addWarning('Stopped at a non-increasing frequency record; it may be a Touchstone v1 noise-data block.');
+      } else {
+        addError('Network-data frequencies must be strictly increasing.');
+      }
+      break;
+    }
 
     const matrix: Complex[][] = [];
     for (let r = 0; r < numPorts; r++) {
@@ -320,12 +440,14 @@ export function parseTouchstone(content: string, numPorts: number): ParseResult 
 
     let t = i + 1;
     if (numPorts === 2) {
-      // Order: S11, S21, S12, S22
       matrix[0][0] = createComplex(dataTokens[t], dataTokens[t+1], format);
-      matrix[1][0] = createComplex(dataTokens[t+2], dataTokens[t+3], format);
-      matrix[0][1] = createComplex(dataTokens[t+4], dataTokens[t+5], format);
+      const second = createComplex(dataTokens[t+2], dataTokens[t+3], format);
+      const third = createComplex(dataTokens[t+4], dataTokens[t+5], format);
+      matrix[twoPortDataOrder === '21_12' ? 1 : 0][twoPortDataOrder === '21_12' ? 0 : 1] = second;
+      matrix[twoPortDataOrder === '21_12' ? 0 : 1][twoPortDataOrder === '21_12' ? 1 : 0] = third;
       matrix[1][1] = createComplex(dataTokens[t+6], dataTokens[t+7], format);
     } else {
+      // Touchstone full matrices with three or more ports are serialized row-by-row.
       for (let r = 0; r < numPorts; r++) {
         for (let c = 0; c < numPorts; c++) {
           matrix[r][c] = createComplex(dataTokens[t], dataTokens[t+1], format);
@@ -340,15 +462,20 @@ export function parseTouchstone(content: string, numPorts: number): ParseResult 
       isPassive = false;
     }
 
-    points.push({ frequency: f, matrix, z0, passivitySingularValue });
+    points.push({ frequency: f, matrix, z0, portZ0: [...portZ0], passivitySingularValue });
     i += tokensPerPoint;
   }
 
+  if (i < dataTokens.length && !warnings.some(warning => warning.includes('noise-data'))) {
+    addWarning(`Ignored ${dataTokens.length - i} trailing token(s) that do not form a complete network-data record.`);
+  }
+  if (declaredFrequencyCount !== null && points.length !== declaredFrequencyCount) {
+    addError(`File declares ${declaredFrequencyCount} network frequencies but ${points.length} complete records were parsed.`);
+  }
+
   // Post-process metrics (Y, Z, VSWR, ESR, Rp, K, Group Delay)
-  let prevPhase: number | null = null;
   for (let k = 0; k < points.length; k++) {
     const S = points[k].matrix;
-    const f = points[k].frequency;
     
     const vswr: number[] = [];
     for (let p = 0; p < numPorts; p++) {
@@ -357,8 +484,9 @@ export function parseTouchstone(content: string, numPorts: number): ParseResult 
     }
     points[k].vswr = vswr;
 
-    const Y = sToY(S, z0);
-    const Z = sToZ(S, z0);
+    const references = points[k].portZ0 ?? z0;
+    const Y = sToY(S, references);
+    const Z = sToZ(S, references);
     points[k].Y = Y || undefined;
     points[k].Z = Z || undefined;
 
@@ -367,7 +495,7 @@ export function parseTouchstone(content: string, numPorts: number): ParseResult 
     if (Z && Y) {
       for (let p = 0; p < numPorts; p++) {
         esr.push(Z[p][p].real);
-        rp.push(1 / (Y[p][p].real || 1e-15));
+        rp.push(Y[p][p].real === 0 ? Number.POSITIVE_INFINITY : 1 / Y[p][p].real);
       }
     }
     points[k].ESR = esr.length ? esr : undefined;
@@ -381,31 +509,27 @@ export function parseTouchstone(content: string, numPorts: number): ParseResult 
       const magDelta_2 = Math.pow(cMag(delta), 2);
       const den = 2 * cMag(cMul(s12, s21));
       points[k].K = (1 - magS11_2 - magS22_2 + magDelta_2) / (den + 1e-15);
-
-      const currentPhase = cPhase(s21) * 180 / Math.PI;
-      if (prevPhase === null) {
-        points[k].groupDelay = 0;
-      } else {
-        let dPhase = currentPhase - prevPhase;
-        while (dPhase > 180) dPhase -= 360;
-        while (dPhase < -180) dPhase += 360;
-        
-        const df = f - points[k-1].frequency;
-        if (df !== 0) {
-          points[k].groupDelay = - (1 / 360) * (dPhase / df);
-        } else {
-          points[k].groupDelay = 0;
-        }
-      }
-      prevPhase = currentPhase;
+      points[k].deltaMagnitude = cMag(delta);
+      points[k].unconditionallyStable = points[k].K! > 1 && points[k].deltaMagnitude! < 1;
     }
   }
 
   if (numPorts === 2 && points.length > 1) {
-    points[0].groupDelay = points[1].groupDelay;
+    const unwrapped = points.map(point => cPhase(point.matrix[1][0]));
+    for (let k = 1; k < unwrapped.length; k++) {
+      let delta = unwrapped[k] - unwrapped[k - 1];
+      while (delta > Math.PI) { unwrapped[k] -= 2 * Math.PI; delta -= 2 * Math.PI; }
+      while (delta < -Math.PI) { unwrapped[k] += 2 * Math.PI; delta += 2 * Math.PI; }
+    }
+    for (let k = 0; k < points.length; k++) {
+      const low = k === 0 ? 0 : k - 1;
+      const high = k === points.length - 1 ? points.length - 1 : k + 1;
+      const df = points[high].frequency - points[low].frequency;
+      points[k].groupDelay = -(unwrapped[high] - unwrapped[low]) / (2 * Math.PI * df);
+    }
   }
 
-  return { points, isPassive, maxPassivitySingularValue, warnings };
+  return { points, isPassive, maxPassivitySingularValue, warnings, errors };
 }
 
 function createComplex(v1: string, v2: string, format: string): Complex {
@@ -435,6 +559,23 @@ export interface TDRPoint {
   impedance: number;
 }
 
+export function getTdrValidationError(points: SParamMatrix[]): string | null {
+  if (points.length < 2) return 'TDR requires at least two frequency points.';
+  const df = points[1].frequency - points[0].frequency;
+  if (!Number.isFinite(df) || df <= 0) return 'TDR requires strictly increasing frequencies.';
+  for (let i = 2; i < points.length; i++) {
+    const currentDf = points[i].frequency - points[i - 1].frequency;
+    if (Math.abs(currentDf - df) > Math.max(Math.abs(df) * 1e-6, 1e-6)) {
+      return 'TDR requires uniformly spaced frequency samples; resample the network data before transforming.';
+    }
+  }
+  const startBin = points[0].frequency / df;
+  if (Math.abs(startBin - Math.round(startBin)) > 1e-6) {
+    return 'TDR requires the first measured frequency to align with the uniform Δf grid used for DC extrapolation.';
+  }
+  return null;
+}
+
 function fft(arr: Complex[], invert: boolean): Complex[] {
   const n = arr.length;
   if (n === 1) return [arr[0]];
@@ -455,14 +596,15 @@ function fft(arr: Complex[], invert: boolean): Complex[] {
 }
 
 export function computeTDR(points: SParamMatrix[], portIndex: number = 0): TDRPoint[] {
-  if (points.length < 2) return [];
+  if (getTdrValidationError(points)) return [];
+  if (portIndex < 0 || portIndex >= points[0].matrix.length) return [];
 
   const df = points[1].frequency - points[0].frequency;
-  if (df <= 0) return []; 
 
   const f0 = points[0].frequency;
   const s11Points: Complex[] = [];
   
+  // Without a DC measurement, use a constant-real, zero-imaginary extrapolation to DC.
   let dcVal = { real: points[0].matrix[portIndex][portIndex].real, imag: 0 };
   
   const startIdx = Math.round(f0 / df);
@@ -489,8 +631,8 @@ export function computeTDR(points: SParamMatrix[], portIndex: number = 0): TDRPo
   const X = new Array(N).fill({ real: 0, imag: 0 });
   
   for (let i = 0; i < M; i++) {
-    // Hamming window to reduce Gibbs ringing
-    const window = 0.54 - 0.46 * Math.cos((2 * Math.PI * i) / (M - 1));
+    // One-sided raised-cosine low-pass taper: unity at DC and zero at the highest sample.
+    const window = M === 1 ? 1 : 0.5 * (1 + Math.cos(Math.PI * i / (M - 1)));
     X[i] = {
       real: s11Points[i].real * window,
       imag: s11Points[i].imag * window

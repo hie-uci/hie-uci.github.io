@@ -142,13 +142,16 @@ export default function SystemCascadeBuilder() {
     // Basic detection of ports from extension (e.g. .s2p -> 2)
     const extMatch = fileName.match(/\.s(\d+)p$/i);
     const numPorts = extMatch ? parseInt(extMatch[1]) : 2;
-    if (numPorts < 2) {
-      alert("Cascade gain extraction needs at least a 2-port Touchstone file so S21 is available.");
+    if (numPorts !== 2) {
+      alert("Two-port cascade analysis requires a .s2p Touchstone file.");
       return;
     }
     
     try {
       const parsed = parseTouchstone(content, numPorts);
+      if (parsed.errors?.length || parsed.points.length === 0) {
+        throw new Error(parsed.errors?.join(' ') || 'No valid network-data points were found.');
+      }
       setNodes((nds) =>
         nds.map((node) => {
           if (node.id === id) {
@@ -244,7 +247,8 @@ export default function SystemCascadeBuilder() {
     }
 
     if (chain.length > 0) {
-      return { result: calculateCascade(chain), warnings };
+      const result = calculateCascade(chain);
+      return { result, warnings: [...warnings, ...result.warnings] };
     } 
     return { result: null, warnings };
   }, [nodes, edges]);
@@ -315,7 +319,7 @@ export default function SystemCascadeBuilder() {
             <div className="flex flex-col gap-3">
               {cascadeAnalysis.warnings.length > 0 && (
                 <div className="bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 p-3 rounded-xl border border-amber-200 dark:border-amber-800/40 text-xs leading-relaxed">
-                  {cascadeAnalysis.warnings[0]}
+                  {cascadeAnalysis.warnings.map(warning => <p key={warning}>{warning}</p>)}
                 </div>
               )}
               {cascadeResult.sweptResults && cascadeResult.sweptResults.length > 0 && (
@@ -345,11 +349,11 @@ export default function SystemCascadeBuilder() {
               )}
               <div className="bg-white dark:bg-gray-800 p-3.5 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm flex justify-between items-center">
                 <div className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wider">Gain {summaryFrequencyLabel}</div>
-                <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{cascadeResult.cascadedGain.toFixed(2)} <span className="text-xs font-normal text-gray-500">dB</span></div>
+                <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{Number.isFinite(cascadeResult.cascadedGain) ? cascadeResult.cascadedGain.toFixed(2) : 'N/A'} <span className="text-xs font-normal text-gray-500">dB</span></div>
               </div>
               <div className="bg-white dark:bg-gray-800 p-3.5 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm flex justify-between items-center">
                 <div className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wider">NF {summaryFrequencyLabel}</div>
-                <div className="text-lg font-bold text-red-600 dark:text-red-400">{cascadeResult.cascadedNF.toFixed(2)} <span className="text-xs font-normal text-gray-500">dB</span></div>
+                <div className="text-lg font-bold text-red-600 dark:text-red-400">{Number.isFinite(cascadeResult.cascadedNF) ? cascadeResult.cascadedNF.toFixed(2) : 'N/A'} <span className="text-xs font-normal text-gray-500">dB</span></div>
               </div>
               <div className="bg-white dark:bg-gray-800 p-3.5 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm flex justify-between items-center">
                 <div className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wider">OIP3 {summaryFrequencyLabel}</div>

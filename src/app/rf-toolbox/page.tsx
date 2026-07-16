@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import 'katex/dist/katex.min.css';
 import { BlockMath } from 'react-katex';
 import { vswrTable, dielectricsTable, waveguideTable, freqBandsTable } from './data';
@@ -11,6 +11,7 @@ import { ImpedanceMatchingCalculator, ReceiverCascadeCalculator, PatchAntennaCal
 import { InteractiveSmithChart } from '@/components/InteractiveSmithChart';
 import SystemCascadeBuilder from '@/components/SystemCascadeBuilder';
 import SParameterViewer from '@/components/SParameterViewer';
+import { RFModelBadge, RFModelLevel } from '@/components/RFModelBadge';
 
 const CATEGORIES = [
   { id: 'system_link', name: 'System & Link Budget', desc: 'Cascade analysis, loop filters, and system-level calculations.' },
@@ -22,8 +23,34 @@ const CATEGORIES = [
   { id: 'fundamentals_refs', name: 'Fundamentals & Quick Refs', desc: 'Power conversions, VSWR, waveguides, and frequency bands.' },
 ];
 
+const RF_TOOLBOX_MODEL_REVISION = '2026.07-r2';
+const SOURCE_REVISION = process.env.NEXT_PUBLIC_GIT_SHA?.slice(0, 8) ?? 'local';
+
 export default function RFToolboxPage() {
   const [activeTab, setActiveTab] = useState(CATEGORIES[0].id);
+
+  useEffect(() => {
+    const readCategory = () => {
+      const params = new URLSearchParams(window.location.search);
+      const requested = params.get('category') ?? window.location.hash.replace(/^#/, '');
+      if (CATEGORIES.some(category => category.id === requested)) setActiveTab(requested);
+    };
+    readCategory();
+    window.addEventListener('popstate', readCategory);
+    window.addEventListener('hashchange', readCategory);
+    return () => {
+      window.removeEventListener('popstate', readCategory);
+      window.removeEventListener('hashchange', readCategory);
+    };
+  }, []);
+
+  const selectCategory = (categoryId: string) => {
+    setActiveTab(categoryId);
+    const url = new URL(window.location.href);
+    url.searchParams.set('category', categoryId);
+    url.hash = '';
+    window.history.pushState({}, '', url);
+  };
 
   return (
     <PageWrapper>
@@ -39,6 +66,11 @@ export default function RFToolboxPage() {
             title="RF & Microwave Toolbox"
             subtitle="Professional calculators and reference formulas for high-frequency hardware design."
           />
+          <div className="mt-4 flex justify-center">
+            <span className="rounded-full border border-uci-blue/20 bg-uci-blue/5 px-3 py-1 text-[11px] font-mono text-slate-600 dark:text-slate-400">
+              RF model {RF_TOOLBOX_MODEL_REVISION} · source {SOURCE_REVISION}
+            </span>
+          </div>
 
           <div className="mt-12 flex flex-col lg:flex-row gap-8">
             {/* Sidebar Navigation */}
@@ -47,7 +79,8 @@ export default function RFToolboxPage() {
                 {CATEGORIES.map((cat) => (
                   <button
                     key={cat.id}
-                    onClick={() => setActiveTab(cat.id)}
+                    onClick={() => selectCategory(cat.id)}
+                    aria-pressed={activeTab === cat.id}
                     className={`whitespace-nowrap text-left px-5 py-3 rounded-xl transition-all duration-300 ${
                       activeTab === cat.id
                         ? 'bg-uci-blue text-white shadow-md shadow-uci-blue/20 translate-x-1'
@@ -72,6 +105,10 @@ export default function RFToolboxPage() {
               {activeTab === 'fundamentals_refs' && <FundamentalsSection />}
             </main>
           </div>
+          <aside className="mt-8 rounded-2xl border border-slate-200 bg-white/60 p-5 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-400">
+            <h2 className="mb-2 text-sm font-bold text-eng-blue dark:text-blue-300">Model provenance & engineering use</h2>
+            <p>Every calculator is labeled as an identity, closed-form approximation, rule of thumb, or simulation-dependent model. Results are design aids, not sign-off data. Principal references include the <a className="text-uci-blue underline" href="https://qucs.sourceforge.net/tech/node75.html" target="_blank" rel="noreferrer">Hammerstad–Jensen / Kirschning–Jansen equations</a>, the official <a className="text-uci-blue underline" href="https://ibis.org/touchstone_ver2.0/touchstone_ver2_0.pdf" target="_blank" rel="noreferrer">Touchstone 2.0 specification</a>, <a className="text-uci-blue underline" href="https://www.rogerscorp.com/advanced-electronics-solutions/ro4000-series-laminates/ro4003c-laminates" target="_blank" rel="noreferrer">Rogers laminate data</a>, and <a className="text-uci-blue underline" href="https://www.itu.int/en/ITU-R/study-groups/rcpm/Pages/wrc-27-studies.aspx" target="_blank" rel="noreferrer">ITU-R WRC-27 study material</a>. Validate substrate properties, reference planes, calibration, PVT, layout discontinuities, and EM behavior for the actual hardware.</p>
+          </aside>
         </div>
       </section>
     </PageWrapper>
@@ -218,11 +255,11 @@ function FundamentalsSection() {
           <FormulaCard title="Mismatch Loss (ML)">
             <BlockMath math="ML (dB) = -10 \log_{10} \left( 1 - |\Gamma|^2 \right)" />
           </FormulaCard>
-          <FormulaCard title="Total Mismatch Loss (Both Ends)">
+          <FormulaCard title="Total Mismatch Loss (Both Ends)" note="Power-wave mismatch factor for the stated common reference plane; ΓS and ΓL are complex and the phase in the denominator matters.">
             <BlockMath math="ML = -10 \log_{10} \left[ \frac{(1 - |\Gamma_S|^2)(1 - |\Gamma_L|^2)}{|1 - \Gamma_S \Gamma_L|^2} \right]" />
           </FormulaCard>
-          <FormulaCard title="Wavelength & Phase">
-            <BlockMath math="\lambda = \frac{c}{f \sqrt{\epsilon_r \mu_r}}, \quad \phi = -360 f T_D" />
+          <FormulaCard title="Wavelength & Phase" note="Homogeneous, isotropic, nondispersive medium; phase is shown in degrees with f in Hz and delay in seconds.">
+            <BlockMath math="\lambda = \frac{c}{f \sqrt{\epsilon_r \mu_r}}, \quad \phi[{}^\circ] = -360^\circ f[\mathrm{Hz}] T_D[\mathrm{s}]" />
           </FormulaCard>
         </div>
       </div>
@@ -243,14 +280,14 @@ function FundamentalsSection() {
           <FormulaCard title="Parallel Plate Capacitance">
             <BlockMath math="C_{pp} = \frac{A \epsilon_r \epsilon_0}{h}" />
           </FormulaCard>
-          <FormulaCard title="Equivalent Parallel Capacitance">
-            <BlockMath math="C_p = \frac{jB}{\omega}" />
+          <FormulaCard title="Equivalent Parallel Capacitance" note="Valid for positive capacitive susceptance B under the e^{jωt} convention.">
+            <BlockMath math="Y=G+jB, \quad C_p = \frac{B}{\omega}" />
           </FormulaCard>
           <FormulaCard title="Inductive Reactance (X_L)">
             <BlockMath math="X_L = 2\pi f L = 6.28 \cdot f_{GHz} \cdot L_{nH}" />
           </FormulaCard>
           <FormulaCard title="Capacitive Reactance (X_C)">
-            <BlockMath math="X_C = \frac{1}{2\pi f C} \approx \frac{0.159}{f_{GHz} \cdot C_{pF}}" />
+            <BlockMath math="|X_C| = \frac{1}{2\pi f C} \approx \frac{159.155}{f_{GHz} \cdot C_{pF}}\ \Omega" />
           </FormulaCard>
         </div>
       </div>
@@ -286,7 +323,7 @@ function SParameterSection() {
             100% Client-Side (No Data Collected)
           </div>
         </div>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Upload Touchstone v1/full-matrix files (up to 12 ports) to interactively plot and extract network parameters including Y/Z parameters, Group Delay, Rollett&apos;s Stability Factor, and equivalent circuit models.</p>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Upload supported Touchstone v1/v2 full-matrix S-parameter files (up to 12 ports) to plot and extract Y/Z parameters, group delay, Rollett stability metrics, and first-order equivalent models. Unsupported matrix formats and parameter types are rejected explicitly.</p>
         <p className="text-xs text-slate-500 dark:text-slate-500 mb-6 italic">Privacy Note: This tool processes your .sNp files entirely within your web browser. We do not upload, collect, or store any of your measurement or simulation data on our servers.</p>
         <SParameterViewer />
       </div>
@@ -304,7 +341,7 @@ function CoaxSection() {
         <FormulaCard title="Characteristic Impedance (Z₀)">
           <BlockMath math="Z_0 \approx \frac{59.959}{\sqrt{\epsilon_r}} \ln\left(\frac{b}{a}\right)" />
         </FormulaCard>
-        <FormulaCard title="Cutoff Frequency (f_c)">
+        <FormulaCard title="Approx. First Higher-Order-Mode Cutoff" level="closed-form">
           <BlockMath math="f_c = \frac{c}{\pi (a + b) \sqrt{\mu_r \epsilon_r}}" />
         </FormulaCard>
         <FormulaCard title="Capacitance per Unit Length (C)">
@@ -318,6 +355,7 @@ function CoaxSection() {
         <p><strong>a:</strong> Inner conductor outer radius (m)</p>
         <p><strong>b:</strong> Outer conductor inner radius (m)</p>
         <p><strong>ε_r:</strong> Relative permittivity of the dielectric</p>
+        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">The TEM mode has no cutoff. The displayed cutoff is a common approximation for the lowest higher-order coaxial mode; exact modal cutoff depends on the conductor-radius ratio and should be solved numerically for precision work.</p>
       </div>
     </div>
   );
@@ -419,6 +457,7 @@ function DielectricSection() {
           </tbody>
         </table>
       </div>
+      <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">Table values are representative process/specification Dk values, while calculator presets use typical design Dk where published. Dk is method- and frequency-dependent; always use the laminate vendor&apos;s value appropriate to the intended field solver and stackup.</p>
     </div>
   );
 }
@@ -449,19 +488,22 @@ function BandsSection() {
           </tbody>
         </table>
       </div>
+      <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">“FR3” has no single globally allocated 7.125–15.35 GHz block. The entries below identify separate WRC-27 study ranges and label them as study candidates, not existing mobile allocations. “Sub-THz” and “THz” overlap near 0.3 THz in common engineering usage.</p>
     </div>
   );
 }
 
 /* ──────────────────────────── HELPERS ──────────────────────────── */
 
-function FormulaCard({ title, children }: { title: string; children: React.ReactNode }) {
+function FormulaCard({ title, children, level = 'identity', note }: { title: string; children: React.ReactNode; level?: RFModelLevel; note?: string }) {
   return (
     <div className="bg-white/70 dark:bg-slate-900/70 rounded-2xl p-6 border border-white/50 dark:border-white/10 shadow-sm hover:shadow-md hover:border-uci-blue/30 transition-all duration-300">
       <h4 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-4 tracking-wide uppercase">{title}</h4>
+      <RFModelBadge level={level} />
       <div className="flex justify-center items-center text-lg overflow-x-auto py-2">
         {children}
       </div>
+      {note && <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">{note}</p>}
     </div>
   );
 }

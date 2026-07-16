@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { calculateMicrostrip, calculateSymmetricStripline } from '@/lib/rfMath';
+import { RFModelBadge } from './RFModelBadge';
 
 /* =========================================================================
    PCBWay Material Specifications
@@ -54,6 +56,9 @@ function SubstrateSelector({ er, setEr, height, setHeight, thickness, setThickne
   };
 
   const mat = MATERIALS.find(m => m.id === matId);
+  const isCustomHeight = !mat
+    || mat.thicknesses.length === 0
+    || !mat.thicknesses.some(value => value.toString() === height);
 
   return (
     <div className="bg-uci-blue/5 border border-uci-blue/10 p-4 rounded-xl space-y-4 mb-4">
@@ -72,10 +77,22 @@ function SubstrateSelector({ er, setEr, height, setHeight, thickness, setThickne
         <div>
           <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Substrate Height</label>
           {mat && mat.thicknesses.length > 0 ? (
-            <select value={height} onChange={(e) => setHeight(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono">
-              {mat.thicknesses.map(t => <option key={t} value={t}>{t} mm</option>)}
-              <option value="custom">Custom...</option>
-            </select>
+            <>
+              <select
+                value={isCustomHeight ? 'custom' : height}
+                onChange={(e) => setHeight(e.target.value === 'custom' ? '' : e.target.value)}
+                className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono"
+              >
+                {mat.thicknesses.map(t => <option key={t} value={t}>{t} mm</option>)}
+                <option value="custom">Custom (Input below)</option>
+              </select>
+              {isCustomHeight && (
+                <div className="flex items-center gap-2 mt-2">
+                  <input type="number" min="0" step="0.001" value={height} onChange={(e) => setHeight(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" placeholder="Enter substrate height" />
+                  <span className="text-xs text-gray-500">mm</span>
+                </div>
+              )}
+            </>
           ) : (
             <div className="flex items-center gap-2">
               <input type="number" step="0.1" value={height} onChange={(e) => setHeight(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
@@ -100,6 +117,9 @@ function SubstrateSelector({ er, setEr, height, setHeight, thickness, setThickne
           </div>
         )}
       </div>
+      <p className="text-[11px] leading-relaxed text-gray-500 dark:text-gray-400">
+        Preset εr values are typical design Dk values; FR-4 varies with resin content, glass weave, frequency, and vendor. Confirm the laminate datasheet and fabrication stackup before release.
+      </p>
     </div>
   );
 }
@@ -121,17 +141,20 @@ export function VSWRCalculator() {
     let rl = 0;
 
     if (inputType === 'vswr') {
-      vswr = Math.max(val, 1);
+      if (val < 1) return null;
+      vswr = val;
       gamma = (vswr - 1) / (vswr + 1);
-      rl = -20 * Math.log10(gamma);
+      rl = gamma === 0 ? Infinity : -20 * Math.log10(gamma);
     } else if (inputType === 'rl') {
-      rl = Math.max(val, 0.001);
+      if (val < 0) return null;
+      rl = val;
       gamma = Math.pow(10, -rl / 20);
-      vswr = (1 + gamma) / (1 - gamma);
+      vswr = gamma === 1 ? Infinity : (1 + gamma) / (1 - gamma);
     } else if (inputType === 'gamma') {
-      gamma = Math.max(0, Math.min(val, 0.9999));
-      vswr = (1 + gamma) / (1 - gamma);
-      rl = -20 * Math.log10(gamma);
+      if (val < 0 || val > 1) return null;
+      gamma = val;
+      vswr = gamma === 1 ? Infinity : (1 + gamma) / (1 - gamma);
+      rl = gamma === 0 ? Infinity : -20 * Math.log10(gamma);
     }
 
     const mismatchLoss = -10 * Math.log10(1 - gamma * gamma);
@@ -146,6 +169,7 @@ export function VSWRCalculator() {
   return (
     <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
       <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">VSWR Interactive Calculator</h4>
+      <RFModelBadge level="identity" detail="Lossless single-interface power-wave identities." />
       
       <div className="grid md:grid-cols-2 gap-8">
         <div className="space-y-4">
@@ -224,6 +248,7 @@ export function DBCalculator() {
   return (
     <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
       <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Power / dB Calculator</h4>
+      <RFModelBadge level="identity" detail="Unit conversion referenced to 1 mW and 1 W." />
       
       <div className="grid md:grid-cols-2 gap-8">
         <div className="space-y-4">
@@ -277,48 +302,19 @@ export function MicrostripCalculator() {
   const [er, setEr] = useState<string>('4.4');
   const [height, setHeight] = useState<string>('1.6');
   const [width, setWidth] = useState<string>('3.0');
+  const [thickness, setThickness] = useState<string>('0.035');
   const [freq, setFreq] = useState<string>('2.45');
 
-  // Hammerstad-Jensen approximation for Z0 (Static)
-  // Kirschning and Jansen model for dispersion
   const calcMicrostrip = () => {
     const w = parseFloat(width);
     const h = parseFloat(height);
     const e = parseFloat(er);
+    const t = parseFloat(thickness);
     const fGHz = parseFloat(freq);
     
-    if (isNaN(w) || isNaN(h) || isNaN(e) || isNaN(fGHz) || w <= 0 || h <= 0 || e < 1 || fGHz <= 0) return null;
+    if ([w, h, e, t, fGHz].some(Number.isNaN) || w <= 0 || h <= 0 || e < 1 || t < 0 || t >= h || t >= w / 2 || fGHz <= 0) return null;
 
-    const u = w / h;
-    
-    // Quasi-static effective permittivity (Hammerstad & Jensen)
-    const eEff0 = ((e + 1) / 2) + ((e - 1) / 2) * Math.pow(1 + 12 * (1 / u), -0.5);
-    
-    // Static Z0
-    let z0_static = 0;
-    if (u <= 1) {
-      z0_static = (60 / Math.sqrt(eEff0)) * Math.log(8 / u + 0.25 * u);
-    } else {
-      z0_static = (120 * Math.PI / Math.sqrt(eEff0)) / (u + 1.393 + 0.667 * Math.log(u + 1.444));
-    }
-
-    // Kirschning and Jansen Dispersion Model
-    const fn = fGHz * h; // normalized frequency
-    
-    const P1 = 0.27488 + (0.6315 + 0.525 / Math.pow(1 + 0.0157 * fn, 20)) * u - 0.065683 * Math.exp(-0.5 * u);
-    const P2 = 0.33622 * (1 - Math.exp(-0.03442 * e));
-    const P3 = 0.0363 * Math.exp(-4.6 * u) * (1 - Math.exp(-Math.pow(fn / 38.7, 4.97)));
-    const P4 = 1 + 2.751 * (1 - Math.exp(-Math.pow(e / 15.916, 8)));
-    
-    const P_f = P1 * P2 * Math.pow((0.1844 + P3 * P4) * fn, 1.5763);
-    
-    // Frequency dependent effective permittivity
-    const eEff_f = e - (e - eEff0) / (1 + P_f);
-    
-    // Frequency dependent Z0
-    const z0_f = z0_static * Math.sqrt(eEff0 / eEff_f);
-
-    return { z0_static, eEff0, z0_f, eEff_f };
+    return calculateMicrostrip({ widthMm: w, heightMm: h, thicknessMm: t, er: e, frequencyGHz: fGHz });
   };
 
   const results = calcMicrostrip();
@@ -326,24 +322,12 @@ export function MicrostripCalculator() {
   return (
     <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
       <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Microstrip Transmission Line</h4>
+      <RFModelBadge level="closed-form" detail="Hammerstad–Jensen with thickness correction and Kirschning–Jansen dispersion." />
       
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-4">
+          <SubstrateSelector er={er} setEr={setEr} height={height} setHeight={setHeight} thickness={thickness} setThickness={setThickness} showThickness={true} />
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Dielectric Constant (εr)</label>
-              <input
-                type="number" step="0.1" value={er} onChange={(e) => setEr(e.target.value)}
-                className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Substrate Height (mm)</label>
-              <input
-                type="number" step="0.1" value={height} onChange={(e) => setHeight(e.target.value)}
-                className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono"
-              />
-            </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Trace Width (mm)</label>
               <input
@@ -364,11 +348,13 @@ export function MicrostripCalculator() {
             <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Results (with Dispersion)</h5>
             {results ? (
               <>
-                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Z₀ (High-Freq)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.z0_f.toFixed(2)} Ω</span></div>
-                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">εeff (High-Freq)</span> <span className="font-mono font-medium">{results.eEff_f.toFixed(4)}</span></div>
+                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Z₀ @ {freq} GHz</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.z0.toFixed(2)} Ω</span></div>
+                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">εeff @ {freq} GHz</span> <span className="font-mono font-medium">{results.effectivePermittivity.toFixed(4)}</span></div>
                 <hr className="border-gray-200 dark:border-gray-800 my-2" />
-                <div className="flex justify-between items-center text-xs opacity-60"><span className="text-gray-600 dark:text-gray-400">Z₀ (Static/DC)</span> <span className="font-mono">{results.z0_static.toFixed(2)} Ω</span></div>
-                <div className="flex justify-between items-center text-xs opacity-60"><span className="text-gray-600 dark:text-gray-400">εeff (Static/DC)</span> <span className="font-mono">{results.eEff0.toFixed(4)}</span></div>
+                <div className="flex justify-between items-center text-xs opacity-60"><span className="text-gray-600 dark:text-gray-400">Z₀ (quasi-static)</span> <span className="font-mono">{results.staticZ0.toFixed(2)} Ω</span></div>
+                <div className="flex justify-between items-center text-xs opacity-60"><span className="text-gray-600 dark:text-gray-400">εeff (quasi-static)</span> <span className="font-mono">{results.staticEffectivePermittivity.toFixed(4)}</span></div>
+                {results.warnings.map(warning => <p key={warning} className="text-xs text-amber-700 dark:text-amber-300">{warning}</p>)}
+                <p className="text-xs text-gray-500 dark:text-gray-400">Closed-form approximation: full Hammerstad–Jensen quasi-static model with finite conductor thickness and Kirschning–Jansen dispersion. Conductor/dielectric loss, roughness, solder mask, and enclosure effects are excluded; verify final geometry with a 2.5D/3D EM solver.</p>
               </>
             ) : (
               <div className="text-sm text-gray-400">Invalid input values</div>
@@ -436,6 +422,7 @@ export function WaveguideCalculator() {
       <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6 flex items-center gap-3">
         Rectangular Waveguide (TE₁₀)
       </h4>
+      <RFModelBadge level="identity" detail="Ideal PEC, homogeneous-fill rectangular-waveguide TE10 cutoff." />
       
       <div className="grid md:grid-cols-2 gap-8 items-center">
         <div>
@@ -477,24 +464,9 @@ export function StriplineCalculator() {
     const w = parseFloat(width);
     const t = parseFloat(thickness);
     
-    if (isNaN(e) || isNaN(bVal) || isNaN(w) || isNaN(t) || w <= 0 || bVal <= 0 || e < 1) return null;
+    if ([e, bVal, w, t].some(Number.isNaN) || w <= 0 || bVal <= 0 || e < 1 || t < 0 || t >= bVal) return null;
 
-    let we = w;
-    if (t > 0 && w > t / (2.0 * Math.PI)) {
-      we = w + (t / Math.PI) * (1.0 + Math.log(4.0 * Math.PI * w / t));
-    }
-
-    const ratio = we / bVal;
-    let z0 = 50;
-    if (ratio < 0.35) {
-      z0 = (60.0 / Math.sqrt(e)) * Math.log(4.0 * bVal / (Math.PI * we));
-    } else {
-      const tOverB = Math.min(t / bVal, 0.99);
-      const cf = (2.0 / Math.PI) * Math.log(1.0 / (1.0 - tOverB));
-      z0 = (30.0 * Math.PI / Math.sqrt(e)) / (ratio / (1.0 - tOverB) + cf);
-    }
-
-    return { z0, eEff: e };
+    return calculateSymmetricStripline({ widthMm: w, groundSpacingMm: bVal, thicknessMm: t, er: e });
   };
 
   const results = calcStripline();
@@ -502,6 +474,7 @@ export function StriplineCalculator() {
   return (
     <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
       <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Stripline Calculator</h4>
+      <RFModelBadge level="closed-form" detail="Centered symmetric stripline with infinite planes and homogeneous dielectric." />
       
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-4">
@@ -516,7 +489,9 @@ export function StriplineCalculator() {
             {results ? (
               <>
                 <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Characteristic Impedance (Z₀)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.z0.toFixed(2)} Ω</span></div>
-                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Effective Permittivity (εeff)</span> <span className="font-mono font-medium">{results.eEff.toFixed(4)}</span></div>
+                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">TEM Permittivity</span> <span className="font-mono font-medium">{results.effectivePermittivity.toFixed(4)}</span></div>
+                {results.warnings.map(warning => <p key={warning} className="text-xs text-amber-700 dark:text-amber-300">{warning}</p>)}
+                <p className="text-xs text-gray-500 dark:text-gray-400">Closed-form approximation for a symmetric, homogeneous stripline with the trace centered between infinite ground planes. Loss, surface roughness, sidewalls, and trace offset require field simulation.</p>
               </>
             ) : (
               <div className="text-sm text-gray-400">Invalid input values</div>
@@ -638,6 +613,7 @@ export function CPWCalculator() {
   return (
     <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
       <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Coplanar Waveguide (CPW)</h4>
+      <RFModelBadge level="closed-form" detail="Ideal unbacked CPW conformal-mapping model." />
       
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-4">
@@ -659,6 +635,7 @@ export function CPWCalculator() {
               <>
                 <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Characteristic Impedance (Z₀)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.z0.toFixed(2)} Ω</span></div>
                 <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Effective Permittivity (εeff)</span> <span className="font-mono font-medium">{results.eEff.toFixed(4)}</span></div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Closed-form conformal-mapping approximation for an unbacked CPW on a finite-thickness substrate, with infinite lateral ground width, zero conductor thickness, and no conductor/dielectric loss. Grounded CPW, solder mask, finite ground, and discontinuities require an EM solver.</p>
               </>
             ) : (
               <div className="text-sm text-gray-400">Invalid input values</div>
@@ -748,6 +725,7 @@ export function SkinDepthCalculator() {
   return (
     <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
       <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Skin Depth & Surface Resistance</h4>
+      <RFModelBadge level="closed-form" detail="Good-conductor approximation with μr=1 and bulk resistivity." />
       
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-4">
@@ -774,6 +752,7 @@ export function SkinDepthCalculator() {
             <>
               <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Skin Depth (δ)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.delta_um.toFixed(3)} μm</span></div>
               <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Surface Resistance (Rs)</span> <span className="font-mono font-medium">{results.rs.toFixed(5)} Ω/sq</span></div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Exact good-conductor approximation using μr=1 and the listed room-temperature bulk resistivity. Temperature, alloy/plating, roughness, and anomalous skin effect are excluded.</p>
             </>
           ) : (
             <div className="text-sm text-gray-400">Invalid input values</div>
@@ -803,7 +782,7 @@ export function PCBViaCalculator() {
     const e = parseFloat(er);
     
     if (isNaN(dDrill) || isNaN(dPad) || isNaN(dAnti) || isNaN(h) || isNaN(e)) return null;
-    if (dDrill <= 0 || dPad <= 0 || dAnti <= dPad || h <= 0) return null;
+    if (dDrill <= 0 || dPad <= dDrill || dAnti <= dPad || h <= 0 || e < 1) return null;
 
     // Convert to inches for Goldfarb
     const h_in = h * 0.0393701;
@@ -813,6 +792,7 @@ export function PCBViaCalculator() {
 
     // L (nH) = 5.08 * h * [ln(4h/d) + 1]
     const L_nH = 5.08 * h_in * (Math.log(4.0 * h_in / drill_in) + 1.0);
+    if (L_nH <= 0) return null;
     
     // C (pF) = 1.41 * εr * T * D / (D_clearance - D)
     const C_pF = (1.41 * e * h_in * pad_in) / (anti_in - pad_in);
@@ -831,6 +811,7 @@ export function PCBViaCalculator() {
   return (
     <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
       <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">PCB Via Parasitics (Goldfarb Model)</h4>
+      <RFModelBadge level="closed-form" detail="Lumped via L/C estimates; distributed behavior requires 3D EM." />
       
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-4">
@@ -858,13 +839,13 @@ export function PCBViaCalculator() {
               <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Via Inductance (L)</span> <span className="font-mono font-medium">{results.L_nH.toFixed(4)} nH</span></div>
               <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Via Capacitance (C)</span> <span className="font-mono font-medium">{results.C_pF.toFixed(4)} pF</span></div>
               <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">LC Impedance Scale √(L/C)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.Z_ohms.toFixed(2)} Ω</span></div>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Resonant Frequency</span> <span className="font-mono font-medium">{results.fres_GHz.toFixed(2)} GHz</span></div>
+              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Lumped LC Corner Estimate</span> <span className="font-mono font-medium">{results.fres_GHz.toFixed(2)} GHz</span></div>
             </>
           ) : (
             <div className="text-sm text-gray-400">Invalid input values (Ensure Anti-pad &gt; Pad)</div>
           )}
-          <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-xs font-medium border border-red-200 dark:border-red-800/30">
-            <strong>⚠️ High Frequency Warning:</strong> Lumped via models (like Goldfarb) break down and become highly inaccurate at mmWave frequencies (&gt; 5 GHz). Full 3D EM simulation is strictly required for high-frequency via design.
+          <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 rounded-lg text-xs font-medium border border-amber-200 dark:border-amber-800/30">
+            <strong>Model limit:</strong> √(L/C) is only an impedance scale and 1/(2π√LC) is a lumped corner estimate—not the via&apos;s distributed Z₀ or a guaranteed physical resonance. Model validity depends on via electrical length, return-via/plane geometry, antipads, pads, and stubs; use 3D EM when these details are electrically significant.
           </div>
         </div>
       </div>
@@ -883,6 +864,7 @@ export function RadarRangeCalculator() {
   const [freqStr, setFreqStr] = useState<string>('60'); // GHz
   const [rcs, setRcs] = useState<string>('10'); // m^2 (Radar Cross Section)
   const [pmin, setPmin] = useState<string>('-90'); // dBm (Min Detectable Signal)
+  const [systemLoss, setSystemLoss] = useState<string>('3'); // dB
 
   const calcRadar = () => {
     const P_t_dBm = parseFloat(pt);
@@ -891,8 +873,9 @@ export function RadarRangeCalculator() {
     const f_GHz = parseFloat(freqStr);
     const sigma = parseFloat(rcs);
     const P_min_dBm = parseFloat(pmin);
+    const lossDB = parseFloat(systemLoss);
 
-    if (isNaN(P_t_dBm) || isNaN(G_t_dBi) || isNaN(G_r_dBi) || isNaN(f_GHz) || f_GHz <= 0 || isNaN(sigma) || isNaN(P_min_dBm)) return null;
+    if ([P_t_dBm, G_t_dBi, G_r_dBi, f_GHz, sigma, P_min_dBm, lossDB].some(Number.isNaN) || f_GHz <= 0 || sigma <= 0 || lossDB < 0) return null;
 
     // FSPL calculation (for 100 meter reference to show)
     const lambda = 0.299792458 / f_GHz; // meters
@@ -904,10 +887,11 @@ export function RadarRangeCalculator() {
     // Linear gains
     const G_t = Math.pow(10, G_t_dBi / 10);
     const G_r = Math.pow(10, G_r_dBi / 10);
+    const systemLossLinear = Math.pow(10, lossDB / 10);
 
     // Radar Equation for Max Range R: R^4 = (Pt * Gt * Gr * lambda^2 * sigma) / ((4*pi)^3 * Pmin)
     const numerator = P_t_W * G_t * G_r * Math.pow(lambda, 2) * sigma;
-    const denominator = Math.pow(4 * Math.PI, 3) * P_min_W;
+    const denominator = Math.pow(4 * Math.PI, 3) * P_min_W * systemLossLinear;
     const R_max = Math.pow(numerator / denominator, 0.25);
 
     // Free Space Path Loss at 100 meters
@@ -921,6 +905,7 @@ export function RadarRangeCalculator() {
   return (
     <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
       <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Radar Range Equation & Free Space Path Loss</h4>
+      <RFModelBadge level="closed-form" detail="Classical monostatic free-space radar equation with aggregate loss." />
 
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-4">
@@ -949,6 +934,10 @@ export function RadarRangeCalculator() {
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">RCS σ (m²)</label>
               <input type="number" step="0.1" value={rcs} onChange={(e) => setRcs(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
             </div>
+            <div className="col-span-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Aggregate System / Propagation Loss (dB)</label>
+              <input type="number" min="0" step="0.1" value={systemLoss} onChange={(e) => setSystemLoss(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+            </div>
           </div>
         </div>
 
@@ -964,7 +953,7 @@ export function RadarRangeCalculator() {
             <div className="text-sm text-gray-400">Invalid input values</div>
           )}
           <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-            Calculates the maximum detection range of a monostatic radar system based on the classical Radar Range Equation. It assumes free space propagation without atmospheric absorption loss.
+            Closed-form monostatic radar range equation using the entered aggregate loss. Gains, RCS, loss, and minimum detectable power are assumed constant and mutually consistent; real detection probability also depends on waveform integration, target fluctuation, clutter, noise figure, CFAR threshold, polarization, and atmospheric/weather loss.
           </div>
         </div>
       </div>
@@ -1009,6 +998,7 @@ export function FMCWRadarCalculator() {
   return (
     <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
       <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">FMCW Radar Parameters</h4>
+      <RFModelBadge level="closed-form" detail="Ideal linear chirp and stationary-target beat-frequency limit." />
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-4">
           <div>
@@ -1036,7 +1026,7 @@ export function FMCWRadarCalculator() {
             <div className="text-sm text-gray-400">Invalid input values</div>
           )}
           <div className="text-xs text-gray-500 dark:text-gray-400">
-            Max range uses the beat-frequency limit: Rmax = fIF,max·c/(2S), where S = B/Tc.
+            First-order, stationary-target result. Max range uses the beat-frequency limit Rmax=fIF,max·c/(2S), S=B/Tc; Doppler-range coupling, sampling/Nyquist margin, analog filters, chirp settling, and waveform timing are excluded.
           </div>
         </div>
       </div>
@@ -1069,6 +1059,7 @@ export function DopplerCalculator() {
   return (
     <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
       <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Doppler Shift</h4>
+      <RFModelBadge level="closed-form" detail="Monostatic narrowband radial-motion approximation." />
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-4">
           <div>
@@ -1076,7 +1067,7 @@ export function DopplerCalculator() {
             <input type="number" step="0.1" value={freq} onChange={(e) => setFreq(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Radial Velocity (m/s)</label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Radial Velocity (m/s, + approaching)</label>
             <input type="number" step="1" value={vel} onChange={(e) => setVel(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
           </div>
         </div>
@@ -1087,6 +1078,7 @@ export function DopplerCalculator() {
           ) : (
             <div className="text-sm text-gray-400">Invalid input values</div>
           )}
+          <p className="text-xs text-gray-500 dark:text-gray-400">Monostatic, narrowband, direct line-of-sight approximation fd=2v/λ. Positive velocity is defined here as approaching, so positive fd is an upshift.</p>
         </div>
       </div>
     </div>
@@ -1125,6 +1117,7 @@ export function PhaseNoiseCalculator() {
   return (
     <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
       <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Phase Noise to Jitter (Spot)</h4>
+      <RFModelBadge level="closed-form" detail="Spot jitter density only; integrated RMS jitter needs the full phase-noise spectrum." />
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-4">
           <div>
@@ -1171,10 +1164,11 @@ export function LinearityCalculator() {
 
   return (
     <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
-      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Linearity Estimation (P1dB ↔ OIP3)</h4>
+      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Linearity Rule of Thumb (OP1dB → OIP3)</h4>
+      <RFModelBadge level="rule-of-thumb" detail="Cubic memoryless-model heuristic; not a device identity." />
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <div>
-          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">P1dB (dBm)</label>
+          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Output 1 dB Compression Point, OP1dB (dBm)</label>
           <input type="number" step="0.1" value={p1db} onChange={(e) => setP1db(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
         </div>
         <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
@@ -1184,7 +1178,7 @@ export function LinearityCalculator() {
           ) : (
             <div className="text-sm text-gray-400">Invalid input</div>
           )}
-          <div className="text-xs text-gray-500 mt-2">Rule of thumb: OIP3 ≈ P1dB + 9.6 dB.</div>
+          <div className="text-xs text-gray-500 mt-2">Rule of thumb only: OIP3 ≈ OP1dB + 9.6 dB for a memoryless weakly nonlinear cubic model. The offset varies substantially by circuit, bias, frequency, matching, thermal effects, and measurement definition; do not use it as a substitute for two-tone characterization.</div>
         </div>
       </div>
     </div>
@@ -1217,6 +1211,7 @@ export function ThermalNoiseCalculator() {
   return (
     <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
       <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Thermal Noise Floor (kTB)</h4>
+      <RFModelBadge level="identity" detail="Johnson–Nyquist available noise power for a matched resistor at temperature T." />
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-4">
           <div>

@@ -3,7 +3,7 @@
 import React, { useState, useMemo, ChangeEvent } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Brush } from 'recharts';
 import { UploadCloud, FileText, AlertCircle, Trash2, ShieldAlert } from 'lucide-react';
-import { parseTouchstone, sToMixedMode, cDB, cPhase, cMag, computeTDR, TDRPoint } from '../lib/sParameterEngine';
+import { parseTouchstone, sToMixedMode, cDB, cPhase, cMag, computeTDR, getTdrValidationError, MixedModePairing, TDRPoint } from '../lib/sParameterEngine';
 import { SmithChart } from './SmithChart';
 
 const colors = [
@@ -94,11 +94,14 @@ export default function SParameterViewer() {
   const [isPassive, setIsPassive] = useState<boolean>(true);
   const [parseWarnings, setParseWarnings] = useState<string[]>([]);
   const [maxPassivitySingularValue, setMaxPassivitySingularValue] = useState<number | null>(null);
+  const [tdrWarning, setTdrWarning] = useState<string>('');
+  const [stabilitySummary, setStabilitySummary] = useState<string>('');
   
   const [analysisGroup, setAnalysisGroup] = useState<'S' | 'ZY' | 'Comp' | 'Sys'>('S');
   const [chartType, setChartType] = useState<ChartType>('S');
   const [sParamViewType, setSParamViewType] = useState<SParamViewType>('Magnitude');
   const [sParamMode, setSParamMode] = useState<'Single' | 'Mixed'>('Single');
+  const [mixedModePairing, setMixedModePairing] = useState<MixedModePairing>('12-34');
   
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [numPorts, setNumPorts] = useState<number>(0);
@@ -123,6 +126,7 @@ export default function SParameterViewer() {
     try {
       const text = await file.text();
       const parsed = parseTouchstone(text, ports);
+      if (parsed.errors?.length) throw new Error(parsed.errors.join(' '));
       if (parsed.points.length === 0) {
         throw new Error('Could not parse any valid frequency points. Check file format.');
       }
@@ -155,19 +159,20 @@ export default function SParameterViewer() {
 
         // Mixed-Mode for 4-port
         if (N === 4) {
-          const S_mm = sToMixedMode(S);
-          if (S_mm) {
+          (['12-34', '13-24', '14-23'] as MixedModePairing[]).forEach(pairing => {
+            const S_mm = sToMixedMode(S, pairing);
+            if (!S_mm) return;
             const mmLabels = ['dd1', 'dd2', 'cc1', 'cc2'];
             for (let i = 0; i < 4; i++) {
               for (let j = 0; j < 4; j++) {
                 const label = `S${mmLabels[i][0]}${mmLabels[j][0]}${mmLabels[i][2]}${mmLabels[j][2]}`;
-                dataPoint[`${label}_Magnitude`] = parseFloat(cDB(S_mm[i][j]).toFixed(4));
-                dataPoint[`${label}_Phase`] = parseFloat((cPhase(S_mm[i][j]) * 180 / Math.PI).toFixed(4));
-                dataPoint[`${label}_Real`] = parseFloat(S_mm[i][j].real.toFixed(4));
-                dataPoint[`${label}_Imag`] = parseFloat(S_mm[i][j].imag.toFixed(4));
+                dataPoint[`${label}_${pairing}_Magnitude`] = parseFloat(cDB(S_mm[i][j]).toFixed(4));
+                dataPoint[`${label}_${pairing}_Phase`] = parseFloat((cPhase(S_mm[i][j]) * 180 / Math.PI).toFixed(4));
+                dataPoint[`${label}_${pairing}_Real`] = parseFloat(S_mm[i][j].real.toFixed(4));
+                dataPoint[`${label}_${pairing}_Imag`] = parseFloat(S_mm[i][j].imag.toFixed(4));
               }
             }
-          }
+          });
         }
       
         if (pt.Z) {
@@ -180,18 +185,18 @@ export default function SParameterViewer() {
               dataPoint[`Z${i+1}${j+1}_Imag`] = parseFloat(zij.imag.toFixed(4));
               
               if (i === j) {
-                dataPoint[`L${i+1}${i+1}`] = parseFloat(((zij.imag / w) * 1e9).toFixed(4));
-                dataPoint[`C${i+1}${i+1}`] = zij.imag !== 0 ? parseFloat(((-1 / (w * zij.imag)) * 1e12).toFixed(4)) : 0;
-                dataPoint[`Q${i+1}${i+1}`] = zij.real !== 0 ? parseFloat((zij.imag / zij.real).toFixed(4)) : 0;
+                if (zij.imag > 0) dataPoint[`L${i+1}${i+1}`] = parseFloat(((zij.imag / w) * 1e9).toFixed(4));
+                if (zij.imag < 0) dataPoint[`C${i+1}${i+1}`] = parseFloat(((-1 / (w * zij.imag)) * 1e12).toFixed(4));
+                if (zij.real !== 0) dataPoint[`Q${i+1}${i+1}`] = parseFloat(Math.abs(zij.imag / zij.real).toFixed(4));
               }
             }
           }
           if (N >= 2) {
             const zdiff_real = pt.Z[0][0].real + pt.Z[1][1].real - pt.Z[0][1].real - pt.Z[1][0].real;
             const zdiff_imag = pt.Z[0][0].imag + pt.Z[1][1].imag - pt.Z[0][1].imag - pt.Z[1][0].imag;
-            dataPoint['L_diff'] = parseFloat(((zdiff_imag / w) * 1e9).toFixed(4));
-            dataPoint['C_diff'] = zdiff_imag !== 0 ? parseFloat(((-1 / (w * zdiff_imag)) * 1e12).toFixed(4)) : 0;
-            dataPoint['Q_diff'] = zdiff_real !== 0 ? parseFloat((zdiff_imag / zdiff_real).toFixed(4)) : 0;
+            if (zdiff_imag > 0) dataPoint['L_diff'] = parseFloat(((zdiff_imag / w) * 1e9).toFixed(4));
+            if (zdiff_imag < 0) dataPoint['C_diff'] = parseFloat(((-1 / (w * zdiff_imag)) * 1e12).toFixed(4));
+            if (zdiff_real !== 0) dataPoint['Q_diff'] = parseFloat(Math.abs(zdiff_imag / zdiff_real).toFixed(4));
           }
         }
 
@@ -232,13 +237,21 @@ export default function SParameterViewer() {
         if (pt.K !== undefined) {
           dataPoint[`K`] = parseFloat(pt.K.toFixed(4));
         }
+        if (pt.deltaMagnitude !== undefined) dataPoint['Delta'] = parseFloat(pt.deltaMagnitude.toFixed(4));
       
         return dataPoint;
       });
 
       setData(plotData);
-      setTdrData(computeTDR(parsed.points, 0));
+      const tdrError = getTdrValidationError(parsed.points);
+      setTdrWarning(tdrError ?? 'Approximate transform: any missing DC data is extrapolated and a one-sided raised-cosine low-pass taper is applied. Interpret discontinuity locations and impedance quantitatively only after checking bandwidth and calibration.');
+      setTdrData(tdrError ? [] : computeTDR(parsed.points, 0));
+      if (ports === 2) {
+        const stableCount = parsed.points.filter(point => point.unconditionallyStable).length;
+        setStabilitySummary(`${stableCount}/${parsed.points.length} frequency points satisfy both K > 1 and |Δ| < 1.`);
+      } else setStabilitySummary('');
       setSParamMode('Single');
+      setViewMode('Frequency');
       setSParamViewType('Magnitude');
       setAnalysisGroup('S');
 
@@ -254,6 +267,8 @@ export default function SParameterViewer() {
       setData([]);
       setParseWarnings([]);
       setMaxPassivitySingularValue(null);
+      setTdrWarning('');
+      setStabilitySummary('');
     }
   };
 
@@ -264,6 +279,8 @@ export default function SParameterViewer() {
     setError('');
     setParseWarnings([]);
     setMaxPassivitySingularValue(null);
+    setTdrWarning('');
+    setStabilitySummary('');
     setSelectedKeys([]);
   };
 
@@ -281,11 +298,11 @@ export default function SParameterViewer() {
       }
       return keys;
     } else if (chartType === 'L' || chartType === 'C' || chartType === 'Q' || chartType === 'ESR' || chartType === 'Rp' || chartType === 'VSWR') {
-      return Object.keys(data[0]).filter(k => k.startsWith(chartType));
+      return Array.from(new Set(data.flatMap(point => Object.keys(point).filter(key => key.startsWith(chartType)))));
     } else if (chartType === 'GD') {
       return ['GD21'];
     } else if (chartType === 'K') {
-      return ['K'];
+      return ['K', 'Delta'];
     }
     return [];
   }, [data, chartType, sParamMode, numPorts]);
@@ -307,7 +324,7 @@ export default function SParameterViewer() {
       } else if (type === 'GD') {
         setSelectedKeys(['GD21']);
       } else if (type === 'K') {
-        setSelectedKeys(['K']);
+        setSelectedKeys(['K', 'Delta']);
       }
     }
   };
@@ -384,7 +401,7 @@ export default function SParameterViewer() {
       {data.length > 0 && !isPassive && (
         <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 rounded-lg flex items-center gap-3 text-sm font-medium border border-yellow-200 dark:border-yellow-800/30">
           <ShieldAlert size={18} className="shrink-0" />
-          <span>Warning: The S-matrix passivity check exceeded unity spectral norm{maxPassivitySingularValue !== null ? ` (max σ=${maxPassivitySingularValue.toFixed(3)})` : ''}. This is normal for active components, but check calibration if this is a passive structure.</span>
+          <span>Warning: The S-matrix passivity check exceeded the +0.1 dB numerical-tolerance threshold (σmax &gt; 1.0116){maxPassivitySingularValue !== null ? `; measured max σ=${maxPassivitySingularValue.toFixed(3)}` : ''}. This can be expected for active devices; for a passive DUT, check calibration, reference impedance, and de-embedding.</span>
         </div>
       )}
 
@@ -396,6 +413,12 @@ export default function SParameterViewer() {
               <div key={warning}>{warning}</div>
             ))}
           </div>
+        </div>
+      )}
+
+      {data.length > 0 && tdrWarning && (
+        <div className={`p-3 rounded-lg text-xs border ${tdrData.length ? 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-300 dark:border-indigo-800/30' : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800/30'}`}>
+          TDR: {tdrWarning}
         </div>
       )}
 
@@ -417,6 +440,8 @@ export default function SParameterViewer() {
             </button>
             <button
               onClick={() => setViewMode('Time')}
+              disabled={tdrData.length === 0}
+              title={tdrData.length === 0 ? tdrWarning : undefined}
               className={`px-4 py-2 font-semibold text-sm transition-colors rounded-lg ${viewMode === 'Time' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
             >
               Time Domain (TDR)
@@ -493,7 +518,7 @@ export default function SParameterViewer() {
 
                 <div className="flex gap-2 overflow-x-auto w-full lg:w-auto">
                   {chartType === 'S' && numPorts === 4 && (
-                    <div className="flex gap-2 p-1.5 bg-slate-200/60 dark:bg-slate-900/80 rounded-lg shrink-0">
+                    <div className="flex gap-2 p-1.5 bg-slate-200/60 dark:bg-slate-900/80 rounded-lg shrink-0 items-center">
                       {(['Single', 'Mixed'] as const).map(mode => (
                         <button
                           key={mode}
@@ -507,6 +532,13 @@ export default function SParameterViewer() {
                           {mode}
                         </button>
                       ))}
+                      {sParamMode === 'Mixed' && (
+                        <select value={mixedModePairing} onChange={(event) => setMixedModePairing(event.target.value as MixedModePairing)} className="rounded bg-white px-2 py-1 text-xs font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-200" aria-label="Mixed-mode physical port pairing">
+                          <option value="12-34">Pairs 1–2 / 3–4</option>
+                          <option value="13-24">Pairs 1–3 / 2–4</option>
+                          <option value="14-23">Pairs 1–4 / 2–3</option>
+                        </select>
+                      )}
                     </div>
                   )}
 
@@ -544,6 +576,12 @@ export default function SParameterViewer() {
                   </label>
                 ))}
               </div>
+              {analysisGroup === 'Comp' && (
+                <p className="text-xs text-slate-500 dark:text-slate-400">First-order extraction: L is shown only where Im(Zpp)&gt;0, C only where Im(Zpp)&lt;0, and Q=|Im(Zpp)/Re(Zpp)|. Zpp corresponds to the other ports open; ESR=Re(Zpp). Rp=1/Re(Ypp), where Ypp corresponds to the other ports short. These are frequency-dependent equivalents, not broadband lumped models.</p>
+              )}
+              {chartType === 'K' && stabilitySummary && (
+                <p className="text-xs text-slate-500 dark:text-slate-400">{stabilitySummary} K alone is insufficient; unconditional stability requires K&gt;1 and |Δ|&lt;1 at each frequency.</p>
+              )}
             </div>
           </div>
 
@@ -586,7 +624,11 @@ export default function SParameterViewer() {
                     <Line 
                       key={key} 
                       type="monotone" 
-                      dataKey={(chartType === 'S' || chartType === 'Z' || chartType === 'Y') ? `${key}_${sParamViewType}` : key}
+                      dataKey={(chartType === 'S' || chartType === 'Z' || chartType === 'Y')
+                        ? chartType === 'S' && sParamMode === 'Mixed'
+                          ? `${key}_${mixedModePairing}_${sParamViewType}`
+                          : `${key}_${sParamViewType}`
+                        : key}
                       name={key}
                       stroke={colors[i % colors.length]} 
                       strokeWidth={2.5}
@@ -656,7 +698,7 @@ export default function SParameterViewer() {
                     <YAxis 
                       label={{ value: 'Impedance (Ω)', angle: -90, position: 'insideLeft', fill: '#64748b' }}
                       tick={{ fill: '#64748b', fontSize: 12 }}
-                      domain={[0, 150]}
+                      domain={['auto', 'auto']}
                       stroke="#94a3b8"
                     />
                     <Tooltip 
