@@ -114,7 +114,7 @@ const publications: Publication[] = [
 
   // ===== SELECTED CONFERENCE PUBLICATIONS (22) =====
   // #1
-  { authors: 'Z. Zhang, X. Liu, Y. Huang, H. Aghasi', title: 'A Doppler-Assisted 76 GHz PMCW Radar with Meter-Scale Unambiguous Range and μm-Scale Range Accuracy', venue: 'IEEE RFIC', year: 2026, type: 'conference' },
+  { authors: 'Z. Zhang, X. Liu, Y. Huang, H. Aghasi', title: 'A Doppler-Assisted 76 GHz PMCW Radar with Meter-Scale Unambiguous Range and μm-Scale Range Accuracy', venue: 'IEEE RFIC', year: 2026, type: 'conference', status: 'Published', link: 'https://ieeexplore.ieee.org/abstract/document/11602168' },
   // #2
   { authors: 'Y. Huang, A. Mehradfar, S. Avestimehr, H. R. Aghasi', title: 'EM-Aware Physical Synthesis: Neural Inductor Modeling and Intelligent Placement & Routing for RF Circuits', venue: 'IEEE ISCAS', year: 2026, type: 'conference', status: 'Published', link: 'https://ieeexplore.ieee.org/abstract/document/11562320' },
   // #3
