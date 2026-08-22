@@ -50,7 +50,7 @@ export default function PageWrapper({ children, className = '' }: PageWrapperPro
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className={`subpage-shell relative isolate min-h-screen overflow-hidden bg-slate-warm pt-20 text-foreground lg:pt-24 dark:bg-[#090e17] ${className}`}
+      className={`subpage-shell relative isolate min-h-screen overflow-hidden bg-slate-warm pt-20 text-foreground lg:pt-28 dark:bg-[#090e17] ${className}`}
     >
       {/* Oscilloscope Scanline Effect on Mount */}
       <motion.div
