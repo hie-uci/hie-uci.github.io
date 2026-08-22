@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Image from 'next/image';
+import { GraduationCap } from 'lucide-react';
 import PageWrapper from '@/components/PageWrapper';
 import SectionHeader from '@/components/SectionHeader';
 import CircuitBackground from '@/components/CircuitBackground';
@@ -73,6 +74,9 @@ const directorJsonLd = {
 
 interface Member {
   name: string;
+  /** Google Scholar profile. Present only where the profile was verified as
+      belonging to this person -- a wrong link here misattributes real work. */
+  scholar?: string;
   initials: string;
   image: string;
   focus: string;
@@ -82,10 +86,10 @@ interface Member {
 }
 
 const phdStudents: Member[] = [
-  { name: 'Md Hedayatullah Maktoomi', initials: 'MH', image: '/images/members/phd-maktoomi.png', focus: 'RF/microwave and power amplifier design', bio: 'B. Engg. from Jamia Millia Islamia, New Delhi (2015), M.S. from Washington State University (2020). Intern and research assistant at IIIT Delhi (2016-2017) on passive RF/microwave circuits. RF engineering intern at Wolfspeed Inc. (2019) working on Doherty power amplifier design. Published in IEEE TCAS-II and IEEE TMTT. Frequent reviewer for multiple IEEE journals.', gradientFrom: 'from-uci-blue', gradientTo: 'to-eecs-teal' },
-  { name: 'Mahdi Alesheikh', initials: 'MA', image: '/images/members/phd-alesheikh.png', focus: 'Analog/RF circuits', bio: 'BSc in Electronics from Sharif University of Technology, Tehran, Iran. BSc thesis on IoT circuits under Prof. Safarian. MSc in ECE from University of Alberta, with master\'s work on RFIC and microwave circuits under Prof. Karumudi and Hossain. Currently pursuing PhD at UCI.', gradientFrom: 'from-eng-blue', gradientTo: 'to-uci-gold' },
-  { name: 'Allen (Yilun) Huang', initials: 'AH', image: '/images/members/phd-allen-huang.png', focus: 'Analog, RF, and mm-wave circuits, AI-driven IC design', bio: 'received the B.S. from Iowa State (2022) and M.S. from UCLA (2024). Currently a Ph.D. student at UCI, his research focuses on analog, RF, and mm-wave IC design, and AI-driven optimization for circuits and radar systems.', gradientFrom: 'from-uci-gold', gradientTo: 'to-eecs-teal' },
-  { name: 'Zhengyang (Mark) Zhang', initials: 'ZZ', image: '/images/members/phd-mark-zhang.png', focus: 'Radar, Analog/mixed-signal/RF circuits', bio: 'BSEE (2024) from SUSTech, Shenzhen, China, with work on integrated power management for wireline transceivers. MSEE (2026) from UCI. Currently pursuing PhD at UCI. Current research focuses on radar systems.', gradientFrom: 'from-eecs-teal', gradientTo: 'to-uci-blue' },
+  { name: 'Md Hedayatullah Maktoomi', scholar: 'https://scholar.google.com/citations?user=WlRBLIUAAAAJ', initials: 'MH', image: '/images/members/phd-maktoomi.png', focus: 'RF/microwave and power amplifier design', bio: 'B. Engg. from Jamia Millia Islamia, New Delhi (2015), M.S. from Washington State University (2020). Intern and research assistant at IIIT Delhi (2016-2017) on passive RF/microwave circuits. RF engineering intern at Wolfspeed Inc. (2019) working on Doherty power amplifier design. Published in IEEE TCAS-II and IEEE TMTT. Frequent reviewer for multiple IEEE journals.', gradientFrom: 'from-uci-blue', gradientTo: 'to-eecs-teal' },
+  { name: 'Mahdi Alesheikh', scholar: 'https://scholar.google.com/citations?user=gA_Bu2YAAAAJ', initials: 'MA', image: '/images/members/phd-alesheikh.png', focus: 'Analog/RF circuits', bio: 'BSc in Electronics from Sharif University of Technology, Tehran, Iran. BSc thesis on IoT circuits under Prof. Safarian. MSc in ECE from University of Alberta, with master\'s work on RFIC and microwave circuits under Prof. Karumudi and Hossain. Currently pursuing PhD at UCI.', gradientFrom: 'from-eng-blue', gradientTo: 'to-uci-gold' },
+  { name: 'Allen (Yilun) Huang', scholar: 'https://scholar.google.com/citations?user=Fpr6OqsAAAAJ', initials: 'AH', image: '/images/members/phd-allen-huang.png', focus: 'Analog, RF, and mm-wave circuits, AI-driven IC design', bio: 'received the B.S. from Iowa State (2022) and M.S. from UCLA (2024). Currently a Ph.D. student at UCI, his research focuses on analog, RF, and mm-wave IC design, and AI-driven optimization for circuits and radar systems.', gradientFrom: 'from-uci-gold', gradientTo: 'to-eecs-teal' },
+  { name: 'Zhengyang (Mark) Zhang', scholar: 'https://scholar.google.com/citations?user=L1xO0-0AAAAJ', initials: 'ZZ', image: '/images/members/phd-mark-zhang.png', focus: 'Radar, Analog/mixed-signal/RF circuits', bio: 'BSEE (2024) from SUSTech, Shenzhen, China, with work on integrated power management for wireline transceivers. MSEE (2026) from UCI. Currently pursuing PhD at UCI. Current research focuses on radar systems.', gradientFrom: 'from-eecs-teal', gradientTo: 'to-uci-blue' },
   { name: 'Mohammadamin (Amin) Montazar', initials: 'AM', image: '/images/members/phd-montazar.png', focus: 'mm-wave and terahertz integrated circuits', bio: 'B.S. and M.S. in Electrical Engineering from UC Davis (2020, 2022). Under Prof. Omeed Momeni, designed LC VCO in C-band with thesis on low power, low phase noise VCO for PLL applications. Senior RF Design Engineer for two years specializing in military communication systems VHF to C-Band.', gradientFrom: 'from-uci-blue-dark', gradientTo: 'to-uci-gold' },
   { name: 'Yuncheng Tu', initials: 'YT', image: '/images/members/phd-yuncheng-tu.png', focus: 'Analog, RF, and mm-wave circuits', bio: 'B.S. in Electrical Engineering from Southern University of Science and Technology, Shenzhen, China (2025). Currently pursuing Ph.D. at UCI.', gradientFrom: 'from-eng-blue', gradientTo: 'to-eecs-teal-light' },
 ];
@@ -96,6 +100,7 @@ const undergradResearchers: Member[] = [
 
 interface Alumnus {
   name: string;
+  scholar?: string;
   initials: string;
   image: string;
   detail: string;
@@ -104,8 +109,8 @@ interface Alumnus {
 }
 
 const phdAlumni: Alumnus[] = [
-  { name: 'Masoud Berahman', initials: 'MB', image: '/images/members/alumni-berahman.png', detail: 'Ph.D./Postdoc', now: undefined, bio: 'Completed PhD in electrical engineering and postdoctoral fellowship in physics. Primary research interests in two and one-dimensional materials applications in future electronic devices.' },
-  { name: 'Xuyang Liu', initials: 'XL', image: '/images/members/alumni-xuyang-liu.png', detail: '2020-2025', now: 'Staff Engineer, Marvell Technology', bio: 'BS in Electronic Information Engineering from Jilin University, China (2018), MS in Electrical Engineering from Columbia University (2019), PhD from UCI (2025). Research interests in mmWave front-end, VCO and PLL, FMCW radar system.' },
+  { name: 'Masoud Berahman', scholar: 'https://scholar.google.com/citations?user=BZgCwmkAAAAJ', initials: 'MB', image: '/images/members/alumni-berahman.png', detail: 'Ph.D./Postdoc', now: undefined, bio: 'Completed PhD in electrical engineering and postdoctoral fellowship in physics. Primary research interests in two and one-dimensional materials applications in future electronic devices.' },
+  { name: 'Xuyang Liu', scholar: 'https://scholar.google.com/citations?user=X43HexAAAAAJ', initials: 'XL', image: '/images/members/alumni-xuyang-liu.png', detail: '2020-2025', now: 'Staff Engineer, Marvell Technology', bio: 'BS in Electronic Information Engineering from Jilin University, China (2018), MS in Electrical Engineering from Columbia University (2019), PhD from UCI (2025). Research interests in mmWave front-end, VCO and PLL, FMCW radar system.' },
   { name: 'Behnam Moradi Shahrbabak', initials: 'BM', image: '/images/members/alumni-behnam.jpg', detail: '2019-2024', now: 'Senior RFIC Engineer, Kyocera', bio: 'Research interests in analog, RF, millimeter-wave circuits, and system design.' },
 ];
 
@@ -136,6 +141,22 @@ const cardVariants = {
 
 // --------------- sub-components ---------------
 
+function ScholarLink({ href, name }: { href: string; name: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`${name} on Google Scholar`}
+      onClick={(e) => e.stopPropagation()}
+      className="inline-flex items-center gap-1 text-[11px] font-medium text-uci-blue/80 hover:text-uci-blue focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-uci-gold transition-colors"
+    >
+      <GraduationCap className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+      Google Scholar
+    </a>
+  );
+}
+
 function MemberCard({ member, label = 'PhD Student' }: { member: Member; index: number; label?: string }) {
   const tags = member.focus.split(/,\s*and\s*|,\\s*|\\s+and\\s+/);
   const isAllen = member.name.includes('Allen') || member.name.includes('Yilun');
@@ -163,6 +184,11 @@ function MemberCard({ member, label = 'PhD Student' }: { member: Member; index: 
         </div>
         <h3 className="mt-4 font-bold text-eng-blue text-base leading-tight group-hover:text-uci-blue transition-colors duration-300">{member.name}</h3>
         <p className="text-xs text-gray-400 mt-1 font-medium tracking-wide uppercase">{label}</p>
+        {member.scholar && (
+          <div className="mt-1.5">
+            <ScholarLink href={member.scholar} name={member.name} />
+          </div>
+        )}
         <div className="mt-3 flex flex-wrap justify-center gap-1.5">
           {tags.map((t) => (
             <span key={t} className="inline-block px-2.5 py-1 rounded-full text-[11px] font-medium bg-gradient-to-r from-uci-blue/5 to-eecs-teal/5 text-uci-blue border border-uci-blue/10 group-hover:border-uci-blue/20 group-hover:from-uci-blue/10 group-hover:to-eecs-teal/10 transition-all duration-300">
@@ -209,6 +235,11 @@ function AlumnusCard({ alumnus, large = false }: { alumnus: Alumnus; large?: boo
             <span className="w-1.5 h-1.5 rounded-full bg-eecs-teal" />
             Now at {alumnus.now}
           </span>
+        )}
+        {alumnus.scholar && (
+          <div className="mt-1.5">
+            <ScholarLink href={alumnus.scholar} name={alumnus.name} />
+          </div>
         )}
       </div>
       {alumnus.bio && (
