@@ -67,6 +67,8 @@ interface Publication {
 
 const publications: Publication[] = [
   // ===== SELECTED JOURNAL PUBLICATIONS (22) =====
+  // #25
+  { authors: 'Y. Huang, H. R. Aghasi', title: 'AI-Assisted Radio-Frequency and mm-Wave Layout Using Electromagnetic Surrogates and Frequency-Adaptive Rules', venue: 'IEEE JSTEAP', year: 2026, type: 'journal', status: 'Published', link: 'https://ieeexplore.ieee.org/document/11647306' },
   // #24
   { authors: 'M. Berahman, A. Montazar, Y. Huang, H. Aghasi', title: 'Gigahertz frequency mixing and multiplication in an all-van der Waals ambipolar MoTe2 transistor', venue: 'Applied Physics Letters', year: 2026, type: 'journal', status: 'Published', link: 'https://pubs.aip.org/aip/apl/article/128/25/253504/3396329' },
   // #23
