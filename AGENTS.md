@@ -1,15 +1,34 @@
 # AGENTS.md — HIE Lab Website Project Guide
 
 > **This file is for AI agents (Hermes, Claude, Copilot, Cursor, etc.) working on this project.**
-> Read this file first to understand the project state, architecture, and conventions.
+> It holds the stable rules: what this repo is, what it is not, and how to deploy it.
+>
+> **For current state — what exists today, what is open, what is green — read `STATE.md`.**
+> This file changes when the workflow changes; `STATE.md` changes every session.
 
 ---
 
-## Project Status (as of May 2026)
+## Scope — read this before writing any code
 
-**Status:** ✅ LIVE — deployed and serving at https://hie.eng.uci.edu
+This repo is the **public lab website only**: `hie.eng.uci.edu`, a pure static export
+with **no backend of any kind** (no API routes, no auth, no database, no server actions).
 
-**Pending:** Continued expansion of the RF Toolbox and measurement video resources.
+The member portal, the lab tools and the AI-for-Circuit project site are a **different
+application, in a different and private repository**, serving `portal.ai4circuit.com`.
+None of it is here. Its location and infrastructure are deliberately not recorded in
+this repo, which is public.
+
+Two standing rules:
+
+1. **Do not add AI-for-Circuit demo content to this site.** Not the simulation demo, not
+   a results view, not an embed. It has its own site, served by the portal app. At most,
+   a sentence and an outbound link.
+2. **The only coupling to the portal is one constant** — `PORTAL_URL` in
+   `src/components/Navbar.tsx`, rendered as the "Member Login" link. Anything more
+   coupled than an `<a href>` belongs in the portal, so that a portal outage can never
+   take the lab's public face down with it.
+
+If a requested feature needs a server, it is portal work. Open the other folder.
 
 ---
 
@@ -17,11 +36,10 @@
 
 | Item | Value |
 |------|-------|
-| Project path | `/Users/allenhuang/Desktop/Allen_main/HIE_webcite` |
-| GitHub org | `hie-uci` (account: allenh12@uci.edu) |
 | Live URL | https://hie.eng.uci.edu |
-| Main repo | https://github.com/hie-uci/hie-uci.github.io |
-| Backup repo | https://github.com/hie-uci/HIE-Lab-Website |
+| Repo | https://github.com/hie-uci/hie-uci.github.io — **public** |
+| GitHub org | `hie-uci` |
+| Sibling project | the member portal — separate, private, not in this repo |
 | PI | Prof. Hamidreza Aghasi (haghasi@uci.edu) |
 | Built by | Allen Huang (Yilun Huang), PhD student |
 
@@ -95,16 +113,17 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,     // Required for GitHub Pages (no image optimization API)
   },
-  typescript: {
-    ignoreBuildErrors: true,
-  }
 };
 ```
 
+There is **no** `typescript.ignoreBuildErrors` escape hatch any more — type errors fail
+the build, which is the point. Do not add it back to get a build through.
+
 ### Deployment Workflow (.github/workflows/deploy.yml)
 - Triggers on push to `main`
-- Runs `npm ci` → `npm run build` → uploads `out/` to GitHub Pages
+- Runs `npm ci` → **lint → typecheck → test** → `npm run build` → uploads `out/` to Pages
 - Custom domain (`hie.eng.uci.edu`) is managed via `public/CNAME`
+- `out/` is **not** tracked in git; CI builds it
 
 ---
 
@@ -124,28 +143,40 @@ const nextConfig: NextConfig = {
 
 ## How to Deploy
 
-🚨 **CRITICAL DEPLOYMENT WARNING (origin vs pages)** 🚨
-This local project is connected to TWO remote repositories:
-1. `origin` -> `HIE-Lab-Website` (Stores the source code)
-2. `pages` -> `hie-uci.github.io` (The actual LIVE website that triggers the deployment Action)
+**`git push origin main`. That is the whole procedure.**
 
-To deploy changes to the live site, you **MUST** push to the `pages` remote.
+`origin` and `pages` are two remote names pointing at the **same** repository,
+`hie-uci/hie-uci.github.io`. Pushing to either one deploys; pushing to both does nothing
+extra.
+
+> **Stale instruction, do not follow it:** older versions of this file said `origin` was
+> a separate `HIE-Lab-Website` source repo and that you must also
+> `git push pages main --force`. That two-remote dance no longer applies, and
+> force-pushing a public repo destroys history for no benefit. If you see that
+> instruction anywhere, it is out of date.
 
 ```bash
 # Local development
-npm run dev          # → http://localhost:3000
+npm run dev                # → http://localhost:3000
 
-# Build & test locally
-npm run build
-npx serve out        # → http://localhost:3000
+# Gates — run these before pushing. A red gate means the site silently does not update.
+npm run lint && npm run typecheck && npm test
+npm run validate           # the same, plus a production build
 
-# Deploy (MUST run BOTH commands to update source AND live site)
-npm run build
+# Preview the static output (append a query string; index.html caches hard)
+npx serve out              # → http://localhost:3000/?v=2
+
+# Deploy
 git add -A
 git commit -m "your message"
-git push origin main   # 1. Saves source code to HIE-Lab-Website repo
-git push pages main --force # 2. 🚨 CRITICAL: Triggers build + deploy to live hie.eng.uci.edu
+git push origin main       # CI: lint → typecheck → test → build → Pages, ~70 s
 ```
+
+**Never commit secrets, credentials, local filesystem paths, or details of private
+infrastructure.** This repo is public and stays public — making it private would take
+`hie.eng.uci.edu` offline, because free-plan GitHub Pages will not serve from a private
+repository. A push is a publication and there is no undo; removing a file later does not
+remove it from history.
 
 ---
 
@@ -159,4 +190,4 @@ git push pages main --force # 2. 🚨 CRITICAL: Triggers build + deploy to live 
 
 ---
 
-*Last updated: May 2026*
+*Last updated: 2026-08-24 — see `STATE.md` for current state.*

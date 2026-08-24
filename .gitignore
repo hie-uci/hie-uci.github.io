@@ -40,3 +40,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# agent/tool scratch output — session-scoped, never part of the site
+/.playwright-mcp/
+
+# machine-local agent permissions — accumulates absolute paths to other
+# checkouts, and this repo is public. settings.json (shared) is still tracked.
+/.claude/settings.local.json
