@@ -1,6 +1,6 @@
 # STATE — HIE Lab public website
 
-Last updated: 2026-08-24
+Last updated: 2026-08-28
 
 ## What this is
 
@@ -103,7 +103,7 @@ Plus `robots.ts` and `sitemap.ts` (generated at build).
 - `public/images/` — 21 member photos, 40 research images, 5 composite chip images,
   15 individual die photos, 1 logo.
 
-## Quality gates — green as of 2026-08-24
+## Quality gates — green as of 2026-08-28
 
 | | |
 |---|---|
@@ -133,6 +133,14 @@ Plus `robots.ts` and `sitemap.ts` (generated at build).
   would take `hie.eng.uci.edu` offline, since free-plan GitHub Pages will not serve from
   a private repository. There is no undo: a push is a publication, and scrubbing a file
   afterwards does not remove it from the history anyone already cloned.
+- **Right after a deploy the site can render unstyled for up to 10 minutes.** GitHub
+  Pages' CDN (Fastly) is not updated atomically: a browser can fetch the new `index.html`
+  while its edge node still lacks the new hashed `_next/static/chunks/*.css`, and the
+  resulting 404 is cached with `max-age=600` on that node (query strings do not bust it).
+  Seen 2026-08-28 — one node served a cached 404 while the other three served the file.
+  Fix: `gh run rerun <run-id>` on the deploy workflow — a fresh Pages deployment purges the
+  CDN. Do not declare a deploy done until the CSS referenced by the live HTML returns 200
+  from every `dig +short hie.eng.uci.edu` IP (`curl --resolve hie.eng.uci.edu:443:<ip>`).
 - **`.claude/settings.local.json` is not tracked**, and should not be re-added. It
   accumulates machine-local permission entries, including absolute paths to other
   checkouts.
