@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
+/** The old /research-projects address now lives at /research. */
 export default function RedirectPage() {
   const router = useRouter();
   useEffect(() => {
@@ -10,10 +12,13 @@ export default function RedirectPage() {
   }, [router]);
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-uci-blue animate-pulse">Redirecting to Research...</h1>
-        <p className="text-gray-500 mt-2">Please wait while we transfer you to the new page.</p>
+    <main className="grid min-h-dvh place-items-center bg-bg px-5 text-center text-ink">
+      <div>
+        <p className="kicker">Moved</p>
+        <h1 className="display-3 mt-4">Research projects are now on the Research page.</h1>
+        <Link href="/research/" className="link-arrow mt-6">
+          Go to Research <span className="arrow">→</span>
+        </Link>
       </div>
     </main>
   );
