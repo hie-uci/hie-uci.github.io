@@ -25,13 +25,20 @@ export interface Alumnus {
   bio?: string;
 }
 
+/** Web-sized WebP made by scripts/make-image-derivatives.py; the original stays in place. */
+export function webPortrait(image: string): string {
+  const stem = image.split('/').pop()?.replace(/\.[^.]+$/, '');
+  if (!stem) throw new Error(`Portrait path has no file name: ${image}`);
+  return `/images/members/web/${stem}.webp`;
+}
+
 export const director = {
   name: 'Prof. Hamidreza Aghasi',
   initials: 'HA',
   image: '/images/members/pi-aghasi.jpeg',
   title: 'Associate Professor of EECS',
   email: 'haghasi@uci.edu',
-  phone: '(949)-824-8810',
+  phone: '(949) 824-8810',
   education: 'B.Sc. in Electrical Engineering, Sharif University of Technology, Tehran, Iran (2011); M.S. and Ph.D. in Electrical Engineering, Cornell University (2015, 2017)',
   expertise: 'mm-wave and terahertz electronics for applications in communication, biomedical imaging, and molecular spectroscopy',
   experience: [
