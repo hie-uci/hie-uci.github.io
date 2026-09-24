@@ -1,4 +1,4 @@
-"""Generate web-sized WebP derivatives for die photos and member portraits.
+"""Generate web-sized WebP derivatives for die photos, portraits and research figures.
 
 The site is a static export with `images.unoptimized`, so Next.js serves image
 files as they are. A 160 px thumbnail would otherwise download a 3 MB PNG.
@@ -13,6 +13,7 @@ upscales: a source narrower than the target width is re-encoded at its own size.
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -40,6 +41,7 @@ CHIPS = {
 }
 CHIP_WIDTHS = (1200, 480)
 PORTRAIT_WIDTH = 640
+RESEARCH_WIDTH = 1400
 
 
 def encode(src: Path, dst: Path, width: int, quality: int = 84) -> tuple[int, int]:
@@ -54,7 +56,8 @@ def encode(src: Path, dst: Path, width: int, quality: int = 84) -> tuple[int, in
         return im.size
 
 
-def main() -> int:
+def chips() -> int:
+    """Die photos at two widths; the gallery lightbox still opens the original."""
     chip_dir = PUBLIC / "images" / "chips" / "individual"
     out_dir = PUBLIC / "images" / "chips" / "web"
     missing = [name for name in CHIPS.values() if not (chip_dir / name).exists()]
@@ -65,19 +68,58 @@ def main() -> int:
         for width in CHIP_WIDTHS:
             size = encode(chip_dir / name, out_dir / f"{slug}-{width}.webp", width)
             print(f"chip   {slug:18s} {width:5d} -> {size}")
+    return 0
 
-    logo = PUBLIC / "images" / "logo" / "hie-logo.png"
+
+def logo() -> None:
+    src = PUBLIC / "images" / "logo" / "hie-logo.png"
     for width in (160, 320):
-        size = encode(logo, logo.with_name(f"hie-logo-{width}.webp"), width, quality=90)
+        size = encode(src, src.with_name(f"hie-logo-{width}.webp"), width, quality=90)
         print(f"logo   hie-logo {width:5d} -> {size}")
 
+
+def members() -> None:
     member_dir = PUBLIC / "images" / "members"
     for src in sorted(member_dir.iterdir()):
         if src.suffix.lower() not in (".png", ".jpg", ".jpeg"):
             continue
-        dst = member_dir / "web" / f"{src.stem}.webp"
-        size = encode(src, dst, PORTRAIT_WIDTH, quality=86)
+        size = encode(
+            src, member_dir / "web" / f"{src.stem}.webp", PORTRAIT_WIDTH, quality=86
+        )
         print(f"member {src.stem:28s} -> {size}")
+
+
+def research() -> None:
+    """Research figures for inline display; several originals are 3-5 MB PNGs.
+
+    Also writes each derivative's pixel size to src/data/researchFigureSizes.json,
+    so the research page can reserve the space before an image loads.
+    """
+    research_dir = PUBLIC / "images" / "research"
+    sizes: dict[str, list[int]] = {}
+    for src in sorted(research_dir.iterdir()):
+        if src.suffix.lower() not in (".png", ".jpg", ".jpeg"):
+            continue
+        size = encode(
+            src, research_dir / "web" / f"{src.stem}.webp", RESEARCH_WIDTH, quality=86
+        )
+        sizes[src.stem] = list(size)
+        print(f"figure {src.stem:34s} -> {size}")
+    # The lead visuals are already WebP; record their size without re-encoding.
+    for src in sorted((research_dir / "visuals").glob("*.webp")):
+        with Image.open(src) as im:
+            sizes[f"visuals/{src.stem}"] = [im.width, im.height]
+    manifest = ROOT / "src" / "data" / "researchFigureSizes.json"
+    manifest.write_text(json.dumps(sizes, indent=2, sort_keys=True) + "\n")
+    print(f"sizes  {len(sizes)} figures -> {manifest.relative_to(ROOT)}")
+
+
+def main() -> int:
+    if chips():
+        return 1
+    logo()
+    members()
+    research()
     return 0
 
 

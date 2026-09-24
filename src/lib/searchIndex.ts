@@ -7,6 +7,7 @@ import { publications, publicationTypeLabels } from '@/data/publications';
 import { director, phdStudents, undergradResearchers, phdAlumni, otherAlumni } from '@/data/team';
 import { chips } from '@/data/chips';
 import { labNews, newsCategoryLabels } from '@/data/news';
+import { normalize } from './text';
 
 export type SearchGroup = 'Pages' | 'RF Toolbox' | 'People' | 'Publications' | 'Chips' | 'News';
 
@@ -26,15 +27,7 @@ export interface SearchItem {
   titleKey: string;
 }
 
-export function normalize(text: string): string {
-  return text
-    .normalize('NFKD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/[–—]/g, '-')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
+export { normalize };
 
 /** Anchor id for a person on /team; the team page uses the same function. */
 export function personSlug(name: string): string {
