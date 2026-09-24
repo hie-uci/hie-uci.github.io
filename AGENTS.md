@@ -24,7 +24,7 @@ Two standing rules:
    a results view, not an embed. It has its own site, served by the portal app. At most,
    a sentence and an outbound link.
 2. **The only coupling to the portal is one constant** — `PORTAL_URL` in
-   `src/data/site.ts`, rendered as the "Member Login" link. Anything more
+   `src/components/Navbar.tsx`, rendered as the "Member Login" link. Anything more
    coupled than an `<a href>` belongs in the portal, so that a portal outage can never
    take the lab's public face down with it.
 
@@ -47,18 +47,16 @@ If a requested feature needs a server, it is portal work. Open the other folder.
 
 ## Tech Stack
 
-- **Framework:** Next.js 16 (App Router), static export (`output: "export"`)
-- **React:** 19.2, with React view transitions (`experimental.viewTransition`)
-- **Styling:** Tailwind CSS 4 over the design tokens in `src/app/globals.css`
-- **Design system:** "Signal & Silicon" — rules, tokens and measured contrast in `docs/DESIGN.md`
-- **Fonts:** Mona Sans, Instrument Serif, Martian Mono (`next/font`)
-- **3D:** three.js (on-demand rendering, see `src/components/rf/three/`)
-- **Animation:** CSS first; framer-motion for the header marker and the motion setting
-- **Visualization:** Recharts, XYFlow (cascade builder), hand-drawn SVG instruments
+- **Framework:** Next.js 16 (App Router)
+- **Rendering:** Static Export (`output: "export"` in next.config.ts)
+- **React:** 19.2.3
+- **Styling:** Tailwind CSS 4 (via @tailwindcss/postcss)
+- **Animations:** Framer Motion 12, Matter.js (Physics)
+- **Visualization:** Recharts, XYFlow (Node Builder)
 - **Mathematics:** KaTeX (react-katex)
-- **Theming:** next-themes (Dark Space default, Cleanroom light)
+- **Theming:** next-themes (Dark/Light mode support)
 - **Language:** TypeScript 5
-- **Icons:** lucide-react, sparingly
+- **Icons:** @heroicons/react 2, lucide-react
 - **Hosting:** GitHub Pages (free, no server needed)
 - **CI/CD:** GitHub Actions (auto-deploy on push to `main`)
 
@@ -68,19 +66,39 @@ If a requested feature needs a server, it is portal work. Open the other folder.
 
 ```
 src/
-├── app/                   # one folder per route, each with page.tsx + layout.tsx (metadata)
-│   ├── layout.tsx         # fonts, motion boot script, Navbar, view transition, Footer, ⌘K search
-│   ├── globals.css        # design tokens, utilities, component classes
-│   └── …                  # /, research, rf-toolbox, team, publications, chip-gallery,
-│                          # news, teaching, contact, available-positions, measurement-tutorial
-├── components/            # shell, page skeleton, Lightbox, and one folder per page area:
-│   ├── home/ team/ research/ publications/ chips/ news/ contact/
-│   └── rf/                # RF Toolbox: controls, ToolModule, three/ (3D stages), fmcw/
-├── data/                  # all content: publications, news, team, chips, research, tools, site
-├── lib/                   # tested math and search (*.test.ts beside each module), hooks
-└── types/
-archive/                   # superseded code, excluded from build, lint and type-check
-scripts/make-image-derivatives.py   # WebP copies of chips, portraits and research figures
+├── app/                          # Next.js App Router (file-based routing)
+│   ├── layout.tsx                # Root layout: Navbar + Footer + ScrollToTop
+│   ├── page.tsx                  # HOMEPAGE — Hero, About, Chips, Research, News, Publications
+│   ├── globals.css               # Global styles, Tailwind theme, custom animations
+│   ├── research/page.tsx         # Research highlights (5 thrust areas)
+│   ├── research-projects/page.tsx# Detailed views for specific research projects
+│   ├── publications/page.tsx     # Publications with search + filter tabs
+│   ├── team/page.tsx             # PI, PhD students, undergrads, alumni
+│   ├── chip-gallery/page.tsx     # Full chip photo gallery with lightbox
+│   ├── news/page.tsx             # Lab news items with timeline + filter
+│   ├── teaching/page.tsx         # Courses taught by Prof. Aghasi
+│   ├── rf-toolbox/page.tsx       # Interactive RF calculators and node-based cascade builder
+│   ├── measurement-tutorial/page.tsx # Video resources and lab measurement guides
+│   ├── contact/page.tsx          # Contact form + lab info
+│   └── available-positions/page.tsx  # Open positions
+│
+├── components/                   # Reusable UI components
+│   ├── Navbar.tsx                # Sticky nav: active page indicator + scroll progress bar
+│   ├── ThemeSwitcher.tsx         # Dark/Light mode toggle button
+│   ├── Footer.tsx                # Multi-column footer with links
+│   ├── ChipMarquee.tsx           # Two-row auto-scrolling chip gallery with lightbox
+│   ├── Lightbox.tsx              # Click-to-zoom image viewer (ESC to close)
+│   ├── ParticleField.tsx         # Canvas-based particle network (Hero background)
+│   ├── FluidPlasmaBackground.tsx # Fluid dynamic background animation
+│   ├── FallingChipsBackground.tsx# Matter.js physics-based falling chips
+│   ├── SystemCascadeBuilder.tsx  # XYFlow-based visual RF cascade node builder
+│   ├── InteractiveSmithChart.tsx # SVG-based interactive Smith Chart
+│   ├── AdvancedCalculators.tsx   # Complex RF formulas with KaTeX rendering
+│   └── ...                       # Many other components (cards, headers, layouts)
+│
+└── lib/
+    ├── cascadeMath.ts            # Mathematical logic for system cascade RF calculations
+    └── sParameterEngine.ts       # Logic for handling S-parameters
 ```
 
 ---
@@ -111,9 +129,15 @@ the build, which is the point. Do not add it back to get a build through.
 
 ## Content Data Locations
 
-Content lives in `src/data/`. The table of which file holds what is kept in one place,
-`STATE.md` → "Site map", so it cannot drift. After changing any image, run
-`python3 scripts/make-image-derivatives.py`.
+| Content | File | How to Update |
+|---------|------|---------------|
+| Homepage news | `src/app/page.tsx` → `newsItems` array | Add `{ date, text, tag }` objects |
+| Research areas | `src/app/page.tsx` → `researchAreas` array | Add objects with title, description, iconVariant, gradient |
+| Publications | `src/app/publications/page.tsx` → `publications` array | Add `{ authors, title, venue, year, type, link }` |
+| News timeline | `src/app/news/page.tsx` → `newsItems` array | Add `{ date, month, year, title, category }` |
+| Team members | `src/app/team/page.tsx` → `phdStudents`, etc. | Add Member/Alumnus objects |
+| RF Toolbox | `src/app/rf-toolbox/data.ts` & `src/components/Calculators.tsx` | Modify calculator logic or data arrays |
+| Videos | `src/app/measurement-tutorial/page.tsx` | Add iframe / YouTube links |
 
 ---
 
@@ -161,9 +185,9 @@ remove it from history.
 1. **Next.js <Image> with Static Export:** Always use `unoptimized` prop or global config for `<Image>`, otherwise build will fail for GitHub Pages.
 2. **Build fails?** — Run `npm run lint` and `npm run build` locally first.
 3. **Changes not showing?** — GitHub Actions takes ~45 seconds. Check the Actions tab on `hie-uci.github.io`.
-4. **Colour:** Use the design tokens (`bg-surface`, `text-ink`, `border-line`, …). They switch with the theme, so new code needs no `dark:` colour variants. Rules and contrast figures: `docs/DESIGN.md`.
+4. **Dark Mode:** Use `dark:` variants in Tailwind for all new components. The project uses `next-themes`.
 5. **Interactive Math:** Use `react-katex` for formula rendering.
 
 ---
 
-*Last updated: 2026-09-24 — see `STATE.md` for current state.*
+*Last updated: 2026-08-24 — see `STATE.md` for current state.*

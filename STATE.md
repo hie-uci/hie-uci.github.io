@@ -2,9 +2,12 @@
 
 Last updated: 2026-09-24
 
-> **The "Signal & Silicon" redesign went live on 2026-09-24**, fast-forwarded to `main`
-> from branch `redesign/signal-and-silicon` (deploy run 36034590711, verified on all four
-> Pages CDN nodes). Design rules: `docs/DESIGN.md`.
+> **2026-09-24: a full visual redesign was deployed and then reverted the same day** at
+> the maintainer's request; they prefer the existing style. The site's tree is identical
+> to commit `624388b` again. The redesign is preserved on branch
+> `redesign/signal-and-silicon` and in `main`'s history (commits `44473c3` to `8e00916`),
+> so individual features can be brought back later. **Preview any visual change with the
+> maintainer before deploying it.**
 
 ## What this is
 
@@ -47,8 +50,9 @@ the path. It is deliberately not written down here.
    mentioned here at all, it is a sentence and an outbound link on the research page —
    never a feature of this site. (Verified absent 2026-08-24: the only portal reference
    in the whole tree is the constant below.)
-2. **The only touchpoint is one constant.** `PORTAL_URL` in `src/data/site.ts`
-   (`'https://portal.ai4circuit.com'`) — rendered as the "Member Login" link in both the desktop rail and the mobile menu. Anything more coupled than an
+2. **The only touchpoint is one constant.** `src/components/Navbar.tsx:14` —
+   `const PORTAL_URL = 'https://portal.ai4circuit.com'` — rendered as the "Member Login"
+   link in both the desktop rail and the mobile menu. Anything more coupled than an
    `<a href>` belongs in the portal, because a portal outage must never be able to take
    the lab's public face down with it.
 
@@ -83,44 +87,36 @@ Twelve routes, each a directory under `src/app/` with its own `layout.tsx` for m
 
 Plus `robots.ts` and `sitemap.ts` (generated at build).
 
-**Content is data modules under `src/data/`**, not a CMS. Pages, the homepage and the
-⌘K site search all read the same module, so one edit lands everywhere:
+**Content is data arrays inside the page files**, not a CMS. To edit:
 
 | Content | Where |
 |---|---|
-| Publications, talks, patents | `src/data/publications.ts` |
-| News | `src/data/news.ts` (the homepage shows the first six) |
-| Team, alumni, director CV | `src/data/team.ts` |
-| Die photos | `src/data/chips.ts` |
-| Research: homepage summaries / full text | `src/data/research.ts` / `src/data/researchProjects.ts` (verbatim from the original site) |
-| RF Toolbox catalogue | `src/data/rfTools.ts`; calculators in `src/components/Calculators.tsx`, `AdvancedCalculators.tsx` and `src/components/rf/` |
-| Measurement videos | `src/data/tutorials.ts` |
-| Navigation, contact details, portal URL | `src/data/site.ts` |
-
-After adding or replacing any image, run `python3 scripts/make-image-derivatives.py`: the
-pages use its WebP copies, and the research page reads the sizes it writes to
-`src/data/researchFigureSizes.json`.
+| Homepage news / research areas | `src/app/page.tsx` → `newsItems`, `researchAreas` |
+| Publications | `src/app/publications/page.tsx` → `publications` |
+| News timeline | `src/app/news/page.tsx` → `newsItems` |
+| Team | `src/app/team/page.tsx` → `phdStudents`, alumni, … |
+| RF Toolbox | `src/app/rf-toolbox/data.ts`, `src/components/Calculators.tsx` |
+| Videos | `src/app/measurement-tutorial/page.tsx` |
 
 ## Code
 
-- `src/components/` — the shell (`Navbar`, `Footer`, `CommandPalette`, `ThemeSwitcher`,
-  `MotionToggle`), page skeleton (`PageHero`, `SectionHead`, `Shell`), `Lightbox`, and
-  per-page folders: `home/`, `team/`, `research/`, `publications/`, `chips/`, `news/`,
-  `contact/`. The RF Toolbox lives in `rf/`: shared controls, `ToolModule`, the three.js
-  stages in `rf/three/`, the cascade lineup and the FMCW scope in `rf/fmcw/`.
-- `src/lib/` — tested logic: `cascadeMath`, `rfMath`, `sParameterEngine`, `arrayPattern`,
-  `fmcw`, `spectrum`, `searchIndex`, `publicationSearch` (each with a `.test.ts`), plus
-  small hooks (`useMotionMode`, `useMediaQuery`, `useElementWidth`) and `metadata.ts`.
-- `archive/` — superseded code and CSS, excluded from the build, lint and type-check.
+- `src/components/` — 26 components. Navbar (two-tier, fixed), Footer, ThemeSwitcher
+  (next-themes, dark/light), several canvas/physics backgrounds
+  (`FluidPlasmaBackground`, `FallingChipsBackground` via Matter.js, `ParticleField`),
+  and the RF visualisation set (`SmithChart`, `InteractiveSmithChart`, `PolarPlot`,
+  `SParameterViewer`, `SystemCascadeBuilder` on XYFlow).
+- `src/lib/` — the only tested code: `cascadeMath.ts`, `rfMath.ts`,
+  `sParameterEngine.ts` (each with a `.test.ts`), plus `basePath.ts` and `metadata.ts`.
+- `public/images/` — 21 member photos, 40 research images, 5 composite chip images,
+  15 individual die photos, 1 logo.
 
-## Quality gates — green, 2026-09-24 (deployed)
+## Quality gates — green as of 2026-08-28
 
 | | |
 |---|---|
 | `npm run lint` | clean |
-| `npm run typecheck` | clean — `tsc --noEmit`, no `ignoreBuildErrors` escape hatch |
-| `npm test` | **75 tests, 0 fail** (node:test over `src/lib/*.test.ts`) |
-| `npm run build` | 17 static routes; deep links (`?q=`, `?chip=`, `#person`) checked on the export |
+| `npm run typecheck` | clean — `tsc --noEmit`, no `ignoreBuildErrors` escape hatch any more |
+| `npm test` | **29 tests, 7 suites, 0 fail** (node:test over `src/lib/*.test.ts`) |
 
 ## Known gotchas
 
@@ -152,27 +148,16 @@ pages use its WebP copies, and the research page reads the sizes it writes to
   Fix: `gh run rerun <run-id>` on the deploy workflow — a fresh Pages deployment purges the
   CDN. Do not declare a deploy done until the CSS referenced by the live HTML returns 200
   from every `dig +short hie.eng.uci.edu` IP (`curl --resolve hie.eng.uci.edu:443:<ip>`).
-- **The header is opaque on purpose.** It carries `view-transition-name`, which makes it a
-  backdrop root, so a `backdrop-filter` inside it has nothing behind it to blur and page
-  text shows through a translucent background.
-- **Dev server: a CSS edit saved in the same instant as a component edit can be skipped.**
-  Turbopack then keeps serving the old stylesheet. Save `globals.css` again on its own.
-- **Member photos are small** (most PhD portraits are 160–230 px wide). They are shown at
-  about 150 px; showing them larger needs new photos, not upscaling.
 - **`.claude/settings.local.json` is not tracked**, and should not be re-added. It
   accumulates machine-local permission entries, including absolute paths to other
   checkouts.
 
 ## Open
 
-- [ ] Higher-resolution portraits (800 px or more) for the PhD students.
-- [ ] Check three alumni photos, whose file names look swapped against the names:
-      Mengjie (Kaylee) Xie uses `alumni-annika.png`, Kelly Aung Lu uses `alumni-kaylee.jpg`,
-      Annika Ageles Del Rosario uses `alumni-kelly.jpg`.
-- [ ] `@heroicons/react` and `matter-js` are no longer imported; they can be removed from
-      `package.json`.
-- [ ] One sentence and an outbound link to `ai4circuit.com` on the research page (a link,
-      not demo content).
+- [ ] `AGENTS.md`'s "Content Data Locations" duplicates the table above — one of the two
+      should point at the other rather than drifting separately.
+- [ ] Continued expansion of the RF Toolbox and the measurement video resources
+      (the only feature work that was outstanding as of May 2026).
 
 Superseded history lives in `archive/PROGRESS.md` (design-change log, Feb–May 2026) and
 is not linked from anywhere active.

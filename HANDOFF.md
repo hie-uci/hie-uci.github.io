@@ -2,44 +2,31 @@
 
 ## Current state
 
-- The **"Signal & Silicon" redesign is live** on https://hie.eng.uci.edu since 2026-09-24.
-  `main` was fast-forwarded from `redesign/signal-and-silicon`; CI passed and the new
-  HTML, CSS, scripts and images return 200 from all four Pages CDN nodes.
-- Every page is redesigned. The RF Toolbox gained a 3D phased-array lab, animated
-  microstrip/stripline/patch/waveguide stages, a cascade builder with a level diagram
-  and noise/linearity budgets, and an animated FMCW chirp scope.
-- Content moved out of the page files into `src/data/` (verbatim; research and
-  publications were checked field by field with the TypeScript parser).
-- Gates green: lint, typecheck, 75 tests, build (17 static routes). On the live site,
-  deep links (`?q=`, `?chip=`, `#person`) and client-side navigation were checked.
+- The live site is back to its pre-redesign style. The working tree matches commit
+  `624388b` exactly, restored with a revert commit on `main` (no history rewritten).
+- Gates as before the redesign: lint, typecheck, 29 tests, build.
 
 ## Important context
 
-- Every push to `main` deploys. After a deploy, follow the CDN check in `STATE.md`.
-- Design rules, tokens and measured contrast: `docs/DESIGN.md`. Where content lives:
-  `STATE.md` → "Site map".
-- After adding or replacing any image, run `python3 scripts/make-image-derivatives.py`.
-- Dev server: a `globals.css` edit saved together with a component edit can be skipped;
-  save the CSS again on its own.
-- The design canvas used to plan this work is a private artifact in the maintainer's
-  Claude account; it is not referenced from this public repo.
+- A complete redesign was built, deployed and reverted today because the maintainer does
+  not like its look. It is kept on branch `redesign/signal-and-silicon` and in the
+  history of `main`.
+- Parts of it are independent of the look and could be ported into the current style if
+  wanted: RF Toolbox 3D stages and the FMCW chirp scope, the cascade level diagram and
+  budgets, ⌘K site search, publication search with shareable links, deep links to single
+  chips, and WebP copies of the heavy research figures.
+- Show screenshots or a local preview before deploying any future visual change.
 
 ## Next steps
 
-- [ ] Collect feedback from the lab on the live redesign.
-- [ ] Get PhD portraits at 800 px or more; today's are 160–230 px, so they stay small.
-- [ ] Check the three alumni photos whose file names look swapped (listed in `STATE.md`).
-- [ ] Optional: drop the unused `@heroicons/react` and `matter-js` dependencies.
-- [ ] Optional: one sentence and an outbound link to `ai4circuit.com` on the research page.
+- [ ] Only if the maintainer asks: port chosen features from the redesign branch in the
+      current style.
+- [ ] Three alumni photos look swapped against the names: Mengjie (Kaylee) Xie uses
+      `alumni-annika.png`, Kelly Aung Lu uses `alumni-kaylee.jpg`, Annika Ageles Del
+      Rosario uses `alumni-kelly.jpg`.
+- [ ] Most PhD portraits are only 160–230 px wide; better photos would help.
 
 ## Decisions made
 
-- Dark Space is the default theme; Cleanroom is the light theme. Both are token-driven.
-- The header is opaque: its view-transition name makes a backdrop blur impossible.
-- Portraits are shown at about 150 px because of their source resolution. Real faces are
-  never AI-upscaled.
-- Research figures are never cropped; they sit on white plates and open in the lightbox.
-- Filters live in the URL through a small suspended component, so the static HTML still
-  carries every entry.
-- The director is labelled "Director", not "Principal Investigator".
-- Superseded components and CSS utilities moved to `archive/`, not deleted.
+- Reverted with `git revert` rather than a force-push; the repository is public and its
+  history stays intact.

@@ -2,13 +2,8 @@
 
 import React, { useState } from 'react';
 import { SmithChart } from './SmithChart';
-import dynamic from 'next/dynamic';
-
-// three.js arrives with the first 3D stage, not with the page.
-const PatchStage = dynamic(() => import('./rf/three/PatchStage'), {
-  ssr: false,
-  loading: () => <div className="absolute inset-0 animate-pulse bg-surface-2/40" aria-hidden="true" />,
-});
+import { PolarPlot } from './PolarPlot';
+import { RFModelBadge } from './RFModelBadge';
 
 /* =========================================================================
    Impedance Matching Synthesizer (L-Match)
@@ -161,85 +156,75 @@ export function ImpedanceMatchingCalculator() {
   }
 
   return (
-    <div>
+    <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
+      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">L-Network Impedance Matching Synthesizer</h4>
+      <RFModelBadge level="identity" detail="Ideal lossless single-frequency lumped-network synthesis." />
       
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="field-label">Source Resistance (Ω)</label>
-              <input type="number" step="any" value={rs} onChange={(e) => setRs(e.target.value)} className="field-input" />
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Source Resistance (Ω)</label>
+              <input type="number" step="any" value={rs} onChange={(e) => setRs(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
             </div>
             <div>
-              <label className="field-label">Source Reactance (Ω)</label>
-              <input type="number" step="any" value={xs} onChange={(e) => setXs(e.target.value)} className="field-input" />
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Source Reactance (Ω)</label>
+              <input type="number" step="any" value={xs} onChange={(e) => setXs(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
             </div>
             <div>
-              <label className="field-label">Load Resistance (Ω)</label>
-              <input type="number" step="any" value={rl} onChange={(e) => setRl(e.target.value)} className="field-input" />
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Load Resistance (Ω)</label>
+              <input type="number" step="any" value={rl} onChange={(e) => setRl(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
             </div>
             <div>
-              <label className="field-label">Load Reactance (Ω)</label>
-              <input type="number" step="any" value={xl} onChange={(e) => setXl(e.target.value)} className="field-input" />
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Load Reactance (Ω)</label>
+              <input type="number" step="any" value={xl} onChange={(e) => setXl(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
             </div>
             <div className="col-span-2">
-              <label className="field-label">Frequency (GHz)</label>
-              <input type="number" step="0.1" value={freq} onChange={(e) => setFreq(e.target.value)} className="field-input" />
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Frequency (GHz)</label>
+              <input type="number" step="0.1" value={freq} onChange={(e) => setFreq(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
             </div>
           </div>
 
-          <div className="readout-panel space-y-4">
-            <h5 className="kicker mb-3">Synthesized Networks</h5>
+          <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-4">
+            <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Synthesized Networks</h5>
             {solutions.length > 0 ? (
               solutions.map((sol, i) => (
-                <div key={i} className="rounded-[4px] border border-line bg-surface p-4">
+                <div key={i} className="p-4 bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700 rounded-lg">
                   <div className="text-xs font-bold text-uci-blue uppercase tracking-wide mb-2">{sol.type} Solution</div>
-                  <div className="flex justify-between items-center text-sm mb-1"><span className="text-ink-2">Series Component</span> <span className="font-mono font-medium">{sol.series}</span></div>
-                  <div className="flex justify-between items-center text-sm"><span className="text-ink-2">Shunt Component ({sol.shuntPos})</span> <span className="readout text-trace-2">{sol.shunt}</span></div>
+                  <div className="flex justify-between items-center text-sm mb-1"><span className="text-gray-600 dark:text-gray-400">Series Component</span> <span className="font-mono font-medium">{sol.series}</span></div>
+                  <div className="flex justify-between items-center text-sm"><span className="text-gray-600 dark:text-gray-400">Shunt Component ({sol.shuntPos})</span> <span className="font-mono font-medium text-eecs-teal">{sol.shunt}</span></div>
                 </div>
               ))
             ) : (
-              <div className="text-sm text-ink-3">No valid L-match solution. Source and Load might be identical or invalid input.</div>
+              <div className="text-sm text-gray-400">No valid L-match solution. Source and Load might be identical or invalid input.</div>
             )}
           </div>
         </div>
 
-        <div className="flex flex-col items-center justify-center rounded-[4px] border border-line bg-bg-raised p-4 min-h-[300px]">
-          <h5 className="kicker mb-4 w-full text-left">Smith chart · solution 1</h5>
+        <div className="flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-gray-200 dark:border-gray-700 p-4 min-h-[300px]">
+          <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-4 w-full text-left">Interactive Smith Chart (Sol 1)</h5>
           {validPoints ? (
-            <SmithChart
+            <SmithChart 
               points={[
-                { r: sourceR, x: sourceX, label: 'Z_S', color: 'var(--ink-3)' },
-                { r: loadR, x: loadX, label: 'Z_L', color: 'var(--series-1)' },
-                { r: targetR, x: targetX, label: 'Z_S*', color: 'var(--series-4)' },
-                ...(solutions.length > 0 ? [{ r: midR, x: midX, color: 'var(--series-2)' }] : [])
+                { r: sourceR, x: sourceX, label: 'Z_S', color: '#64748b' },
+                { r: loadR, x: loadX, label: 'Z_L', color: '#0064a4' },
+                { r: targetR, x: targetX, label: 'Z_S*', color: '#e03b24' },
+                ...(solutions.length > 0 ? [{ r: midR, x: midX, color: '#f5a90f' }] : [])
               ]}
               paths={[
                 ...(solutions.length > 0 ? [
-                  { start: { r: loadR, x: loadX }, end: { r: midR, x: midX }, color: 'var(--series-1)' },
-                  { start: { r: midR, x: midX }, end: { r: targetR, x: targetX }, color: 'var(--series-4)' }
+                  { start: { r: loadR, x: loadX }, end: { r: midR, x: midX }, color: '#0064a4' },
+                  { start: { r: midR, x: midX }, end: { r: targetR, x: targetX }, color: '#e03b24' }
                 ] : [
-                  { start: { r: sourceR, x: sourceX }, end: { r: loadR, x: loadX }, color: 'var(--line-strong)' }
+                  { start: { r: sourceR, x: sourceX }, end: { r: loadR, x: loadX }, color: '#94a3b8' }
                 ])
               ]}
             />
           ) : (
-            <div className="text-sm text-ink-3">Waiting for valid inputs to plot.</div>
+            <div className="text-sm text-gray-400">Waiting for valid inputs to plot.</div>
           )}
-          <ul className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1.5 font-mono text-[10.5px] text-ink-3 [font-stretch:87.5%]">
-            {[
-              ['var(--series-1)', 'Load Z_L'],
-              ['var(--series-2)', 'Intermediate'],
-              ['var(--series-4)', 'Matched Z_S*'],
-              ['var(--ink-3)', 'Source Z_S'],
-            ].map(([colour, label]) => (
-              <li key={label} className="inline-flex items-center gap-1.5">
-                <span className="size-2 rounded-full" style={{ background: colour }} aria-hidden="true" />
-                {label}
-              </li>
-            ))}
-          </ul>
-          <div className="text-xs text-ink-3 mt-2 text-center">Ideal, lossless, single-frequency L match. Component Q, self-resonance, pads/vias, distributed effects, stability, and realizability are not included.</div>
+          <div className="text-xs text-slate-500 mt-2 text-center">Blue: Unmatched Load | Orange: Intermediate | Red: Matched (Z_S*)</div>
+          <div className="text-xs text-slate-500 mt-2 text-center">Ideal, lossless, single-frequency L match. Component Q, self-resonance, pads/vias, distributed effects, stability, and realizability are not included.</div>
         </div>
       </div>
     </div>
@@ -278,45 +263,47 @@ export function ReceiverCascadeCalculator() {
   const results = calcReceiver();
 
   return (
-    <div>
+    <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
+      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">System Receiver Analysis (MDS & SFDR)</h4>
+      <RFModelBadge level="closed-form" detail="Standard 290 K noise and third-order SFDR assumptions." />
       
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="field-label">Bandwidth (MHz)</label>
-              <input type="number" step="any" value={bw} onChange={(e) => setBw(e.target.value)} className="field-input" />
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Bandwidth (MHz)</label>
+              <input type="number" step="any" value={bw} onChange={(e) => setBw(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
             </div>
             <div>
-              <label className="field-label">System NF (dB)</label>
-              <input type="number" step="0.1" value={nf} onChange={(e) => setNf(e.target.value)} className="field-input" />
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">System NF (dB)</label>
+              <input type="number" step="0.1" value={nf} onChange={(e) => setNf(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
             </div>
             <div>
-              <label className="field-label">System IIP3 (dBm)</label>
-              <input type="number" step="0.1" value={iip3} onChange={(e) => setIip3(e.target.value)} className="field-input" />
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">System IIP3 (dBm)</label>
+              <input type="number" step="0.1" value={iip3} onChange={(e) => setIip3(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
             </div>
             <div>
-              <label className="field-label">Required SNR (dB)</label>
-              <input type="number" step="0.1" value={snr} onChange={(e) => setSnr(e.target.value)} className="field-input" />
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Required SNR (dB)</label>
+              <input type="number" step="0.1" value={snr} onChange={(e) => setSnr(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
             </div>
             <div className="col-span-2">
-              <label className="field-label">Implementation Loss (dB)</label>
-              <input type="number" step="0.1" value={loss} onChange={(e) => setLoss(e.target.value)} className="field-input" />
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Implementation Loss (dB)</label>
+              <input type="number" step="0.1" value={loss} onChange={(e) => setLoss(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
             </div>
           </div>
         </div>
 
-        <div className="readout-panel space-y-3">
-          <h5 className="kicker mb-3">Performance Metrics</h5>
+        <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
+          <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Performance Metrics</h5>
           {results ? (
             <>
-              <div className="flex justify-between items-center"><span className="text-ink-2">Input-Referred Receiver Noise</span> <span className="font-mono font-medium">{results.noiseFloor.toFixed(2)} dBm</span></div>
-              <div className="flex justify-between items-center"><span className="text-ink-2">Spurious-Free Dynamic Range (SFDR)</span> <span className="font-mono font-medium text-accent-ink">{results.sfdr.toFixed(2)} dB</span></div>
-              <div className="flex justify-between items-center"><span className="text-ink-2">Receiver Sensitivity</span> <span className="readout text-lg text-trace-2">{results.sensitivity.toFixed(2)} dBm</span></div>
-              <p className="text-xs leading-relaxed text-ink-3">Uses −174 dBm/Hz at 290 K plus bandwidth and NF. SFDR=(2/3)(IIP3−noise) assumes two equal in-band interferers, third-order products, a 1 Hz-equivalent comparison convention, and no blockers, reciprocal mixing, compression, quantization, or phase-noise limit.</p>
+              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Input-Referred Receiver Noise</span> <span className="font-mono font-medium">{results.noiseFloor.toFixed(2)} dBm</span></div>
+              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Spurious-Free Dynamic Range (SFDR)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400">{results.sfdr.toFixed(2)} dB</span></div>
+              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Receiver Sensitivity</span> <span className="font-mono font-medium text-green-600 dark:text-green-400 text-lg">{results.sensitivity.toFixed(2)} dBm</span></div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Uses −174 dBm/Hz at 290 K plus bandwidth and NF. SFDR=(2/3)(IIP3−noise) assumes two equal in-band interferers, third-order products, a 1 Hz-equivalent comparison convention, and no blockers, reciprocal mixing, compression, quantization, or phase-noise limit.</p>
             </>
           ) : (
-            <div className="text-sm text-ink-3">Invalid input values</div>
+            <div className="text-sm text-gray-400">Invalid input values</div>
           )}
         </div>
       </div>
@@ -390,50 +377,152 @@ export function PatchAntennaCalculator() {
   const results = calcAntenna();
 
   return (
-    <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
-      <div className="space-y-5">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="field-label">Dielectric Constant (εr)</label>
-            <input type="number" step="0.1" value={er} onChange={(e) => setEr(e.target.value)} className="field-input" />
-          </div>
-          <div>
-            <label className="field-label">Substrate Height (mm)</label>
-            <input type="number" step="0.1" value={height} onChange={(e) => setHeight(e.target.value)} className="field-input" />
-          </div>
-          <div className="col-span-2">
-            <label className="field-label">Target Frequency (GHz)</label>
-            <input type="number" step="0.1" value={freq} onChange={(e) => setFreq(e.target.value)} className="field-input" />
+    <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
+      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Microstrip Patch Antenna Synthesis</h4>
+      <RFModelBadge level="closed-form" detail="First-order rectangular-patch/cavity synthesis; verify with full-wave EM." />
+      
+      <div className="grid lg:grid-cols-2 gap-8 items-start">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Dielectric Constant (εr)</label>
+              <input type="number" step="0.1" value={er} onChange={(e) => setEr(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Substrate Height (mm)</label>
+              <input type="number" step="0.1" value={height} onChange={(e) => setHeight(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+            </div>
+            <div className="col-span-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Target Frequency (GHz)</label>
+              <input type="number" step="0.1" value={freq} onChange={(e) => setFreq(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+            </div>
           </div>
         </div>
 
-        <div className="readout-panel space-y-3">
-          <h5 className="kicker mb-3">Physical Dimensions</h5>
+        <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
+          <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Physical Dimensions</h5>
           {results ? (
             <>
-              <div className="flex justify-between items-center"><span className="text-ink-2">Patch Width (W)</span> <span className="readout text-lg text-accent-ink">{results.width.toFixed(2)} mm</span></div>
-              <div className="flex justify-between items-center"><span className="text-ink-2">Patch Length (L)</span> <span className="readout text-lg text-accent-ink">{results.length.toFixed(2)} mm</span></div>
-              <hr className="border-line my-2" />
-              <div className="flex justify-between items-center"><span className="text-ink-2">Edge Input Impedance</span> <span className="readout">{results.rin.toFixed(1)} Ω</span></div>
-              <div className="flex justify-between items-center"><span className="text-ink-2">Directivity</span> <span className="readout text-trace-2">{results.directivity.toFixed(2)} dBi</span></div>
-              <p className="text-xs leading-relaxed text-ink-3">First-order rectangular-patch/cavity approximation. W, εeff, fringing extension, and L are synthesis estimates; the displayed edge resistance and directivity are rough slot-model values. Feed geometry, finite ground, conductor/dielectric loss, surface waves, fabrication tolerance, and bandwidth require full-wave EM optimization.</p>
+              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Patch Width (W)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.width.toFixed(2)} mm</span></div>
+              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Patch Length (L)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.length.toFixed(2)} mm</span></div>
+              <hr className="border-gray-200 dark:border-gray-700 my-2" />
+              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Edge Input Impedance</span> <span className="font-mono font-medium">{results.rin.toFixed(1)} Ω</span></div>
+              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Directivity</span> <span className="font-mono font-medium text-eecs-teal">{results.directivity.toFixed(2)} dBi</span></div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">First-order rectangular-patch/cavity approximation. W, εeff, fringing extension, and L are synthesis estimates; the displayed edge resistance and directivity are rough slot-model values. Feed geometry, finite ground, conductor/dielectric loss, surface waves, fabrication tolerance, and bandwidth require full-wave EM optimization.</p>
             </>
           ) : (
-            <div className="text-sm text-ink-3">Invalid input values</div>
+            <div className="text-sm text-gray-400">Invalid input values</div>
           )}
         </div>
       </div>
+    </div>
+  );
+}
 
-      <div className="graph-grid relative min-h-[360px] overflow-hidden rounded-[4px] border border-line bg-bg-raised lg:min-h-[460px]">
-        {results && (
-          <PatchStage
-            widthMm={results.width}
-            lengthMm={results.length}
-            heightMm={parseFloat(height)}
-            freqGHz={parseFloat(freq)}
-            label={`Rectangular patch ${results.width.toFixed(1)} by ${results.length.toFixed(1)} mm on a ${height} mm substrate, with its broadside pattern`}
-          />
-        )}
+/* =========================================================================
+   Phased Array & Array Factor Analysis
+   ========================================================================= */
+
+export function PhasedArrayCalculator() {
+  const [numElements, setNumElements] = useState<string>('8');
+  const [spacing, setSpacing] = useState<string>('0.5'); // Lambda
+  const [scanAngle, setScanAngle] = useState<string>('0'); // Degrees
+
+  const calcPattern = () => {
+    const n = Number(numElements);
+    const d = parseFloat(spacing);
+    const scan = parseFloat(scanAngle);
+    if (!Number.isInteger(n) || isNaN(d) || isNaN(scan) || n <= 0 || d <= 0 || scan < -90 || scan > 90) return [];
+
+    const k = 2.0 * Math.PI;
+    const beta = -k * d * Math.sin(scan * Math.PI / 180.0);
+
+    let maxAF = 0;
+    const rawVals = [];
+
+    // Calculate over 360 degrees
+    for (let i = 0; i <= 360; i++) {
+        const thetaDeg = -180.0 + 360.0 * (i / 360.0);
+        const thetaRad = thetaDeg * Math.PI / 180.0;
+        // The Swift code maps theta 0 to broadside. 
+        // sin(theta) means 0 deg is broadside, 90 is endfire.
+        const psi = k * d * Math.sin(thetaRad) + beta;
+
+        let afReal = 0;
+        let afImag = 0;
+        for (let elem = 0; elem < n; elem++) {
+            const phase = elem * psi;
+            afReal += Math.cos(phase);
+            afImag += Math.sin(phase);
+        }
+        const afMag = Math.sqrt(afReal * afReal + afImag * afImag);
+        rawVals.push({ angle: thetaDeg, mag: afMag });
+        if (afMag > maxAF) maxAF = afMag;
+    }
+
+    const norm = Math.max(maxAF, 1e-30);
+    return rawVals.map(pt => {
+        const db = 20 * Math.log10(Math.max(pt.mag / norm, 1e-5));
+        return {
+            angleDegrees: pt.angle,
+            value: db
+        };
+    });
+  };
+
+  const patternData = calcPattern();
+
+  // Basic HPBW and Max Spacing calculation
+  const cosTheta = Math.cos(parseFloat(scanAngle) * Math.PI / 180.0);
+  const nd = Number(numElements) * parseFloat(spacing);
+  const hpbw = (0.886 / (nd * Math.max(Math.abs(cosTheta), 1e-10))) * 180.0 / Math.PI;
+  const maxD = 1.0 / (1.0 + Math.abs(Math.sin(parseFloat(scanAngle) * Math.PI / 180.0)));
+
+  return (
+    <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
+      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Phased Array & Array Factor Analysis (ULA)</h4>
+      <RFModelBadge level="closed-form" detail="Uniform isotropic narrowband array factor, not realized radiation pattern." />
+      
+      <div className="grid lg:grid-cols-2 gap-8 items-start">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Number of Elements (N)</label>
+              <input type="number" step="1" min="1" value={numElements} onChange={(e) => setNumElements(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Element Spacing (λ)</label>
+              <input type="number" step="0.05" min="0.1" value={spacing} onChange={(e) => setSpacing(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+            </div>
+            <div className="col-span-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Scan Angle (Degrees from Broadside)</label>
+              <input type="number" step="1" value={scanAngle} onChange={(e) => setScanAngle(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+            </div>
+          </div>
+
+          <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3 mt-4">
+            <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Array Metrics</h5>
+            {patternData.length > 0 ? (
+              <>
+                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Approx. HPBW</span> <span className="font-mono font-medium">{Math.min(hpbw, 180).toFixed(1)}°</span></div>
+                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Max Spacing (Grating Lobe Free)</span> <span className="font-mono font-medium">{maxD.toFixed(3)} λ</span></div>
+                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Grating Lobes Present?</span> <span className={`font-mono font-bold ${parseFloat(spacing) >= maxD ? 'text-red-500' : 'text-green-500'}`}>{parseFloat(spacing) >= maxD ? 'Yes' : 'No'}</span></div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Closed-form HPBW/grating-lobe estimates for a uniform, narrowband linear array of equal isotropic elements. The plot is normalized array factor—not the realized antenna radiation pattern—and excludes element pattern, mutual coupling, scan loss, feed errors, edge effects, and polarization.</p>
+              </>
+            ) : (
+              <div className="text-sm text-gray-400">Invalid input values</div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-gray-200 dark:border-gray-700 p-4 min-h-[300px]">
+          <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-4 w-full text-left">Normalized Array Factor (dB)</h5>
+          {patternData.length > 0 ? (
+            <PolarPlot data={patternData} isDb={true} minDb={-40} />
+          ) : (
+            <div className="text-sm text-gray-400">Waiting for valid inputs to plot.</div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -478,46 +567,48 @@ export function PLLCalculator() {
   const results = calcPLL();
 
   return (
-    <div>
+    <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
+      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">PLL Loop Filter Synthesis (2nd Order Passive)</h4>
+      <RFModelBadge level="closed-form" detail="Ideal Type-II second-order charge-pump PLL synthesis." />
       
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="field-label">Target Unity-Gain Crossover (kHz)</label>
-              <input type="number" step="any" value={fc} onChange={(e) => setFc(e.target.value)} className="field-input" />
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Target Unity-Gain Crossover (kHz)</label>
+              <input type="number" step="any" value={fc} onChange={(e) => setFc(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
             </div>
             <div>
-              <label className="field-label">Phase Margin (Degrees)</label>
-              <input type="number" step="any" value={pm} onChange={(e) => setPm(e.target.value)} className="field-input" />
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Phase Margin (Degrees)</label>
+              <input type="number" step="any" value={pm} onChange={(e) => setPm(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
             </div>
             <div>
-              <label className="field-label">VCO Gain (MHz/V)</label>
-              <input type="number" step="any" value={kvco} onChange={(e) => setKvco(e.target.value)} className="field-input" />
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">VCO Gain (MHz/V)</label>
+              <input type="number" step="any" value={kvco} onChange={(e) => setKvco(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
             </div>
             <div>
-              <label className="field-label">Charge Pump Current (mA)</label>
-              <input type="number" step="any" value={icp} onChange={(e) => setIcp(e.target.value)} className="field-input" />
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Charge Pump Current (mA)</label>
+              <input type="number" step="any" value={icp} onChange={(e) => setIcp(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
             </div>
             <div className="col-span-2">
-              <label className="field-label">Feedback Divider Ratio (N)</label>
-              <input type="number" step="1" value={n} onChange={(e) => setN(e.target.value)} className="field-input" />
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Feedback Divider Ratio (N)</label>
+              <input type="number" step="1" value={n} onChange={(e) => setN(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
             </div>
           </div>
         </div>
 
-        <div className="readout-panel space-y-3">
-          <h5 className="kicker mb-3">Filter Components</h5>
+        <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
+          <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Filter Components</h5>
           {results ? (
             <>
-              <div className="flex justify-between items-center"><span className="text-ink-2">Shunt Capacitor (C1)</span> <span className="readout text-lg text-accent-ink">{(results.C1 * 1e12 > 1000 ? results.C1 * 1e9 : results.C1 * 1e12).toFixed(2)} {results.C1 * 1e12 > 1000 ? 'nF' : 'pF'}</span></div>
-              <div className="flex justify-between items-center"><span className="text-ink-2">Series Capacitor (C2)</span> <span className="readout text-lg text-accent-ink">{(results.C2 * 1e12 > 1000 ? results.C2 * 1e9 : results.C2 * 1e12).toFixed(2)} {results.C2 * 1e12 > 1000 ? 'nF' : 'pF'}</span></div>
-              <div className="flex justify-between items-center"><span className="text-ink-2">Series Resistor (R2)</span> <span className="readout text-trace-2 text-lg">{(results.R2 > 1000 ? results.R2 / 1e3 : results.R2).toFixed(2)} {results.R2 > 1000 ? 'kΩ' : 'Ω'}</span></div>
+              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Shunt Capacitor (C1)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{(results.C1 * 1e12 > 1000 ? results.C1 * 1e9 : results.C1 * 1e12).toFixed(2)} {results.C1 * 1e12 > 1000 ? 'nF' : 'pF'}</span></div>
+              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Series Capacitor (C2)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{(results.C2 * 1e12 > 1000 ? results.C2 * 1e9 : results.C2 * 1e12).toFixed(2)} {results.C2 * 1e12 > 1000 ? 'nF' : 'pF'}</span></div>
+              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Series Resistor (R2)</span> <span className="font-mono font-medium text-eecs-teal text-lg">{(results.R2 > 1000 ? results.R2 / 1e3 : results.R2).toFixed(2)} {results.R2 > 1000 ? 'kΩ' : 'Ω'}</span></div>
             </>
           ) : (
-            <div className="text-sm text-ink-3">Invalid input values</div>
+            <div className="text-sm text-gray-400">Invalid input values</div>
           )}
-          <div className="text-xs leading-relaxed text-ink-3">
+          <div className="text-xs text-gray-500 dark:text-gray-400">
             Ideal Type-II, second-order charge-pump PLL synthesis using Kpd=Icp/(2π), Kvco in Hz/V, no extra pole, and the entered crossover/phase margin. Charge-pump output resistance, VCO input capacitance, leakage, delay, reference spurs, discrete component choices, and PVT are excluded; verify the implemented loop in a PLL simulator before tapeout or hardware release.
           </div>
         </div>

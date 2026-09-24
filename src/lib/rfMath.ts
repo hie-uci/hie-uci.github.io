@@ -244,33 +244,3 @@ export function calculateSymmetricStripline(input: StriplineInput): StriplineRes
     warnings,
   };
 }
-
-export interface WaveguideTE10Result {
-  cutoffGHz: number;
-  /** Free-space wavelength, mm. */
-  lambda0Mm: number;
-  propagating: boolean;
-  /** Guide wavelength, mm; null below cutoff. */
-  guideWavelengthMm: number | null;
-  /** Evanescent attenuation, dB/mm; 0 above cutoff. */
-  attenuationDbPerMm: number;
-}
-
-/**
- * TE10 mode of an air-filled rectangular waveguide with PEC walls:
- * fc = c / 2a, lambda_g = lambda0 / sqrt(1 - (fc/f)^2) above cutoff,
- * alpha = (2 pi / lambda0) sqrt((fc/f)^2 - 1) below it.
- */
-export function waveguideTE10(broadWallMm: number, frequencyGHz: number): WaveguideTE10Result {
-  assertPositiveFinite(broadWallMm, 'Broad dimension a');
-  assertPositiveFinite(frequencyGHz, 'Frequency');
-  const cMmGHz = 299.792458; // c in mm·GHz
-  const cutoffGHz = cMmGHz / (2 * broadWallMm);
-  const lambda0Mm = cMmGHz / frequencyGHz;
-  const ratio = cutoffGHz / frequencyGHz;
-  if (ratio < 1) {
-    return { cutoffGHz, lambda0Mm, propagating: true, guideWavelengthMm: lambda0Mm / Math.sqrt(1 - ratio * ratio), attenuationDbPerMm: 0 };
-  }
-  const alphaNpPerMm = ((2 * Math.PI) / lambda0Mm) * Math.sqrt(ratio * ratio - 1);
-  return { cutoffGHz, lambda0Mm, propagating: false, guideWavelengthMm: null, attenuationDbPerMm: (20 / Math.LN10) * alphaNpPerMm };
-}

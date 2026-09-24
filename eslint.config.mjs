@@ -12,8 +12,6 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
-    // Frozen historical code; see archive/README.md.
-    "archive/**",
   ]),
 ]);
 

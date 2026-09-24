@@ -1,47 +1,21 @@
-import type { Metadata, Viewport } from "next";
-import { ViewTransition } from "react";
-import { Instrument_Serif, Martian_Mono, Mona_Sans } from "next/font/google";
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
-import CommandPalette from "@/components/CommandPalette";
 import { DEFAULT_SOCIAL_IMAGE, serializeJsonLd, SITE_NAME, SITE_URL } from "@/lib/metadata";
-import { MOTION_BOOT_SCRIPT } from "@/lib/motionPreference";
 
-// Mona Sans carries the whole type system. Its width axis is the brand gesture:
-// display lines are set expanded, text stays at normal width.
-const monaSans = Mona_Sans({
-  variable: "--font-mona",
+const geistSans = Geist({
+  variable: "--font-geist-sans",
   subsets: ["latin"],
-  axes: ["wdth"],
-  display: "swap",
 });
 
-// One accent face, used for a single word per page at most.
-const instrumentSerif = Instrument_Serif({
-  variable: "--font-instrument",
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
   subsets: ["latin"],
-  weight: "400",
-  style: ["normal", "italic"],
-  display: "swap",
 });
-
-// Readouts, kickers, axis labels, dates.
-const martianMono = Martian_Mono({
-  variable: "--font-martian",
-  subsets: ["latin"],
-  axes: ["wdth"],
-  display: "swap",
-});
-
-export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#060a12" },
-    { media: "(prefers-color-scheme: light)", color: "#f6f7f9" },
-  ],
-};
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -116,30 +90,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        {/* Runs before first paint so a reduced-motion choice never flashes an animation. */}
-        <script dangerouslySetInnerHTML={{ __html: MOTION_BOOT_SCRIPT }} />
-      </head>
       <body
-        className={`${monaSans.variable} ${instrumentSerif.variable} ${martianMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased transition-colors duration-500`}
       >
         <Providers>
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: serializeJsonLd(organizationJsonLd) }}
           />
-          <a href="#main" className="skip-link">
-            Skip to content
-          </a>
           <Navbar />
-          <ViewTransition>
-            <div id="main" className="min-h-dvh">
-              {children}
-            </div>
-          </ViewTransition>
+          {children}
           <Footer />
           <ScrollToTop />
-          <CommandPalette />
         </Providers>
       </body>
     </html>
