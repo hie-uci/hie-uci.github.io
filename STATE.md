@@ -191,6 +191,12 @@ element grid size and travelling rings are decorative, the FMCW magnifier states
   would take `hie.eng.uci.edu` offline, since free-plan GitHub Pages will not serve from
   a private repository. There is no undo: a push is a publication, and scrubbing a file
   afterwards does not remove it from the history anyone already cloned.
+- **White text on a coloured fill needs `text-on-accent`, not `text-white`, inside a
+  page's first section.** The subpage hero rule in `globals.css` recolours `.text-white`
+  there to eng-blue in light mode, which suits hero banners. The RF Toolbox and the
+  measurement tutorials put their whole page in the first section, so a `bg-… text-white`
+  button there turns eng-blue on blue. Dark mode hides it (its variant sets white), so
+  check light mode after any colour change on those pages.
 - **Right after a deploy the site can render unstyled for up to 10 minutes.** GitHub
   Pages' CDN (Fastly) is not updated atomically: a browser can fetch the new `index.html`
   while its edge node still lacks the new hashed `_next/static/chunks/*.css`, and the
@@ -209,9 +215,11 @@ element grid size and travelling rings are decorative, the FMCW magnifier states
       should point at the other rather than drifting separately.
 - [ ] Continued expansion of the RF Toolbox and the measurement video resources
       (the only feature work that was outstanding as of May 2026).
-- [ ] On the RF Toolbox the active sidebar button's title is dark blue on blue in light
-      mode: the subpage hero rule recolours every `.text-white` inside the page's first
-      section. Pre-existing; a one-line fix.
+- [ ] The S-parameter viewer's Smith Chart toggle is white on emerald-600: 3.65:1 in both
+      themes, below WCAG AA (4.5:1). emerald-700 would give about 5.4:1; it is a visual
+      change, so preview it first.
+- [ ] 3D / animated visuals for the Home page and every subpage: brainstorm delivered
+      2026-09-24, nothing built yet. Candidates and constraints are in `HANDOFF.md`.
 
 Superseded history lives in `archive/PROGRESS.md` (design-change log, Feb–May 2026) and
 is not linked from anywhere active.
