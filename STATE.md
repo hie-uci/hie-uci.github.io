@@ -2,11 +2,9 @@
 
 Last updated: 2026-09-24
 
-> **A full redesign ("Signal & Silicon") is on branch `redesign/signal-and-silicon`, not
-> merged and not deployed.** This file describes that branch. On `main` the content
-> still lives in data arrays inside the page files, and the old visual style is live.
-> Merging to `main` publishes it (`git push origin main` deploys); that needs the
-> maintainer's go-ahead. Design rules: `docs/DESIGN.md`.
+> **The "Signal & Silicon" redesign went live on 2026-09-24**, fast-forwarded to `main`
+> from branch `redesign/signal-and-silicon` (deploy run 36034590711, verified on all four
+> Pages CDN nodes). Design rules: `docs/DESIGN.md`.
 
 ## What this is
 
@@ -50,8 +48,7 @@ the path. It is deliberately not written down here.
    never a feature of this site. (Verified absent 2026-08-24: the only portal reference
    in the whole tree is the constant below.)
 2. **The only touchpoint is one constant.** `PORTAL_URL` in `src/data/site.ts`
-   (`'https://portal.ai4circuit.com'`; on `main` it is still in `src/components/Navbar.tsx`)
-   — rendered as the "Member Login" link in both the desktop rail and the mobile menu. Anything more coupled than an
+   (`'https://portal.ai4circuit.com'`) — rendered as the "Member Login" link in both the desktop rail and the mobile menu. Anything more coupled than an
    `<a href>` belongs in the portal, because a portal outage must never be able to take
    the lab's public face down with it.
 
@@ -116,7 +113,7 @@ pages use its WebP copies, and the research page reads the sizes it writes to
   small hooks (`useMotionMode`, `useMediaQuery`, `useElementWidth`) and `metadata.ts`.
 - `archive/` — superseded code and CSS, excluded from the build, lint and type-check.
 
-## Quality gates — green on the redesign branch, 2026-09-24
+## Quality gates — green, 2026-09-24 (deployed)
 
 | | |
 |---|---|
@@ -168,7 +165,6 @@ pages use its WebP copies, and the research page reads the sizes it writes to
 
 ## Open
 
-- [ ] Review the redesign branch and decide when to merge it; merging deploys it.
 - [ ] Higher-resolution portraits (800 px or more) for the PhD students.
 - [ ] Check three alumni photos, whose file names look swapped against the names:
       Mengjie (Kaylee) Xie uses `alumni-annika.png`, Kelly Aung Lu uses `alumni-kaylee.jpg`,
