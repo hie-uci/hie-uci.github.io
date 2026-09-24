@@ -13,7 +13,10 @@ Last updated: 2026-09-24
 > look** — 3D stages, phased-array beam lab, FMCW chirp scope, cascade level diagram and
 > budgets — with a formula audit that fixed four pre-existing model errors (see "RF
 > Toolbox models"). The maintainer approved screenshots first; the work was merged to
-> `main` from branch `feature/rf-tools-port` and deployed the same day.
+> `main` from branch `feature/rf-tools-port` and deployed the same day. A second audit then
+> covered every remaining calculator and the reference tables, fixed four more errors, and
+> added a 3D via, a 3D skin-depth view and an animated VSWR standing wave (branch
+> `feature/rf-toolbox-audit-2`, also merged and deployed that day).
 
 ## What this is
 
@@ -113,14 +116,16 @@ Plus `robots.ts` and `sitemap.ts` (generated at build).
   `SParameterViewer`, `SystemCascadeBuilder` on XYFlow).
 - `src/components/rf/` — the RF Toolbox instruments: `controls.tsx`,
   `PhasedArrayLab`, `CascadeLineup`, `fmcw/` (chirp scope) and `three/` (three.js stages
-  for microstrip, stripline, CPW, patch, waveguide and the array pattern; loaded lazily,
+  for microstrip, stripline, CPW, patch, waveguide, via, skin depth and the array pattern;
+  `StandingWavePlot` animates the VSWR standing wave; the stages are loaded lazily,
   rendered on demand, paused off-screen, still under `prefers-reduced-motion`). They read
   the instrument tokens (`--ink`, `--trace`, `--line`, …) defined in `globals.css` with
   the site palette, and size themselves with container queries because the toolbox
   content column is narrower than the viewport.
 - `src/lib/` — the only tested code: `cascadeMath.ts`, `rfMath.ts`,
-  `sParameterEngine.ts`, `arrayPattern.ts`, `fmcw.ts`, `patchAntenna.ts` (each with a
-  `.test.ts`), plus the client hooks `useElementWidth.ts`, `useMediaQuery.ts`,
+  `sParameterEngine.ts`, `arrayPattern.ts`, `fmcw.ts`, `patchAntenna.ts`, `rfCalculators.ts`
+  (the smaller calculators' formulas; each file with a `.test.ts`), plus the client hooks
+  `useElementWidth.ts`, `useMediaQuery.ts`,
   `useMotionMode.ts`, and `basePath.ts` and `metadata.ts`.
 - `public/images/` — 21 member photos, 40 research images, 5 composite chip images,
   15 individual die photos, 1 logo.
@@ -131,9 +136,9 @@ Plus `robots.ts` and `sitemap.ts` (generated at build).
 |---|---|
 | `npm run lint` | clean |
 | `npm run typecheck` | clean — `tsc --noEmit`, no `ignoreBuildErrors` escape hatch any more |
-| `npm test` | **68 tests, 0 fail** (node:test over `src/lib/*.test.ts`) |
+| `npm test` | **80 tests, 0 fail** (node:test over `src/lib/*.test.ts`) |
 
-## RF Toolbox models (audited 2026-09-24)
+## RF Toolbox models (every tool audited 2026-09-24)
 
 The ported tools and the calculators they sit in were cross-checked against independent
 implementations of the textbook formulas (numpy/scipy) and, for the transmission lines, a
@@ -151,6 +156,14 @@ this repo; the unit tests carry the reference values and say where each came fro
 | Microstrip / stripline | Hammerstad–Jensen + Kirschning–Jansen / Cohn–Pozar | field solve agrees to 0.2 % |
 | CPW | Simons finite-substrate conformal map | **fixed**: k₁ used tanh(πS/8h); now sinh(πS/4h)/sinh(π(S+2W)/4h), exact K(k)/K(k′) (was 4–5 % off in Z₀) |
 | Patch | Balanis ch. 14 TL model; Rin = 1/(2(G₁+G₁₂)); two-slot directivity | **fixed**: Rin used the wide-slot asymptote and no G₁₂ (≈40 % low); directivity integral lacked sin²θ |
+| Linearity | memoryless cubic: IIP3 − IP1dB = 9.64 dB, OIP3 − OP1dB = 10.64 dB | **fixed**: OP1dB → OIP3 added 9.6 dB (1 dB low); both offsets confirmed by a simulated cubic amplifier |
+| Via | Goldfarb–Pucel via-hole L; Johnson–Graham pad C (empirical) | **fixed**: L used 5.08h[ln(4h/d)+1], about 1.8× an isolated rod's partial inductance (Neumann integral), under a "Goldfarb" title |
+| S-parameter TDR | low-pass step from the windowed IFFT | **fixed**: the step skipped the negative-time half of the zero-phase window, reading a 60 Ω line as 56.8 Ω |
+| L-match | Pozar sec. 5.1, complex source | 13 838 random-case solutions all conjugate-match to 3e-14; the Smith path now follows the constant-r / constant-g arcs instead of straight chords |
+| PLL | Banerjee second-order passive filter | rebuilt loop crosses over at fc with exactly the requested phase margin, peaking there |
+| VSWR, dB, kTB, receiver, radar, FSPL, Doppler, spot jitter, skin depth | identities and closed forms | exact against independent computations (skin depth against the exact conductor propagation constant) |
+| Smith chart, S→Z/Y, mixed mode, K/Δ, group delay | chart geometry and network algebra | machine precision against numpy |
+| Reference tables | VSWR, IEC 60153-2 waveguides, laminates, IEEE bands | **fixed**: VSWR reflected-power column now computed; WR18/WR14 were WR-19/WR-15; GaAs tanδ 0.0016 → 0.0006 (measured) |
 
 What is illustrative rather than computed is stated in each tool's note: T-line field
 lines are sketches, the travelling waves and every animation are slowed down, the array's
@@ -196,9 +209,6 @@ element grid size and travelling rings are decorative, the FMCW magnifier states
       should point at the other rather than drifting separately.
 - [ ] Continued expansion of the RF Toolbox and the measurement video resources
       (the only feature work that was outstanding as of May 2026).
-- [ ] Audit the toolbox calculators the 2026-09-24 pass did not cover (VSWR, dB, skin
-      depth, via, radar range, Doppler, phase noise, linearity, thermal noise, L-match,
-      Smith chart, receiver cascade, PLL, S-parameter viewer) the same way.
 - [ ] On the RF Toolbox the active sidebar button's title is dark blue on blue in light
       mode: the subpage hero rule recolours every `.text-white` inside the page's first
       section. Pre-existing; a one-line fix.
