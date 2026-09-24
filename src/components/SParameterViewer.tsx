@@ -375,7 +375,7 @@ export default function SParameterViewer() {
         </div>
         
         {!data.length ? (
-          <label className="cursor-pointer inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium shadow-sm shrink-0">
+          <label className="cursor-pointer inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-on-accent rounded-lg transition-colors font-medium shadow-sm shrink-0">
             <UploadCloud size={20} />
             <span>Upload File</span>
             <input type="file" accept=".s1p,.s2p,.s3p,.s4p,.s5p,.s6p,.s7p,.s8p,.s9p,.s10p,.s11p,.s12p" className="hidden" onChange={handleFileUpload} />
@@ -428,13 +428,13 @@ export default function SParameterViewer() {
           <div className="flex gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
             <button
               onClick={() => setViewMode('Frequency')}
-              className={`px-4 py-2 font-semibold text-sm transition-colors rounded-lg ${viewMode === 'Frequency' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+              className={`px-4 py-2 font-semibold text-sm transition-colors rounded-lg ${viewMode === 'Frequency' ? 'bg-blue-600 text-on-accent shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
             >
               Frequency Domain
             </button>
             <button
               onClick={() => setViewMode('SmithChart')}
-              className={`px-4 py-2 font-semibold text-sm transition-colors rounded-lg ${viewMode === 'SmithChart' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+              className={`px-4 py-2 font-semibold text-sm transition-colors rounded-lg ${viewMode === 'SmithChart' ? 'bg-emerald-600 text-on-accent shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
             >
               Smith Chart
             </button>
@@ -442,7 +442,7 @@ export default function SParameterViewer() {
               onClick={() => setViewMode('Time')}
               disabled={tdrData.length === 0}
               title={tdrData.length === 0 ? tdrWarning : undefined}
-              className={`px-4 py-2 font-semibold text-sm transition-colors rounded-lg ${viewMode === 'Time' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+              className={`px-4 py-2 font-semibold text-sm transition-colors rounded-lg ${viewMode === 'Time' ? 'bg-indigo-600 text-on-accent shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
             >
               Time Domain (TDR)
             </button>

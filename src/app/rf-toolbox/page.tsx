@@ -84,7 +84,7 @@ export default function RFToolboxPage() {
                     aria-pressed={activeTab === cat.id}
                     className={`whitespace-nowrap text-left px-5 py-3 rounded-xl transition-all duration-300 ${
                       activeTab === cat.id
-                        ? 'bg-uci-blue text-white shadow-md shadow-uci-blue/20 translate-x-1'
+                        ? 'bg-uci-blue text-on-accent shadow-md shadow-uci-blue/20 translate-x-1'
                         : 'bg-white/50 dark:bg-slate-900/50 text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:text-uci-blue'
                     }`}
                   >

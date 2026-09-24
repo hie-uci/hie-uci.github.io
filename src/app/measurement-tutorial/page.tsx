@@ -45,7 +45,7 @@ export default function MeasurementTutorialPage() {
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-3 shrink-0">
-                <a href="https://www.youtube.com/@xuyangliu3768?sub_confirmation=1" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl shadow-sm transition-all duration-300">
+                <a href="https://www.youtube.com/@xuyangliu3768?sub_confirmation=1" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-on-accent text-sm font-semibold rounded-xl shadow-sm transition-all duration-300">
                   <MonitorPlay className="w-5 h-5" />
                   Subscribe to Channel
                 </a>

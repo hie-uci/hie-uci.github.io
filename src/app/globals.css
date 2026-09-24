@@ -102,7 +102,7 @@
   --color-marker: var(--marker);
   --color-marker-ink: var(--marker-ink);
   --color-on-marker: var(--on-marker);
-  /* White on UCI Blue. text-white would lose to the subpage hero rule that recolours .text-white. */
+  /* White on a coloured fill. text-white would lose to the subpage hero rule, which recolours .text-white anywhere in a page's first section. */
   --color-on-accent: #ffffff;
   --color-alert: var(--alert);
   --color-background: var(--background);
