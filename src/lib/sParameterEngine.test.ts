@@ -193,6 +193,39 @@ describe('reference conversion and TDR validation', () => {
   });
 });
 
+describe('computeTDR', () => {
+  // S11 of a lossless 60-ohm, 30 mm air line terminated in 50 ohm, sampled from DC to 20 GHz.
+  const lineS1p = () => {
+    const rows = ['# Hz S RI R 50'];
+    for (let f = 0; f <= 20e9 + 1; f += 50e6) {
+      const t = Math.tan((2 * Math.PI * f / 299792458) * 0.03);
+      // Zin = Zc (Zl + j Zc t) / (Zc + j Zl t), Gamma = (Zin - 50) / (Zin + 50)
+      const [zr, zi] = [60 * (50 * 60 + 60 * 50 * t * t) / (60 * 60 + 2500 * t * t), 60 * (60 * 60 * t - 50 * 50 * t) / (60 * 60 + 2500 * t * t)];
+      const den = (zr + 50) ** 2 + zi ** 2;
+      rows.push(`${f} ${((zr - 50) * (zr + 50) + zi * zi) / den} ${(zi * (zr + 50) - (zr - 50) * zi) / den}`);
+    }
+    return rows.join('\n');
+  };
+
+  it('reads the impedance of a line section and of the load behind it', () => {
+    const tdr = computeTDR(parseTouchstone(lineS1p(), 1).points);
+    const roundTrip = (2 * 0.03) / 299792458; // 200 ps
+    const mean = (lo: number, hi: number) => {
+      const v = tdr.filter((p) => p.time > lo * roundTrip && p.time < hi * roundTrip).map((p) => p.impedance);
+      return v.reduce((a, b) => a + b, 0) / v.length;
+    };
+    closeTo(mean(0.25, 0.75), 60, 0.5);
+    closeTo(mean(1.5, 2.5), 50, 0.5);
+  });
+
+  it('shows a resistive load at its full value', () => {
+    const rows = ['# Hz S RI R 50'];
+    for (let f = 0; f <= 10e9 + 1; f += 50e6) rows.push(`${f} 0.2 0`); // 75 ohm
+    const tdr = computeTDR(parseTouchstone(rows.join('\n'), 1).points);
+    closeTo(tdr[Math.floor(tdr.length / 2)].impedance, 75, 0.05);
+  });
+});
+
 describe('sToMixedMode', () => {
   it('returns null for non-four-port data', () => {
     assert.equal(sToMixedMode([[{ real: 0, imag: 0 }]]), null);

@@ -3,13 +3,20 @@
 import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { calculateCoplanarWaveguide, calculateMicrostrip, calculateSymmetricStripline, waveguideTE10 } from '@/lib/rfMath';
+import { IP3_ABOVE_IP1DB_DB, IP3_ABOVE_OP1DB_DB, dopplerShiftHz, freeSpacePathLossDb, powerLevels, radarMaxRangeM, skinDepth, spotJitterDensity, thermalNoise, viaParasitics, vswrMetrics } from '@/lib/rfCalculators';
 import { RFModelBadge } from './RFModelBadge';
 import FmcwScope from './rf/fmcw/FmcwScope';
+import StandingWavePlot from './rf/StandingWavePlot';
 
 // three.js loads with the first 3D stage that mounts, never with the page.
 const stageLoading = () => <div className="absolute inset-0 animate-pulse bg-surface-2/40" aria-hidden="true" />;
 const TLineStage = dynamic(() => import('./rf/three/TLineStage'), { ssr: false, loading: stageLoading });
 const WaveguideStage = dynamic(() => import('./rf/three/WaveguideStage'), { ssr: false, loading: stageLoading });
+const ViaStage = dynamic(() => import('./rf/three/ViaStage'), { ssr: false, loading: stageLoading });
+const SkinDepthStage = dynamic(() => import('./rf/three/SkinDepthStage'), { ssr: false, loading: stageLoading });
+
+// Identities go infinite at a perfect match or a total reflection.
+const finite = (value: number, digits: number) => (Number.isFinite(value) ? value.toFixed(digits) : '∞');
 
 // The box a 3D stage fills; it replaces the old CSS isometric view.
 const STAGE_BOX = 'graph-grid relative min-h-[320px] overflow-hidden rounded-xl border border-line bg-bg-raised lg:min-h-[400px]';
@@ -144,34 +151,10 @@ export function VSWRCalculator() {
 
   const calcResults = () => {
     const val = parseFloat(inputValue);
-    if (isNaN(val)) return null;
-
-    let gamma = 0;
-    let vswr = 1;
-    let rl = 0;
-
-    if (inputType === 'vswr') {
-      if (val < 1) return null;
-      vswr = val;
-      gamma = (vswr - 1) / (vswr + 1);
-      rl = gamma === 0 ? Infinity : -20 * Math.log10(gamma);
-    } else if (inputType === 'rl') {
-      if (val < 0) return null;
-      rl = val;
-      gamma = Math.pow(10, -rl / 20);
-      vswr = gamma === 1 ? Infinity : (1 + gamma) / (1 - gamma);
-    } else if (inputType === 'gamma') {
-      if (val < 0 || val > 1) return null;
-      gamma = val;
-      vswr = gamma === 1 ? Infinity : (1 + gamma) / (1 - gamma);
-      rl = gamma === 0 ? Infinity : -20 * Math.log10(gamma);
-    }
-
-    const mismatchLoss = -10 * Math.log10(1 - gamma * gamma);
-    const reflPower = gamma * gamma * 100;
-    const transPower = 100 - reflPower;
-
-    return { vswr, rl, gamma, mismatchLoss, reflPower, transPower };
+    if (!Number.isFinite(val)) return null;
+    if (inputType === 'vswr' ? val < 1 : inputType === 'rl' ? val < 0 : val < 0 || val > 1) return null;
+    const m = vswrMetrics({ kind: inputType === 'rl' ? 'returnLoss' : inputType, value: val });
+    return { vswr: m.vswr, rl: m.returnLossDb, gamma: m.gamma, mismatchLoss: m.mismatchLossDb, reflPower: m.reflectedPercent, transPower: m.transmittedPercent };
   };
 
   const results = calcResults();
@@ -211,10 +194,10 @@ export function VSWRCalculator() {
           <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Calculated Results</h5>
           {results ? (
             <>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">VSWR</span> <span className="font-mono font-medium">{results.vswr.toFixed(4)} : 1</span></div>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Return Loss</span> <span className="font-mono font-medium">{results.rl.toFixed(3)} dB</span></div>
+              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">VSWR</span> <span className="font-mono font-medium">{finite(results.vswr, 4)} : 1</span></div>
+              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Return Loss</span> <span className="font-mono font-medium">{finite(results.rl, 3)} dB</span></div>
               <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">|Γ|</span> <span className="font-mono font-medium">{results.gamma.toFixed(6)}</span></div>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Mismatch Loss</span> <span className="font-mono font-medium">{results.mismatchLoss.toFixed(4)} dB</span></div>
+              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Mismatch Loss</span> <span className="font-mono font-medium">{finite(results.mismatchLoss, 4)} dB</span></div>
               <hr className="border-gray-200 dark:border-gray-800 my-2" />
               <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Reflected Power</span> <span className="font-mono font-medium text-red-500">{results.reflPower.toFixed(2)} %</span></div>
               <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Transmitted Power</span> <span className="font-mono font-medium text-green-600 dark:text-green-400">{results.transPower.toFixed(2)} %</span></div>
@@ -224,6 +207,12 @@ export function VSWRCalculator() {
           )}
         </div>
       </div>
+
+      {results && (
+        <div className="readout-panel mt-6">
+          <StandingWavePlot gamma={results.gamma} />
+        </div>
+      )}
     </div>
   );
 }
@@ -238,19 +227,8 @@ export function DBCalculator() {
 
   const calcPower = () => {
     const val = parseFloat(powerInput);
-    if (isNaN(val)) return null;
-    if ((powerUnit === 'mW' || powerUnit === 'W') && val <= 0) return null;
-
-    let dBm = 0;
-    if (powerUnit === 'dBm') dBm = val;
-    else if (powerUnit === 'mW') dBm = 10 * Math.log10(val);
-    else if (powerUnit === 'W') dBm = 10 * Math.log10(val * 1000);
-
-    const mW = Math.pow(10, dBm / 10);
-    const W = mW / 1000;
-    const dBW = dBm - 30;
-
-    return { dBm, mW, W, dBW };
+    if (!Number.isFinite(val) || (powerUnit !== 'dBm' && val <= 0)) return null;
+    return powerLevels(val, powerUnit);
   };
 
   const results = calcPower();
@@ -593,17 +571,9 @@ export function SkinDepthCalculator() {
   const calcSkinDepth = () => {
     const rho = parseFloat(material);
     const fGHz = parseFloat(freqStr);
-    
-    if (isNaN(rho) || isNaN(fGHz) || fGHz <= 0) return null;
-    
-    const f = fGHz * 1e9;
-    const mu0 = 4 * Math.PI * 1e-7;
-    const omega = 2 * Math.PI * f;
-    
-    const delta = Math.sqrt(2 * rho / (omega * mu0)); // in meters
-    const rs = rho / delta; // Ohms per square
-    
-    return { delta_um: delta * 1e6, rs };
+    if (!Number.isFinite(rho) || !Number.isFinite(fGHz) || rho <= 0 || fGHz <= 0) return null;
+    const { depthM, surfaceResistanceOhm } = skinDepth(rho, fGHz * 1e9);
+    return { delta_um: depthM * 1e6, rs: surfaceResistanceOhm };
   };
 
   const results = calcSkinDepth();
@@ -630,18 +600,28 @@ export function SkinDepthCalculator() {
               <input type="number" step="0.1" value={freqStr} onChange={(e) => setFreqStr(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
             </div>
           </div>
+
+          <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
+            <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Results</h5>
+            {results ? (
+              <>
+                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Skin Depth (δ)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.delta_um.toFixed(3)} μm</span></div>
+                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Surface Resistance (Rs)</span> <span className="font-mono font-medium">{results.rs.toFixed(5)} Ω/sq</span></div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Good-conductor formulas δ = √(2ρ/ωμ₀) and Rs = ρ/δ for a flat conductor much thicker than δ, with μr = 1 and 20 °C bulk resistivity; against the exact propagation constant the error is below 10⁻⁷ for metals up to 100 GHz. Temperature, alloys and plating, surface roughness, and the anomalous skin effect are excluded.</p>
+              </>
+            ) : (
+              <div className="text-sm text-gray-400">Invalid input values</div>
+            )}
+          </div>
         </div>
 
-        <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
-          <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Results</h5>
-          {results ? (
-            <>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Skin Depth (δ)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.delta_um.toFixed(3)} μm</span></div>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Surface Resistance (Rs)</span> <span className="font-mono font-medium">{results.rs.toFixed(5)} Ω/sq</span></div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Exact good-conductor approximation using μr=1 and the listed room-temperature bulk resistivity. Temperature, alloy/plating, roughness, and anomalous skin effect are excluded.</p>
-            </>
-          ) : (
-            <div className="text-sm text-gray-400">Invalid input values</div>
+        <div className={STAGE_BOX}>
+          {results && (
+            <SkinDepthStage
+              depthUm={results.delta_um}
+              frequencyGHz={parseFloat(freqStr)}
+              label={`Current density in a conductor at ${freqStr} GHz, decaying with a skin depth of ${results.delta_um.toFixed(2)} micrometres`}
+            />
           )}
         </div>
       </div>
@@ -661,43 +641,26 @@ export function PCBViaCalculator() {
   const [er, setEr] = useState<string>('4.4');
 
   const calcVia = () => {
-    const dDrill = parseFloat(drill);
-    const dPad = parseFloat(pad);
-    const dAnti = parseFloat(antipad);
-    const h = parseFloat(height);
-    const e = parseFloat(er);
-    
-    if (isNaN(dDrill) || isNaN(dPad) || isNaN(dAnti) || isNaN(h) || isNaN(e)) return null;
+    const [dDrill, dPad, dAnti, h, e] = [drill, pad, antipad, height, er].map(parseFloat);
+    if (![dDrill, dPad, dAnti, h, e].every(Number.isFinite)) return null;
     if (dDrill <= 0 || dPad <= dDrill || dAnti <= dPad || h <= 0 || e < 1) return null;
-
-    // Convert to inches for Goldfarb
-    const h_in = h * 0.0393701;
-    const drill_in = dDrill * 0.0393701;
-    const pad_in = dPad * 0.0393701;
-    const anti_in = dAnti * 0.0393701;
-
-    // L (nH) = 5.08 * h * [ln(4h/d) + 1]
-    const L_nH = 5.08 * h_in * (Math.log(4.0 * h_in / drill_in) + 1.0);
-    if (L_nH <= 0) return null;
-    
-    // C (pF) = 1.41 * εr * T * D / (D_clearance - D)
-    const C_pF = (1.41 * e * h_in * pad_in) / (anti_in - pad_in);
-    
-    // LC impedance scale = sqrt(L/C). This is not a distributed transmission-line Z0.
-    const Z_ohms = Math.sqrt((L_nH * 1e-9) / (C_pF * 1e-12));
-    
-    // f_res = 1 / (2pi * sqrt(LC))
-    const fres_GHz = 1.0 / (2.0 * Math.PI * Math.sqrt((L_nH * 1e-9) * (C_pF * 1e-12))) / 1e9;
-
-    return { L_nH, C_pF, Z_ohms, fres_GHz };
+    const v = viaParasitics({ drillMm: dDrill, padMm: dPad, antipadMm: dAnti, heightMm: h, er: e });
+    return {
+      L_nH: v.inductanceH * 1e9,
+      C_pF: v.capacitanceF * 1e12,
+      Z_ohms: v.impedanceScaleOhm,
+      fres_GHz: v.lcCornerHz / 1e9,
+      // Goldfarb & Pucel validated the inductance for h < 0.03 lambda0.
+      fMaxGHz: (v.heightOverWavelengthLimit * 299.792458) / h,
+    };
   };
 
   const results = calcVia();
 
   return (
     <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
-      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">PCB Via Parasitics (Goldfarb Model)</h4>
-      <RFModelBadge level="closed-form" detail="Lumped via L/C estimates; distributed behavior requires 3D EM." />
+      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">PCB Via Parasitics</h4>
+      <RFModelBadge level="rule-of-thumb" detail="Goldfarb–Pucel via-hole inductance and the Johnson–Graham empirical pad capacitance; a via is distributed, so check it with 3D EM." />
       
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-4">
@@ -716,23 +679,36 @@ export function PCBViaCalculator() {
               <input type="number" step="0.05" value={antipad} onChange={(e) => setAntipad(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
             </div>
           </div>
+
+          <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
+            <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Results</h5>
+            {results ? (
+              <>
+                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Via-to-Ground Inductance (L)</span> <span className="font-mono font-medium">{results.L_nH.toFixed(4)} nH</span></div>
+                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Pad-to-Plane Capacitance (C)</span> <span className="font-mono font-medium">{results.C_pF.toFixed(4)} pF</span></div>
+                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">LC Impedance Scale √(L/C)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.Z_ohms.toFixed(2)} Ω</span></div>
+                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Lumped LC Corner Estimate</span> <span className="font-mono font-medium">{results.fres_GHz.toFixed(2)} GHz</span></div>
+                <div className="flex justify-between items-center text-xs"><span className="text-gray-600 dark:text-gray-400">Inductance model valid below</span> <span className="font-mono font-medium">{results.fMaxGHz.toFixed(1)} GHz</span></div>
+              </>
+            ) : (
+              <div className="text-sm text-gray-400">Invalid input values (Ensure Anti-pad &gt; Pad)</div>
+            )}
+            <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 rounded-lg text-xs font-medium border border-amber-200 dark:border-amber-800/30">
+              <strong>Models:</strong> L = (μ₀/2π)[h ln((h + √(r² + h²))/r) + 1.5(r − √(r² + h²))] for a via hole to ground (Goldfarb &amp; Pucel, IEEE MGWL 1991), validated for h &lt; 0.03 λ₀. C = 1.41 εr T D₁/(D₂ − D₁) pF with inch dimensions is the empirical pad-to-plane rule of Johnson &amp; Graham (1993). The often-quoted 5.08 h[ln(4h/d) + 1] nH is not used: its +1 overstates even an isolated rod&apos;s partial inductance, about 5.08 h[ln(4h/d) − 1] nH, by roughly 2×. √(L/C) is only an impedance scale and 1/(2π√LC) a lumped corner, not the via&apos;s distributed Z₀ or a guaranteed resonance; return vias, planes, stubs and pads need 3D EM.
+            </div>
+          </div>
         </div>
 
-        <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
-          <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Results</h5>
-          {results ? (
-            <>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Via Inductance (L)</span> <span className="font-mono font-medium">{results.L_nH.toFixed(4)} nH</span></div>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Via Capacitance (C)</span> <span className="font-mono font-medium">{results.C_pF.toFixed(4)} pF</span></div>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">LC Impedance Scale √(L/C)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.Z_ohms.toFixed(2)} Ω</span></div>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Lumped LC Corner Estimate</span> <span className="font-mono font-medium">{results.fres_GHz.toFixed(2)} GHz</span></div>
-            </>
-          ) : (
-            <div className="text-sm text-gray-400">Invalid input values (Ensure Anti-pad &gt; Pad)</div>
+        <div className={STAGE_BOX}>
+          {results && (
+            <ViaStage
+              drillMm={parseFloat(drill)}
+              padMm={parseFloat(pad)}
+              antipadMm={parseFloat(antipad)}
+              heightMm={parseFloat(height)}
+              label={`Plated via, ${drill} mm drill with ${pad} mm pads and ${antipad} mm antipad through a ${height} mm board`}
+            />
           )}
-          <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 rounded-lg text-xs font-medium border border-amber-200 dark:border-amber-800/30">
-            <strong>Model limit:</strong> √(L/C) is only an impedance scale and 1/(2π√LC) is a lumped corner estimate—not the via&apos;s distributed Z₀ or a guaranteed physical resonance. Model validity depends on via electrical length, return-via/plane geometry, antipads, pads, and stubs; use 3D EM when these details are electrically significant.
-          </div>
         </div>
       </div>
     </div>
@@ -753,37 +729,13 @@ export function RadarRangeCalculator() {
   const [systemLoss, setSystemLoss] = useState<string>('3'); // dB
 
   const calcRadar = () => {
-    const P_t_dBm = parseFloat(pt);
-    const G_t_dBi = parseFloat(gt);
-    const G_r_dBi = parseFloat(gr);
-    const f_GHz = parseFloat(freqStr);
-    const sigma = parseFloat(rcs);
-    const P_min_dBm = parseFloat(pmin);
-    const lossDB = parseFloat(systemLoss);
-
-    if ([P_t_dBm, G_t_dBi, G_r_dBi, f_GHz, sigma, P_min_dBm, lossDB].some(Number.isNaN) || f_GHz <= 0 || sigma <= 0 || lossDB < 0) return null;
-
-    // FSPL calculation (for 100 meter reference to show)
-    const lambda = 0.299792458 / f_GHz; // meters
-    
-    // Convert dBm to Watts
-    const P_t_W = Math.pow(10, (P_t_dBm - 30) / 10);
-    const P_min_W = Math.pow(10, (P_min_dBm - 30) / 10);
-    
-    // Linear gains
-    const G_t = Math.pow(10, G_t_dBi / 10);
-    const G_r = Math.pow(10, G_r_dBi / 10);
-    const systemLossLinear = Math.pow(10, lossDB / 10);
-
-    // Radar Equation for Max Range R: R^4 = (Pt * Gt * Gr * lambda^2 * sigma) / ((4*pi)^3 * Pmin)
-    const numerator = P_t_W * G_t * G_r * Math.pow(lambda, 2) * sigma;
-    const denominator = Math.pow(4 * Math.PI, 3) * P_min_W * systemLossLinear;
-    const R_max = Math.pow(numerator / denominator, 0.25);
-
-    // Free Space Path Loss at 100 meters
-    const FSPL_100m = 20 * Math.log10(100) + 20 * Math.log10(f_GHz * 1e9) + 20 * Math.log10(4 * Math.PI / 0.299792458);
-
-    return { R_max, FSPL_100m };
+    const [txPowerDbm, txGainDbi, rxGainDbi, fGHz, rcsM2, minSignalDbm, lossDb] = [pt, gt, gr, freqStr, rcs, pmin, systemLoss].map(parseFloat);
+    if (![txPowerDbm, txGainDbi, rxGainDbi, fGHz, rcsM2, minSignalDbm, lossDb].every(Number.isFinite) || fGHz <= 0 || rcsM2 <= 0 || lossDb < 0) return null;
+    const frequencyHz = fGHz * 1e9;
+    return {
+      R_max: radarMaxRangeM({ txPowerDbm, txGainDbi, rxGainDbi, frequencyHz, rcsM2, minSignalDbm, lossDb }),
+      FSPL_100m: freeSpacePathLossDb(100, frequencyHz),
+    };
   };
 
   const results = calcRadar();
@@ -870,15 +822,10 @@ export function DopplerCalculator() {
   const [vel, setVel] = useState<string>('30'); // m/s
 
   const calcDoppler = () => {
-    const f_GHz = parseFloat(freq);
+    const fGHz = parseFloat(freq);
     const v = parseFloat(vel);
-
-    if (isNaN(f_GHz) || isNaN(v) || f_GHz <= 0) return null;
-
-    const lambda = 0.299792458 / f_GHz; // meters
-    const fd = (2 * v) / lambda; // Hz (assuming direct line of sight approach/recede)
-
-    return { fd: fd / 1000 }; // kHz
+    if (!Number.isFinite(fGHz) || !Number.isFinite(v) || fGHz <= 0) return null;
+    return { fd: dopplerShiftHz(fGHz * 1e9, v) / 1000 }; // kHz
   };
 
   const results = calcDoppler();
@@ -921,22 +868,13 @@ export function PhaseNoiseCalculator() {
   const [fc, setFc] = useState<string>('10'); // GHz
   const [offset, setOffset] = useState<string>('1'); // MHz
 
-  // Simplistic Spot Jitter estimation
+  // Spot jitter density from one phase-noise value (IEEE Std 1139: S_phi(f) = 2 L(f)).
   const calcJitter = () => {
     const L_dBc = parseFloat(pn);
     const f_c = parseFloat(fc) * 1e9;
     const f_offset = parseFloat(offset) * 1e6;
-
-    if (isNaN(L_dBc) || isNaN(f_c) || isNaN(f_offset) || f_c <= 0 || f_offset <= 0) return null;
-
-    // Jitter from spot phase noise (assuming 1Hz bandwidth for the spot calculation context, or flat integration)
-    // A true jitter calculation requires integrating the phase noise profile. 
-    // Here we provide a spot phase jitter estimation per unit bandwidth:
-    const L_linear = Math.pow(10, L_dBc / 10);
-    const phase_jitter_rad = Math.sqrt(2 * L_linear); // Rad RMS per sqrt(Hz)
-    const time_jitter_fs = (phase_jitter_rad / (2 * Math.PI * f_c)) * 1e15;
-
-    return { time_jitter_fs, offsetMHz: f_offset / 1e6 };
+    if (![L_dBc, f_c, f_offset].every(Number.isFinite) || f_c <= 0 || f_offset <= 0) return null;
+    return { time_jitter_fs: spotJitterDensity(L_dBc, f_c) * 1e15, offsetMHz: f_offset / 1e6 };
   };
 
   const results = calcJitter();
@@ -983,8 +921,8 @@ export function LinearityCalculator() {
 
   const calcLin = () => {
     const p1 = parseFloat(p1db);
-    if (isNaN(p1)) return null;
-    return { oip3: p1 + 9.6 };
+    if (!Number.isFinite(p1)) return null;
+    return { oip3: p1 + IP3_ABOVE_OP1DB_DB };
   };
 
   const results = calcLin();
@@ -1005,7 +943,7 @@ export function LinearityCalculator() {
           ) : (
             <div className="text-sm text-gray-400">Invalid input</div>
           )}
-          <div className="text-xs text-gray-500 mt-2">Rule of thumb only: OIP3 ≈ OP1dB + 9.6 dB for a memoryless weakly nonlinear cubic model. The offset varies substantially by circuit, bias, frequency, matching, thermal effects, and measurement definition; do not use it as a substitute for two-tone characterization.</div>
+          <div className="text-xs text-gray-500 mt-2">For a memoryless cubic nonlinearity y = a₁x + a₃x³, IIP3 = IP1dB + {IP3_ABOVE_IP1DB_DB.toFixed(2)} dB at the input and OIP3 = OP1dB + {IP3_ABOVE_OP1DB_DB.toFixed(2)} dB at the output, since OP1dB sits 1 dB under the linear extrapolation that defines OIP3. The offset varies substantially by circuit, bias, frequency, matching, thermal effects, and measurement definition; do not use it as a substitute for two-tone characterization.</div>
         </div>
       </div>
     </div>
@@ -1023,14 +961,9 @@ export function ThermalNoiseCalculator() {
   const calcNoise = () => {
     const t = parseFloat(temp);
     const b = parseFloat(bw) * 1e6;
-    if (isNaN(t) || isNaN(b) || t <= 0 || b <= 0) return null;
-
-    const k = 1.380649e-23; // Boltzmann constant
-    const p_W = k * t * b;
-    const p_dBm = 10 * Math.log10(p_W * 1000);
-    const p_density_dBm_Hz = 10 * Math.log10(k * t * 1000);
-
-    return { p_dBm, p_density_dBm_Hz };
+    if (!Number.isFinite(t) || !Number.isFinite(b) || t <= 0 || b <= 0) return null;
+    const n = thermalNoise(t, b);
+    return { p_dBm: n.powerDbm, p_density_dBm_Hz: n.densityDbmPerHz };
   };
 
   const results = calcNoise();

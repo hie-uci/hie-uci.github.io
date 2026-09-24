@@ -652,8 +652,12 @@ export function computeTDR(points: SParamMatrix[], portIndex: number = 0): TDRPo
   const tdr: TDRPoint[] = [];
 
   const z0 = points[0].z0 || 50;
-  
+
+  // The taper makes the impulse response zero-phase: half of its smoothing kernel sits at negative
+  // time, which the circular transform stores in the last N/2 samples. The step response has to
+  // integrate from there; starting at t = 0 would drop that half and understate every step.
   let stepSum = 0;
+  for (let i = N / 2; i < N; i++) stepSum += x[i].real;
 
   for (let i = 0; i < N / 2; i++) {
     const time = i * dt;

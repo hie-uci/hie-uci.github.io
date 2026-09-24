@@ -577,7 +577,7 @@ export default function SParameterViewer() {
                 ))}
               </div>
               {analysisGroup === 'Comp' && (
-                <p className="text-xs text-slate-500 dark:text-slate-400">First-order extraction: L is shown only where Im(Zpp)&gt;0, C only where Im(Zpp)&lt;0, and Q=|Im(Zpp)/Re(Zpp)|. Zpp corresponds to the other ports open; ESR=Re(Zpp). Rp=1/Re(Ypp), where Ypp corresponds to the other ports short. These are frequency-dependent equivalents, not broadband lumped models.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">First-order extraction: L is shown only where Im(Zpp)&gt;0, C only where Im(Zpp)&lt;0, and Q=|Im(Zpp)/Re(Zpp)|. Zpp corresponds to the other ports open; ESR=Re(Zpp). Rp=1/Re(Ypp), where Ypp corresponds to the other ports short. For a two-port on-chip inductor the usual single-ended convention grounds the far port, L = Im(1/Y11)/ω and Q = −Im(Y11)/Re(Y11), which differs from Z11; the differential L_diff and Q_diff use Z11 + Z22 − Z12 − Z21. These are frequency-dependent equivalents, not broadband lumped models.</p>
               )}
               {chartType === 'K' && stabilitySummary && (
                 <p className="text-xs text-slate-500 dark:text-slate-400">{stabilitySummary} K alone is insufficient; unconditional stability requires K&gt;1 and |Δ|&lt;1 at each frequency.</p>

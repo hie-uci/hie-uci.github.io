@@ -6,6 +6,7 @@ import { SmithChart } from './SmithChart';
 import { RFModelBadge } from './RFModelBadge';
 import PhasedArrayLab from './rf/PhasedArrayLab';
 import { designRectangularPatch } from '@/lib/patchAntenna';
+import { lMatchSolutions, passiveLoopFilter2, receiverBudget } from '@/lib/rfCalculators';
 
 // three.js loads with the first 3D stage that mounts, never with the page.
 const PatchStage = dynamic(() => import('./rf/three/PatchStage'), {
@@ -48,120 +49,71 @@ export function ImpedanceMatchingCalculator() {
   const [freq, setFreq] = useState<string>('2.45');
 
   const calcLMatch = (): LMatchSolution[] => {
-    const Rs = parseFloat(rs);
-    const Xs = parseFloat(xs);
-    const Rl = parseFloat(rl);
-    const Xl = parseFloat(xl);
-    const fGHz = parseFloat(freq);
-
-    if (isNaN(Rs) || isNaN(Xs) || isNaN(Rl) || isNaN(Xl) || isNaN(fGHz) || Rs <= 0 || Rl <= 0 || fGHz <= 0) return [];
-
+    const [Rs, Xs, Rl, Xl, fGHz] = [rs, xs, rl, xl, freq].map(parseFloat);
+    if (![Rs, Xs, Rl, Xl, fGHz].every(Number.isFinite) || Rs <= 0 || Rl <= 0 || fGHz <= 0) return [];
     const omega = 2.0 * Math.PI * (fGHz * 1e9);
-    const solutions: LMatchSolution[] = [];
-
-    const RpL = (Rl * Rl + Xl * Xl) / Rl;
-    const RpS = (Rs * Rs + Xs * Xs) / Rs;
-
-    // Topology A: Shunt at Load, Series at Source
-    // Valid if RpL >= Rs
-    if (RpL >= Rs) {
-      const underRoot = (Rl / Rs) * (Rl * Rl + Xl * Xl) - Rl * Rl;
-      if (underRoot >= 0) {
-        const root = Math.sqrt(underRoot);
-        const den = Rl * Rl + Xl * Xl;
-        
-        // Sol A1 (+ root)
-        const B1 = (Xl + root) / den;
-        const X1 = (B1 * den - Xl) / (Rl / Rs) - Xs;
-        
-        // Output components
-        const compSeries1 = formatSeriesReactance(X1, omega);
-        const compShunt1 = formatShuntSusceptance(B1, omega);
-        solutions.push({ type: 'Sol A1 (Shunt at Load)', series: compSeries1, shunt: compShunt1, shuntPos: 'Load Side', seriesX: X1, shuntB: B1 });
-
-        // Sol A2 (- root)
-        const B2 = (Xl - root) / den;
-        const X2 = (B2 * den - Xl) / (Rl / Rs) - Xs;
-        
-        const compSeries2 = formatSeriesReactance(X2, omega);
-        const compShunt2 = formatShuntSusceptance(B2, omega);
-        solutions.push({ type: 'Sol A2 (Shunt at Load)', series: compSeries2, shunt: compShunt2, shuntPos: 'Load Side', seriesX: X2, shuntB: B2 });
-      }
-    }
-
-    // Topology B: Shunt at Source, Series at Load
-    // Valid if RpS >= Rl
-    if (RpS >= Rl) {
-      const underRoot = (Rl / Rs) * (Rs * Rs + Xs * Xs) - Rl * Rl;
-      if (underRoot >= 0) {
-        const root = Math.sqrt(underRoot);
-        const den = Rs * Rs + Xs * Xs;
-        
-        // Sol B1 (+ root)
-        const X1 = -Xl + root;
-        const B1 = (Xs + (X1 + Xl) / (Rl / Rs)) / den;
-        
-        const compSeries1 = formatSeriesReactance(X1, omega);
-        const compShunt1 = formatShuntSusceptance(B1, omega);
-        solutions.push({ type: 'Sol B1 (Shunt at Source)', series: compSeries1, shunt: compShunt1, shuntPos: 'Source Side', seriesX: X1, shuntB: B1 });
-
-        // Sol B2 (- root)
-        const X2 = -Xl - root;
-        const B2 = (Xs + (X2 + Xl) / (Rl / Rs)) / den;
-        
-        const compSeries2 = formatSeriesReactance(X2, omega);
-        const compShunt2 = formatShuntSusceptance(B2, omega);
-        solutions.push({ type: 'Sol B2 (Shunt at Source)', series: compSeries2, shunt: compShunt2, shuntPos: 'Source Side', seriesX: X2, shuntB: B2 });
-      }
-    }
-
-    return solutions;
+    const counters = { 'shunt-at-load': 0, 'shunt-at-source': 0 };
+    return lMatchSolutions(Rs, Xs, Rl, Xl).map((sol) => {
+      const atLoad = sol.topology === 'shunt-at-load';
+      counters[sol.topology] += 1;
+      return {
+        type: `Sol ${atLoad ? 'A' : 'B'}${counters[sol.topology]} (Shunt at ${atLoad ? 'Load' : 'Source'})`,
+        series: formatSeriesReactance(sol.seriesX, omega),
+        shunt: formatShuntSusceptance(sol.shuntB, omega),
+        shuntPos: atLoad ? 'Load Side' : 'Source Side',
+        seriesX: sol.seriesX,
+        shuntB: sol.shuntB,
+      };
+    });
   };
 
   const solutions = calcLMatch();
 
   // Normalize for Smith Chart
   const z0 = 50;
-  const sourceR = parseFloat(rs) / z0;
-  const sourceX = parseFloat(xs) / z0;
+  const [sourceR, sourceX, loadR, loadX] = [rs, xs, rl, xl].map((v) => parseFloat(v) / z0);
   // Matching targets Z_S conjugate
   const targetR = sourceR;
-  const targetX = -sourceX; 
-  
-  const loadR = parseFloat(rl) / z0;
-  const loadX = parseFloat(xl) / z0;
+  const targetX = -sourceX;
+  const validPoints = [sourceR, sourceX, loadR, loadX].every(Number.isFinite);
 
-  const validPoints = !isNaN(sourceR) && !isNaN(sourceX) && !isNaN(loadR) && !isNaN(loadX);
-
-  // Compute intermediate point for the FIRST solution for trajectory
-  let midR = loadR;
-  let midX = loadX;
-  
-  if (validPoints && solutions.length > 0) {
-    const sol = solutions[0];
-    
-    if (sol.shuntPos === 'Load Side') {
-      // Shunt is at load
-      const den = Math.pow(parseFloat(rl), 2) + Math.pow(parseFloat(xl), 2);
-      const gLoad = parseFloat(rl) / den;
-      let bLoad = -parseFloat(xl) / den;
-      
-      bLoad += sol.shuntB; // add susceptance
-      
-      const denY = gLoad * gLoad + bLoad * bLoad;
-      midR = (gLoad / denY) / z0;
-      midX = (-bLoad / denY) / z0;
-    } else {
-      // Series is at load
-      const zReal = parseFloat(rl);
-      let zImag = parseFloat(xl);
-      
-      zImag += sol.seriesX; // add reactance
-      
-      midR = zReal / z0;
-      midX = zImag / z0;
-    }
-  }
+  // The first solution's path from the load: a shunt element moves along a constant-conductance
+  // circle and a series element along a constant-resistance circle, so both legs are arcs.
+  const toGamma = (r: number, x: number) => {
+    const den = (r + 1) ** 2 + x * x;
+    return { real: (r * r + x * x - 1) / den, imag: (2 * x) / den };
+  };
+  const seriesArc = (r: number, x0: number, x1: number) => Array.from({ length: 65 }, (_, k) => toGamma(r, x0 + ((x1 - x0) * k) / 64));
+  const shuntArc = (r: number, x: number, deltaB: number) => {
+    const den = r * r + x * x;
+    const [g, b0] = [r / den, -x / den];
+    return Array.from({ length: 65 }, (_, k) => {
+      const b = b0 + (deltaB * k) / 64;
+      const d = g * g + b * b;
+      return toGamma(g / d, -b / d);
+    });
+  };
+  const first = solutions[0];
+  const trajectories = validPoints && first
+    ? first.shuntPos === 'Load Side'
+      ? (() => {
+          const leg1 = shuntArc(loadR, loadX, first.shuntB * z0);
+          const end = leg1[leg1.length - 1];
+          const mid = { r: (1 - end.real ** 2 - end.imag ** 2) / ((1 - end.real) ** 2 + end.imag ** 2), x: (2 * end.imag) / ((1 - end.real) ** 2 + end.imag ** 2) };
+          return [
+            { points: leg1, color: '#0064a4', name: 'shunt' },
+            { points: seriesArc(mid.r, mid.x, mid.x + first.seriesX / z0), color: '#e03b24', name: 'series' },
+          ];
+        })()
+      : (() => {
+          const leg1 = seriesArc(loadR, loadX, loadX + first.seriesX / z0);
+          return [
+            { points: leg1, color: '#0064a4', name: 'series' },
+            { points: shuntArc(loadR, loadX + first.seriesX / z0, first.shuntB * z0), color: '#e03b24', name: 'shunt' },
+          ];
+        })()
+    : [];
+  const midGamma = trajectories[0]?.points.at(-1);
 
   return (
     <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
@@ -210,28 +162,22 @@ export function ImpedanceMatchingCalculator() {
         </div>
 
         <div className="flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-gray-200 dark:border-gray-700 p-4 min-h-[300px]">
-          <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-4 w-full text-left">Interactive Smith Chart (Sol 1)</h5>
+          <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-4 w-full text-left">Smith Chart Path (Solution 1)</h5>
           {validPoints ? (
-            <SmithChart 
+            <SmithChart
               points={[
                 { r: sourceR, x: sourceX, label: 'Z_S', color: '#64748b' },
                 { r: loadR, x: loadX, label: 'Z_L', color: '#0064a4' },
                 { r: targetR, x: targetX, label: 'Z_S*', color: '#e03b24' },
-                ...(solutions.length > 0 ? [{ r: midR, x: midX, color: '#f5a90f' }] : [])
+                ...(midGamma ? [{ r: (1 - midGamma.real ** 2 - midGamma.imag ** 2) / ((1 - midGamma.real) ** 2 + midGamma.imag ** 2), x: (2 * midGamma.imag) / ((1 - midGamma.real) ** 2 + midGamma.imag ** 2), color: '#f5a90f' }] : [])
               ]}
-              paths={[
-                ...(solutions.length > 0 ? [
-                  { start: { r: loadR, x: loadX }, end: { r: midR, x: midX }, color: '#0064a4' },
-                  { start: { r: midR, x: midX }, end: { r: targetR, x: targetX }, color: '#e03b24' }
-                ] : [
-                  { start: { r: sourceR, x: sourceX }, end: { r: loadR, x: loadX }, color: '#94a3b8' }
-                ])
-              ]}
+              paths={solutions.length > 0 ? [] : [{ start: { r: sourceR, x: sourceX }, end: { r: loadR, x: loadX }, color: '#94a3b8' }]}
+              gammaTrajectories={trajectories}
             />
           ) : (
             <div className="text-sm text-gray-400">Waiting for valid inputs to plot.</div>
           )}
-          <div className="text-xs text-slate-500 mt-2 text-center">Blue: Unmatched Load | Orange: Intermediate | Red: Matched (Z_S*)</div>
+          <div className="text-xs text-slate-500 mt-2 text-center">Blue arc: first element from the load · orange dot: intermediate impedance · red arc: second element, ending on Z_S*. Series elements follow constant-resistance circles, shunt elements constant-conductance circles.</div>
           <div className="text-xs text-slate-500 mt-2 text-center">Ideal, lossless, single-frequency L match. Component Q, self-resonance, pads/vias, distributed effects, stability, and realizability are not included.</div>
         </div>
       </div>
@@ -251,21 +197,10 @@ export function ReceiverCascadeCalculator() {
   const [loss, setLoss] = useState<string>('2.0'); // dB
 
   const calcReceiver = () => {
-    const bwHz = parseFloat(bw) * 1e6;
-    const nF = parseFloat(nf);
-    const ip3 = parseFloat(iip3);
-    const sNr = parseFloat(snr);
-    const lOss = parseFloat(loss);
-    
-    if (isNaN(bwHz) || isNaN(nF) || isNaN(ip3) || isNaN(sNr) || isNaN(lOss) || bwHz <= 0) return null;
-
-    // Noise floor = -174 + 10*log10(BW) + NF
-    const noiseFloor = -174.0 + 10.0 * Math.log10(bwHz) + nF;
-    const mds = noiseFloor + sNr;
-    const sfdr = (2.0 / 3.0) * (ip3 - noiseFloor);
-    const sensitivity = mds + lOss;
-
-    return { noiseFloor, sfdr, sensitivity };
+    const [bandwidthMHz, noiseFigureDb, iip3Dbm, requiredSnrDb, implementationLossDb] = [bw, nf, iip3, snr, loss].map(parseFloat);
+    if (![bandwidthMHz, noiseFigureDb, iip3Dbm, requiredSnrDb, implementationLossDb].every(Number.isFinite) || bandwidthMHz <= 0) return null;
+    const r = receiverBudget({ bandwidthHz: bandwidthMHz * 1e6, noiseFigureDb, iip3Dbm, requiredSnrDb, implementationLossDb });
+    return { noiseFloor: r.noiseFloorDbm, sfdr: r.sfdrDb, sensitivity: r.sensitivityDbm };
   };
 
   const results = calcReceiver();
@@ -308,7 +243,7 @@ export function ReceiverCascadeCalculator() {
               <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Input-Referred Receiver Noise</span> <span className="font-mono font-medium">{results.noiseFloor.toFixed(2)} dBm</span></div>
               <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Spurious-Free Dynamic Range (SFDR)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400">{results.sfdr.toFixed(2)} dB</span></div>
               <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Receiver Sensitivity</span> <span className="font-mono font-medium text-green-600 dark:text-green-400 text-lg">{results.sensitivity.toFixed(2)} dBm</span></div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Uses −174 dBm/Hz at 290 K plus bandwidth and NF. SFDR=(2/3)(IIP3−noise) assumes two equal in-band interferers, third-order products, a 1 Hz-equivalent comparison convention, and no blockers, reciprocal mixing, compression, quantization, or phase-noise limit.</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Uses −174 dBm/Hz at 290 K plus bandwidth and NF. SFDR = (2/3)(IIP3 − N), with N the noise floor integrated over the stated bandwidth, is the range at which two equal in-band tones produce third-order products just at the floor; blockers, reciprocal mixing, compression, quantization, and phase-noise limits are excluded. Sensitivity adds the required SNR and the implementation loss to N.</p>
             </>
           ) : (
             <div className="text-sm text-gray-400">Invalid input values</div>
@@ -418,28 +353,10 @@ export function PLLCalculator() {
   const [n, setN] = useState<string>('100'); // Divider
 
   const calcPLL = () => {
-    const f_c = parseFloat(fc) * 1e3; // Hz
-    const phi = parseFloat(pm) * Math.PI / 180.0;
-    const K_vco = parseFloat(kvco) * 1e6; // Hz/V
-    const I_cp = parseFloat(icp) * 1e-3; // A
-    const N_div = parseFloat(n);
-
-    if (isNaN(f_c) || isNaN(phi) || isNaN(K_vco) || isNaN(I_cp) || isNaN(N_div) || f_c <= 0 || phi <= 0 || phi >= Math.PI/2 || K_vco <= 0 || I_cp <= 0 || N_div <= 0) return null;
-
-    const w_c = 2.0 * Math.PI * f_c;
-    const secPhi = 1.0 / Math.cos(phi);
-    const tanPhi = Math.tan(phi);
-
-    const T2 = (secPhi + tanPhi) / w_c;
-    const T1 = (secPhi - tanPhi) / w_c;
-
-    const C_tot = (I_cp * K_vco) / (N_div * w_c * w_c) * Math.sqrt(T2 / T1);
-    
-    const C1 = C_tot * (T1 / T2);
-    const C2 = C_tot - C1;
-    const R2 = T2 / C2;
-
-    return { C1, C2, R2 };
+    const [fcKHz, pmDeg, kvcoMHz, icpMA, nDiv] = [fc, pm, kvco, icp, n].map(parseFloat);
+    if (![fcKHz, pmDeg, kvcoMHz, icpMA, nDiv].every(Number.isFinite) || fcKHz <= 0 || pmDeg <= 0 || pmDeg >= 90 || kvcoMHz <= 0 || icpMA <= 0 || nDiv <= 0) return null;
+    const f = passiveLoopFilter2({ crossoverHz: fcKHz * 1e3, phaseMarginDeg: pmDeg, kvcoHzPerV: kvcoMHz * 1e6, chargePumpA: icpMA * 1e-3, divider: nDiv });
+    return { C1: f.c1F, C2: f.c2F, R2: f.r2Ohm };
   };
 
   const results = calcPLL();
@@ -447,7 +364,7 @@ export function PLLCalculator() {
   return (
     <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
       <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">PLL Loop Filter Synthesis (2nd Order Passive)</h4>
-      <RFModelBadge level="closed-form" detail="Ideal Type-II second-order charge-pump PLL synthesis." />
+      <RFModelBadge level="closed-form" detail="Ideal type-II charge-pump PLL with a second-order passive filter (a third-order loop), phase-margin peak at the crossover." />
       
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-4">

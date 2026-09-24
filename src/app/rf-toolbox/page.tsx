@@ -108,7 +108,7 @@ export default function RFToolboxPage() {
           </div>
           <aside className="mt-8 rounded-2xl border border-slate-200 bg-white/60 p-5 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-400">
             <h2 className="mb-2 text-sm font-bold text-eng-blue dark:text-blue-300">Model provenance & engineering use</h2>
-            <p>Every calculator is labeled as an identity, closed-form approximation, rule of thumb, or simulation-dependent model. Results are design aids, not sign-off data. Principal references include the <a className="text-uci-blue underline" href="https://qucs.sourceforge.net/tech/node75.html" target="_blank" rel="noreferrer">Hammerstad–Jensen / Kirschning–Jansen equations</a>, the official <a className="text-uci-blue underline" href="https://ibis.org/touchstone_ver2.0/touchstone_ver2_0.pdf" target="_blank" rel="noreferrer">Touchstone 2.0 specification</a>, <a className="text-uci-blue underline" href="https://www.rogerscorp.com/advanced-electronics-solutions/ro4000-series-laminates/ro4003c-laminates" target="_blank" rel="noreferrer">Rogers laminate data</a>, and <a className="text-uci-blue underline" href="https://www.itu.int/en/ITU-R/study-groups/rcpm/Pages/wrc-27-studies.aspx" target="_blank" rel="noreferrer">ITU-R WRC-27 study material</a>. Validate substrate properties, reference planes, calibration, PVT, layout discontinuities, and EM behavior for the actual hardware.</p>
+            <p>Every calculator is labeled as an identity, closed-form approximation, rule of thumb, or simulation-dependent model. Results are design aids, not sign-off data. Principal references include the <a className="text-uci-blue underline" href="https://qucs.sourceforge.net/tech/node75.html" target="_blank" rel="noreferrer">Hammerstad–Jensen / Kirschning–Jansen equations</a>, Pozar&apos;s <i>Microwave Engineering</i> (matching, noise, waveguides), Balanis&apos;s <i>Antenna Theory</i> (arrays, patches), Simons&apos;s <i>Coplanar Waveguide Circuits</i>, the <a className="text-uci-blue underline" href="https://qucs.sourceforge.net/tech/node83.html" target="_blank" rel="noreferrer">Goldfarb–Pucel via-hole model</a>, Banerjee&apos;s <i>PLL Performance, Simulation and Design</i>, the official <a className="text-uci-blue underline" href="https://ibis.org/touchstone_ver2.0/touchstone_ver2_0.pdf" target="_blank" rel="noreferrer">Touchstone 2.0 specification</a>, <a className="text-uci-blue underline" href="https://www.rogerscorp.com/advanced-electronics-solutions/ro4000-series-laminates/ro4003c-laminates" target="_blank" rel="noreferrer">Rogers laminate data</a>, and <a className="text-uci-blue underline" href="https://www.itu.int/en/ITU-R/study-groups/rcpm/Pages/wrc-27-studies.aspx" target="_blank" rel="noreferrer">ITU-R WRC-27 study material</a>. Every model was cross-checked against an independent implementation, and the transmission lines against a 2D field solve. Validate substrate properties, reference planes, calibration, PVT, layout discontinuities, and EM behavior for the actual hardware.</p>
           </aside>
         </div>
       </section>
@@ -218,7 +218,7 @@ function PCBDesignSection() {
 
       <div>
         <h3 className="text-2xl font-bold text-eng-blue dark:text-blue-300 mb-2">PCB Via Parasitics</h3>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Calculate inductance and capacitance of through-hole vias using the Goldfarb model.</p>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Via-to-ground inductance (Goldfarb–Pucel) and pad-to-plane capacitance (Johnson–Graham rule), with the via drawn to scale in 3D.</p>
         <PCBViaCalculator />
       </div>
 
@@ -413,6 +413,7 @@ function WaveguideSection() {
               <th className="px-6 py-4">Frequency (GHz)</th>
               <th className="px-6 py-4">Width a (mm)</th>
               <th className="px-6 py-4">Height b (mm)</th>
+              <th className="px-6 py-4">TE₁₀ Cutoff (GHz)</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-800 bg-white/40 dark:bg-slate-950/40">
@@ -423,11 +424,13 @@ function WaveguideSection() {
                 <td className="px-6 py-3">{row.freq}</td>
                 <td className="px-6 py-3">{row.a}</td>
                 <td className="px-6 py-3">{row.b}</td>
+                <td className="px-6 py-3 font-mono">{(299.792458 / (2 * parseFloat(row.a))).toFixed(2)}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">Designations, recommended ranges and inside dimensions per IEC 60153-2 (R-numbers, the GB/T BJ series) and EIA WR sizes; the cutoff column is c/2a for an air-filled guide.</p>
     </div>
   );
 }
@@ -458,7 +461,7 @@ function DielectricSection() {
           </tbody>
         </table>
       </div>
-      <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">Table values are representative process/specification Dk values, while calculator presets use typical design Dk where published. Dk is method- and frequency-dependent; always use the laminate vendor&apos;s value appropriate to the intended field solver and stackup.</p>
+      <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">Rogers rows give the process Dk and the dissipation factor at 10 GHz, 23 °C, from the manufacturer&apos;s data sheets; calculator presets use the design Dk where Rogers publishes one (RO4003C 3.55, RO4350B 3.66). Ceramic rows are typical values, and the GaAs loss tangent is the measured 5.6 × 10⁻⁴ at 9.4 GHz (Applied Physics Letters, 1967). Dk is method- and frequency-dependent; always use the laminate vendor&apos;s value appropriate to the intended field solver and stackup.</p>
     </div>
   );
 }
