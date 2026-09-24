@@ -1,155 +1,145 @@
-'use client';
-
 import Link from 'next/link';
+import Image from 'next/image';
+import SpectrumScale from '@/components/SpectrumScale';
+import { contact, institutionLinks, PORTAL_URL } from '@/data/site';
+import { chips, siliconSpanGHz } from '@/data/chips';
+import { formatFrequency } from '@/lib/spectrum';
 
-const quickLinks = [
-  { name: 'Research', href: '/research' },
-  { name: 'Publications', href: '/publications' },
-  { name: 'Team', href: '/team' },
-  { name: 'News', href: '/news' },
+const columns: { title: string; links: { name: string; href: string; external?: boolean }[] }[] = [
+  {
+    title: 'The lab',
+    links: [
+      { name: 'Research', href: '/research' },
+      { name: 'Publications', href: '/publications' },
+      { name: 'Team', href: '/team' },
+      { name: 'News', href: '/news' },
+    ],
+  },
+  {
+    title: 'Resources',
+    links: [
+      { name: 'RF Toolbox', href: '/rf-toolbox' },
+      { name: 'Measurements & Design', href: '/measurement-tutorial' },
+      { name: 'Chip Gallery', href: '/chip-gallery' },
+      { name: 'Teaching', href: '/teaching' },
+    ],
+  },
+  {
+    title: 'Join',
+    links: [
+      { name: 'Available Positions', href: '/available-positions' },
+      { name: 'Contact', href: '/contact' },
+      { name: 'Member Login', href: PORTAL_URL, external: true },
+    ],
+  },
 ];
 
-const moreLinks = [
-  { name: 'Teaching', href: '/teaching' },
-  { name: 'Chip Gallery', href: '/chip-gallery' },
-  { name: 'Contact', href: '/contact' },
-  { name: 'Available Positions', href: '/available-positions' },
-];
-
+/**
+ * Always in the Dark Space scheme: the `dark` class re-scopes every token, so the
+ * footer grounds the page in both themes.
+ */
 export default function Footer() {
+  const year = new Date().getFullYear();
+
   return (
-    <footer className="relative bg-gradient-to-b from-eng-blue to-navy text-white overflow-hidden">
-      {/* Decorative top border */}
-      <div className="h-1 bg-gradient-to-r from-uci-blue via-uci-gold to-eecs-teal" />
-
-      {/* Circuit pattern overlay */}
-      <div className="absolute inset-0 opacity-5">
-        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-          <pattern id="footer-circuit" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
-            <circle cx="30" cy="30" r="1.5" fill="white" />
-            <line x1="30" y1="0" x2="30" y2="28" stroke="white" strokeWidth="0.5" />
-            <line x1="32" y1="30" x2="60" y2="30" stroke="white" strokeWidth="0.5" />
-          </pattern>
-          <rect width="100%" height="100%" fill="url(#footer-circuit)" />
-        </svg>
-      </div>
-
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-          {/* Lab Info */}
-          <div className="lg:col-span-1">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-uci-blue to-eecs-teal flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-base tracking-wider">HIE</span>
-              </div>
-              <div>
-                <p className="font-bold text-white text-lg leading-tight">HIE Lab</p>
-                <p className="text-xs text-white/60">UC Irvine</p>
-              </div>
-            </div>
-            <p className="text-sm text-white/70 leading-relaxed mb-4">
-              High-speed Integrated Electronics Laboratory — Advancing mm-wave and terahertz circuit design for next-generation sensing, imaging, and communication systems.
+    <footer className="dark relative border-t border-line bg-bg text-ink" style={{ viewTransitionName: 'site-footer' }}>
+      <div className="mx-auto max-w-[1600px] px-5 pb-10 pt-20 sm:px-8 lg:pt-28">
+        <div className="grid gap-14 lg:grid-cols-12">
+          <div className="lg:col-span-7">
+            <Image
+              src="/images/logo/hie-logo-160.webp"
+              alt="HIE Lab"
+              width={160}
+              height={147}
+              className="mb-8 h-12 w-auto"
+            />
+            <p className="display-2 max-w-3xl">
+              High-speed Integrated Electronics <span className="accent-serif text-ink-2">Laboratory</span>
             </p>
-            <a href="https://engineering.uci.edu/dept/eecs" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <div className="w-8 h-8 rounded-full bg-uci-gold/20 flex items-center justify-center">
-                <span className="text-[8px] font-bold text-uci-gold">UCI</span>
-              </div>
-              <span className="text-xs text-white/50 hover:text-white/70 transition-colors">EECS Department</span>
-            </a>
           </div>
+          <address className="not-italic lg:col-span-4 lg:col-start-9 lg:pt-20">
+            <p className="kicker mb-4">Contact</p>
+            <p className="text-[15px] leading-relaxed text-ink-2">
+              {contact.department}
+              <br />
+              {contact.university}
+              <br />
+              {contact.city}
+            </p>
+            <p className="mt-5 flex flex-col gap-1.5 font-mono text-[13px] [font-stretch:87.5%]">
+              <a href={`mailto:${contact.email}`} className="link-inline w-fit">
+                {contact.email}
+              </a>
+              <a href={contact.phoneHref} className="w-fit text-ink-2 hover:text-ink">
+                {contact.phone}
+              </a>
+            </p>
+          </address>
+        </div>
 
-          {/* Quick Links */}
-          <div>
-            <h3 className="text-sm font-semibold text-uci-gold mb-4 tracking-wider uppercase">
-              Quick Links
-            </h3>
-            <ul className="space-y-2.5">
-              {quickLinks.map((link) => (
-                <li key={link.name}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-white/70 hover:text-uci-gold transition-colors duration-200 flex items-center gap-2"
-                  >
-                    <span className="w-1 h-1 rounded-full bg-eecs-teal" />
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+        <div className="mt-20">
+          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-3">
+            <p className="kicker">Our silicon</p>
+            <p className="kicker normal-case tracking-[0.06em]">
+              {chips.length} dies · {formatFrequency(siliconSpanGHz[0])} to {formatFrequency(siliconSpanGHz[1])}
+            </p>
           </div>
+          <SpectrumScale span={siliconSpanGHz} />
+        </div>
 
-          {/* More Links */}
-          <div>
-            <h3 className="text-sm font-semibold text-uci-gold mb-4 tracking-wider uppercase">
-              More
-            </h3>
-            <ul className="space-y-2.5">
-              {moreLinks.map((link) => (
-                <li key={link.name}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-white/70 hover:text-uci-gold transition-colors duration-200 flex items-center gap-2"
-                  >
-                    <span className="w-1 h-1 rounded-full bg-eecs-teal" />
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Contact */}
-          <div>
-            <h3 className="text-sm font-semibold text-uci-gold mb-4 tracking-wider uppercase">
-              Contact
-            </h3>
-            <div className="space-y-3">
-              <div className="flex items-start gap-2">
-                <svg className="w-4 h-4 text-eecs-teal mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                <a href="mailto:haghasi@uci.edu" className="text-sm text-white/70 hover:text-uci-gold transition-colors">
-                  haghasi@uci.edu
-                </a>
-              </div>
-              <div className="flex items-start gap-2">
-                <svg className="w-4 h-4 text-eecs-teal mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                </svg>
-                <span className="text-sm text-white/70">(949) 824-8810</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <svg className="w-4 h-4 text-eecs-teal mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span className="text-sm text-white/70">
-                  University of California, Irvine<br />
-                  <a href="https://engineering.uci.edu/dept/eecs" target="_blank" rel="noopener noreferrer" className="hover:text-uci-gold transition-colors">Dept. of EECS</a>
-                </span>
-              </div>
+        <div className="mt-16 grid grid-cols-2 gap-10 border-t border-line pt-12 sm:grid-cols-3 lg:grid-cols-12">
+          {columns.map((column) => (
+            <div key={column.title} className="lg:col-span-2">
+              <p className="kicker mb-5">{column.title}</p>
+              <ul className="flex flex-col gap-3">
+                {column.links.map((link) => (
+                  <li key={link.name}>
+                    {link.external ? (
+                      <a
+                        href={link.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[15px] text-ink-2 transition-colors hover:text-ink"
+                      >
+                        {link.name} <span className="font-mono text-ink-3" aria-hidden="true">↗</span>
+                      </a>
+                    ) : (
+                      <Link href={link.href} className="text-[15px] text-ink-2 transition-colors hover:text-ink">
+                        {link.name}
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
             </div>
+          ))}
+          <div className="col-span-2 sm:col-span-3 lg:col-span-4 lg:col-start-9">
+            <p className="kicker mb-5">Part of</p>
+            <ul className="flex flex-col gap-3 text-[15px]">
+              <li>
+                <a href={institutionLinks.eecs} target="_blank" rel="noopener noreferrer" className="text-ink-2 transition-colors hover:text-ink">
+                  Department of EECS <span className="font-mono text-ink-3" aria-hidden="true">↗</span>
+                </a>
+              </li>
+              <li>
+                <a href={institutionLinks.samueli} target="_blank" rel="noopener noreferrer" className="text-ink-2 transition-colors hover:text-ink">
+                  Samueli School of Engineering <span className="font-mono text-ink-3" aria-hidden="true">↗</span>
+                </a>
+              </li>
+              <li>
+                <a href={institutionLinks.uci} target="_blank" rel="noopener noreferrer" className="text-ink-2 transition-colors hover:text-ink">
+                  University of California, Irvine <span className="font-mono text-ink-3" aria-hidden="true">↗</span>
+                </a>
+              </li>
+            </ul>
           </div>
         </div>
 
-        {/* Bottom bar */}
-        <div className="mt-12 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-white/40">
-            &copy; {new Date().getFullYear()} HIE Lab, UC Irvine. All rights reserved.
-          </p>
-          <div className="flex items-center gap-4 text-xs text-white/40">
-            <a href="https://uci.edu/privacy/index.php" target="_blank" rel="noopener noreferrer" className="hover:text-white/60 transition-colors">
-              Privacy
-            </a>
-            <span>|</span>
-            <a href="https://engineering.uci.edu" target="_blank" rel="noopener noreferrer" className="hover:text-white/60 transition-colors">
-              Samueli School of Engineering
-            </a>
-            <span>|</span>
-            <a href="https://uci.edu" target="_blank" rel="noopener noreferrer" className="hover:text-white/60 transition-colors">
-              UC Irvine
-            </a>
-          </div>
+        <div className="mt-16 flex flex-col gap-3 border-t border-line pt-6 font-mono text-[11px] text-ink-3 [font-stretch:87.5%] sm:flex-row sm:items-center sm:justify-between">
+          <p>© {year} HIE Lab, UC Irvine</p>
+          <a href={institutionLinks.privacy} target="_blank" rel="noopener noreferrer" className="hover:text-ink">
+            Privacy
+          </a>
         </div>
       </div>
     </footer>

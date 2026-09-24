@@ -6,16 +6,11 @@ import { UploadCloud, FileText, AlertCircle, Trash2, ShieldAlert } from 'lucide-
 import { parseTouchstone, sToMixedMode, cDB, cPhase, cMag, computeTDR, getTdrValidationError, MixedModePairing, TDRPoint } from '../lib/sParameterEngine';
 import { SmithChart } from './SmithChart';
 
-const colors = [
-  '#ef4444', // red-500
-  '#3b82f6', // blue-500
-  '#10b981', // emerald-500
-  '#f59e0b', // amber-500
-  '#8b5cf6', // violet-500
-  '#ec4899', // pink-500
-  '#06b6d4', // cyan-500
-  '#14b8a6', // teal-500
-];
+// Categorical series tokens from globals.css: they switch with the theme.
+const colors = Array.from({ length: 8 }, (_, i) => `var(--series-${i + 1})`);
+
+const axisTick = { fill: 'var(--ink-3)', fontSize: 11, fontFamily: 'var(--font-martian)' };
+const axisLabel = { fill: 'var(--ink-3)', fontSize: 11 };
 
 interface PlotDataPoint {
   frequency: number;
@@ -56,8 +51,8 @@ function SParameterTooltip({
   }
 
   return (
-    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded-lg shadow-lg">
-      <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mb-2">{`${label} GHz`}</p>
+    <div className="rounded-[4px] border border-line-strong bg-surface p-3 shadow-[var(--shadow-pop)]">
+      <p className="kicker mb-2 normal-case">{`${label} GHz`}</p>
       {payload.map((entry, index) => {
         const dataKey = String(entry.dataKey ?? '');
         const isComplex = dataKey.includes('_Magnitude') || dataKey.includes('_Phase') || dataKey.includes('_Real') || dataKey.includes('_Imag');
@@ -76,7 +71,7 @@ function SParameterTooltip({
         else if (chartType === 'VSWR' || chartType === 'K' || chartType === 'Q') unit = '';
 
         return (
-          <p key={index} className="text-sm font-medium" style={{ color: entry.color }}>
+          <p key={index} className="readout text-[13px]" style={{ color: entry.color }}>
             {name}: {entry.value} {unit}
           </p>
         );
@@ -365,26 +360,26 @@ export default function SParameterViewer() {
   );
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-5xl mx-auto p-4 md:p-6 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-200 dark:border-slate-800">
+    <div className="flex w-full flex-col gap-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 dark:text-white">S-Parameter Viewer & Calculator</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="kicker">Touchstone file</p>
+          <p className="mt-1.5 text-sm text-ink-2">
             Upload a Touchstone v1/full-matrix file (.sNp) to view S-parameters, L, C, Q, and system metrics.
           </p>
         </div>
         
         {!data.length ? (
-          <label className="cursor-pointer inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium shadow-sm shrink-0">
+          <label className="btn btn-primary shrink-0 cursor-pointer focus-within:outline focus-within:outline-2 focus-within:outline-offset-2">
             <UploadCloud size={20} />
             <span>Upload File</span>
-            <input type="file" accept=".s1p,.s2p,.s3p,.s4p,.s5p,.s6p,.s7p,.s8p,.s9p,.s10p,.s11p,.s12p" className="hidden" onChange={handleFileUpload} />
+            <input type="file" accept=".s1p,.s2p,.s3p,.s4p,.s5p,.s6p,.s7p,.s8p,.s9p,.s10p,.s11p,.s12p" className="sr-only" onChange={handleFileUpload} />
           </label>
         ) : (
-          <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800/50 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 shrink-0">
-            <FileText size={18} className="text-blue-500" />
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate max-w-[150px] md:max-w-[250px]">{fileName}</span>
-            <button onClick={handleClear} className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md text-red-500 transition-colors" title="Remove file">
+          <div className="flex shrink-0 items-center gap-3 rounded-md border border-line bg-bg-raised px-4 py-2">
+            <FileText size={18} className="text-accent-ink" aria-hidden="true" />
+            <span className="max-w-[150px] truncate font-mono text-[13px] text-ink md:max-w-[250px]">{fileName}</span>
+            <button type="button" onClick={handleClear} className="btn-icon h-9 min-h-9 w-9 min-w-9 text-ink-3 hover:text-ink" title="Remove file" aria-label="Remove file">
               <Trash2 size={16} />
             </button>
           </div>
@@ -392,21 +387,21 @@ export default function SParameterViewer() {
       </div>
 
       {error && (
-        <div className="p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg flex items-center gap-3 text-sm font-medium border border-red-200 dark:border-red-800/30">
+        <div className="flex items-start gap-3 rounded-[4px] border border-marker-ink/45 bg-marker/10 p-4 text-sm text-ink" role="alert">
           <AlertCircle size={18} className="shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {data.length > 0 && !isPassive && (
-        <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 rounded-lg flex items-center gap-3 text-sm font-medium border border-yellow-200 dark:border-yellow-800/30">
+        <div className="flex items-start gap-3 rounded-[4px] border border-marker-ink/45 bg-marker/10 p-4 text-sm text-ink">
           <ShieldAlert size={18} className="shrink-0" />
           <span>Warning: The S-matrix passivity check exceeded the +0.1 dB numerical-tolerance threshold (σmax &gt; 1.0116){maxPassivitySingularValue !== null ? `; measured max σ=${maxPassivitySingularValue.toFixed(3)}` : ''}. This can be expected for active devices; for a passive DUT, check calibration, reference impedance, and de-embedding.</span>
         </div>
       )}
 
       {parseWarnings.length > 0 && (
-        <div className="p-4 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 rounded-lg flex items-start gap-3 text-sm font-medium border border-amber-200 dark:border-amber-800/30">
+        <div className="flex items-start gap-3 rounded-[4px] border border-marker-ink/45 bg-marker/10 p-4 text-sm text-ink">
           <AlertCircle size={18} className="shrink-0 mt-0.5" />
           <div className="space-y-1">
             {parseWarnings.map((warning) => (
@@ -417,7 +412,7 @@ export default function SParameterViewer() {
       )}
 
       {data.length > 0 && tdrWarning && (
-        <div className={`p-3 rounded-lg text-xs border ${tdrData.length ? 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-300 dark:border-indigo-800/30' : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800/30'}`}>
+        <div className={`rounded-[4px] border p-3 text-xs ${tdrData.length ? 'border-line bg-surface-2/60 text-ink-2' : 'border-marker-ink/45 bg-marker/10 text-ink'}`}>
           TDR: {tdrWarning}
         </div>
       )}
@@ -425,24 +420,27 @@ export default function SParameterViewer() {
       {data.length > 0 && (
         <div className="flex flex-col gap-6">
           
-          <div className="flex gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+          <div className="flex gap-1 overflow-x-auto border-b border-line" role="tablist" aria-label="View">
             <button
+              type="button"
               onClick={() => setViewMode('Frequency')}
-              className={`px-4 py-2 font-semibold text-sm transition-colors rounded-lg ${viewMode === 'Frequency' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+              role="tab" aria-selected={viewMode === 'Frequency'} className={`relative whitespace-nowrap px-4 py-3 text-sm font-semibold transition-colors ${viewMode === 'Frequency' ? 'text-ink after:absolute after:inset-x-3 after:-bottom-px after:h-0.5 after:bg-marker' : 'text-ink-3 hover:text-ink'}`}
             >
               Frequency Domain
             </button>
             <button
+              type="button"
               onClick={() => setViewMode('SmithChart')}
-              className={`px-4 py-2 font-semibold text-sm transition-colors rounded-lg ${viewMode === 'SmithChart' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+              role="tab" aria-selected={viewMode === 'SmithChart'} className={`relative whitespace-nowrap px-4 py-3 text-sm font-semibold transition-colors ${viewMode === 'SmithChart' ? 'text-ink after:absolute after:inset-x-3 after:-bottom-px after:h-0.5 after:bg-marker' : 'text-ink-3 hover:text-ink'}`}
             >
               Smith Chart
             </button>
             <button
+              type="button"
               onClick={() => setViewMode('Time')}
               disabled={tdrData.length === 0}
               title={tdrData.length === 0 ? tdrWarning : undefined}
-              className={`px-4 py-2 font-semibold text-sm transition-colors rounded-lg ${viewMode === 'Time' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+              role="tab" aria-selected={viewMode === 'Time'} className={`relative whitespace-nowrap px-4 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${viewMode === 'Time' ? 'text-ink after:absolute after:inset-x-3 after:-bottom-px after:h-0.5 after:bg-marker' : 'text-ink-3 hover:text-ink'}`}
             >
               Time Domain (TDR)
             </button>
@@ -450,39 +448,41 @@ export default function SParameterViewer() {
 
           {viewMode === 'Frequency' ? (
             <>
-              <div className="flex flex-col gap-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+              <div className="flex flex-col gap-4 rounded-[4px] border border-line bg-bg-raised p-4">
             
             <div className="flex flex-col gap-4">
               <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                <div className="flex items-center gap-2 p-1.5 bg-slate-200/60 dark:bg-slate-900/80 rounded-lg overflow-x-auto w-full lg:w-auto">
+                <div className="flex w-full items-center gap-1 overflow-x-auto rounded-lg border border-line bg-surface p-1 lg:w-auto">
                   <select
                     value={analysisGroup}
                     onChange={handleGroupChange}
-                    className="bg-transparent text-sm font-semibold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer px-2"
+                    className="cursor-pointer bg-transparent px-2 text-sm font-semibold text-ink focus:outline-none" aria-label="Analysis group"
                   >
                     <option value="S">S-Parameters</option>
                     <option value="ZY">Z / Y Parameters</option>
                     <option value="Comp">Component Extraction</option>
                     <option value="Sys">System Metrics</option>
                   </select>
-                  <div className="w-px h-6 bg-slate-300 dark:bg-slate-700 mx-2 shrink-0"></div>
+                  <div className="mx-1 h-6 w-px shrink-0 bg-line-strong"></div>
                   
                   {analysisGroup === 'S' && (
                     <button
+                      type="button"
                       onClick={() => handleChartTypeChange('S')}
-                      className="px-4 py-2 rounded-md text-sm font-semibold transition-all whitespace-nowrap bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm"
+                      className="whitespace-nowrap rounded-md px-3.5 py-2 font-mono text-[12px] [font-stretch:87.5%] bg-surface-2 text-ink shadow-[inset_0_0_0_1px_var(--line)]"
                     >
                       S-Params
                     </button>
                   )}
                   {analysisGroup === 'ZY' && (['Z', 'Y'] as const).map(type => (
                     <button
+                      type="button"
                       key={type}
                       onClick={() => handleChartTypeChange(type)}
-                      className={`px-4 py-2 rounded-md text-sm font-semibold transition-all whitespace-nowrap ${
+                      className={`whitespace-nowrap rounded-md px-3.5 py-2 font-mono text-[12px] transition-colors [font-stretch:87.5%] ${
                         chartType === type 
-                          ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' 
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800'
+                          ? 'bg-surface-2 text-ink shadow-[inset_0_0_0_1px_var(--line)]' 
+                          : 'text-ink-3 hover:text-ink'
                       }`}
                     >
                       {type}-Params
@@ -490,12 +490,13 @@ export default function SParameterViewer() {
                   ))}
                   {analysisGroup === 'Comp' && (['L', 'C', 'Q', 'ESR', 'Rp'] as const).map(type => (
                     <button
+                      type="button"
                       key={type}
                       onClick={() => handleChartTypeChange(type)}
-                      className={`px-4 py-2 rounded-md text-sm font-semibold transition-all whitespace-nowrap ${
+                      className={`whitespace-nowrap rounded-md px-3.5 py-2 font-mono text-[12px] transition-colors [font-stretch:87.5%] ${
                         chartType === type 
-                          ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' 
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800'
+                          ? 'bg-surface-2 text-ink shadow-[inset_0_0_0_1px_var(--line)]' 
+                          : 'text-ink-3 hover:text-ink'
                       }`}
                     >
                       {type === 'L' ? 'Inductance' : type === 'C' ? 'Capacitance' : type === 'Q' ? 'Q-Factor' : type}
@@ -503,12 +504,13 @@ export default function SParameterViewer() {
                   ))}
                   {analysisGroup === 'Sys' && (['VSWR', 'GD', 'K'] as const).map(type => (
                     <button
+                      type="button"
                       key={type}
                       onClick={() => handleChartTypeChange(type)}
-                      className={`px-4 py-2 rounded-md text-sm font-semibold transition-all whitespace-nowrap ${
+                      className={`whitespace-nowrap rounded-md px-3.5 py-2 font-mono text-[12px] transition-colors [font-stretch:87.5%] ${
                         chartType === type 
-                          ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' 
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800'
+                          ? 'bg-surface-2 text-ink shadow-[inset_0_0_0_1px_var(--line)]' 
+                          : 'text-ink-3 hover:text-ink'
                       }`}
                     >
                       {type === 'GD' ? 'Group Delay' : type === 'K' ? 'K-Factor' : type}
@@ -518,22 +520,23 @@ export default function SParameterViewer() {
 
                 <div className="flex gap-2 overflow-x-auto w-full lg:w-auto">
                   {chartType === 'S' && numPorts === 4 && (
-                    <div className="flex gap-2 p-1.5 bg-slate-200/60 dark:bg-slate-900/80 rounded-lg shrink-0 items-center">
+                    <div className="flex shrink-0 items-center gap-1 rounded-lg border border-line bg-surface p-1">
                       {(['Single', 'Mixed'] as const).map(mode => (
                         <button
+                          type="button"
                           key={mode}
                           onClick={() => handleModeChange(mode)}
-                          className={`px-3 py-1.5 rounded-md text-xs font-bold uppercase transition-all ${
+                          className={`rounded-md px-3 py-1.5 font-mono text-[11px] uppercase transition-colors [font-stretch:87.5%] ${
                             sParamMode === mode 
-                              ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' 
-                              : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800'
+                              ? 'bg-surface-2 text-ink shadow-[inset_0_0_0_1px_var(--line)]' 
+                              : 'text-ink-3 hover:text-ink'
                           }`}
                         >
                           {mode}
                         </button>
                       ))}
                       {sParamMode === 'Mixed' && (
-                        <select value={mixedModePairing} onChange={(event) => setMixedModePairing(event.target.value as MixedModePairing)} className="rounded bg-white px-2 py-1 text-xs font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-200" aria-label="Mixed-mode physical port pairing">
+                        <select value={mixedModePairing} onChange={(event) => setMixedModePairing(event.target.value as MixedModePairing)} className="rounded bg-surface-2 px-2 py-1 font-mono text-[11px] text-ink" aria-label="Mixed-mode physical port pairing">
                           <option value="12-34">Pairs 1–2 / 3–4</option>
                           <option value="13-24">Pairs 1–3 / 2–4</option>
                           <option value="14-23">Pairs 1–4 / 2–3</option>
@@ -543,15 +546,16 @@ export default function SParameterViewer() {
                   )}
 
                   {(chartType === 'S' || chartType === 'Z' || chartType === 'Y') && (
-                    <div className="flex gap-2 p-1.5 bg-slate-200/60 dark:bg-slate-900/80 rounded-lg shrink-0">
+                    <div className="flex shrink-0 gap-1 rounded-lg border border-line bg-surface p-1">
                       {(['Magnitude', 'Phase', 'Real', 'Imag'] as const).map(view => (
                         <button
+                          type="button"
                           key={view}
                           onClick={() => setSParamViewType(view)}
-                          className={`px-3 py-1.5 rounded-md text-xs font-bold uppercase transition-all ${
+                          className={`rounded-md px-3 py-1.5 font-mono text-[11px] uppercase transition-colors [font-stretch:87.5%] ${
                             sParamViewType === view 
-                              ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm' 
-                              : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800'
+                              ? 'bg-surface-2 text-ink shadow-[inset_0_0_0_1px_var(--line)]' 
+                              : 'text-ink-3 hover:text-ink'
                           }`}
                         >
                           {view}
@@ -562,42 +566,42 @@ export default function SParameterViewer() {
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-x-4 gap-y-2 items-center bg-white dark:bg-slate-900 px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mr-1">Plot:</span>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-md border border-line bg-surface px-4 py-2.5">
+                <span className="kicker mr-1 text-[10.5px]">Plot:</span>
                 {availableKeys.map(key => (
-                  <label key={key} className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                  <label key={key} className="flex cursor-pointer items-center gap-2 font-mono text-[12px] text-ink-2 transition-colors hover:text-ink">
                     <input 
                       type="checkbox" 
                       checked={selectedKeys.includes(key)} 
                       onChange={() => toggleKey(key)}
-                      className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500 dark:bg-slate-800 transition-colors cursor-pointer"
+                      className="h-4 w-4 cursor-pointer accent-[var(--accent)]"
                     />
                     {key}
                   </label>
                 ))}
               </div>
               {analysisGroup === 'Comp' && (
-                <p className="text-xs text-slate-500 dark:text-slate-400">First-order extraction: L is shown only where Im(Zpp)&gt;0, C only where Im(Zpp)&lt;0, and Q=|Im(Zpp)/Re(Zpp)|. Zpp corresponds to the other ports open; ESR=Re(Zpp). Rp=1/Re(Ypp), where Ypp corresponds to the other ports short. These are frequency-dependent equivalents, not broadband lumped models.</p>
+                <p className="text-xs leading-relaxed text-ink-3">First-order extraction: L is shown only where Im(Zpp)&gt;0, C only where Im(Zpp)&lt;0, and Q=|Im(Zpp)/Re(Zpp)|. Zpp corresponds to the other ports open; ESR=Re(Zpp). Rp=1/Re(Ypp), where Ypp corresponds to the other ports short. These are frequency-dependent equivalents, not broadband lumped models.</p>
               )}
               {chartType === 'K' && stabilitySummary && (
-                <p className="text-xs text-slate-500 dark:text-slate-400">{stabilitySummary} K alone is insufficient; unconditional stability requires K&gt;1 and |Δ|&lt;1 at each frequency.</p>
+                <p className="text-xs leading-relaxed text-ink-3">{stabilitySummary} K alone is insufficient; unconditional stability requires K&gt;1 and |Δ|&lt;1 at each frequency.</p>
               )}
             </div>
           </div>
 
-          <div className="h-[500px] w-full mt-2 bg-white dark:bg-slate-900 rounded-xl">
+          <div className="mt-2 h-[500px] w-full rounded-[4px] border border-line bg-bg-raised p-2">
             <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={data} margin={{ top: 10, right: 30, left: 20, bottom: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" opacity={0.3} />
+                  <CartesianGrid strokeDasharray="2 4" stroke="var(--line-strong)" />
                   <XAxis 
                     dataKey="fGHz" 
                     type="number"
                     domain={['dataMin', 'dataMax']}
                     tickCount={10}
-                    label={{ value: 'Frequency (GHz)', position: 'bottom', offset: 0, fill: '#64748b' }}
-                    tick={{ fill: '#64748b', fontSize: 12 }}
+                    label={{ value: 'Frequency (GHz)', position: 'bottom', offset: 0, ...axisLabel }}
+                    tick={axisTick}
                     tickFormatter={(val) => val.toFixed(2)}
-                    stroke="#94a3b8"
+                    stroke="var(--line-strong)"
                   />
                   <YAxis 
                     label={{ 
@@ -612,14 +616,14 @@ export default function SParameterViewer() {
                       angle: -90, 
                       position: 'insideLeft',
                       offset: 0,
-                      fill: '#64748b'
+                      ...axisLabel
                     }}
-                    tick={{ fill: '#64748b', fontSize: 12 }}
+                    tick={axisTick}
                     domain={['auto', 'auto']}
-                    stroke="#94a3b8"
+                    stroke="var(--line-strong)"
                   />
                   <Tooltip content={<SParameterTooltip chartType={chartType} sParamViewType={sParamViewType} />} />
-                  <Legend verticalAlign="top" height={40} wrapperStyle={{ fontSize: '14px', fontWeight: 500 }} />
+                  <Legend verticalAlign="top" height={40} wrapperStyle={{ fontSize: '12px', fontFamily: 'var(--font-martian)' }} />
                   {selectedKeys.map((key, i) => (
                     <Line 
                       key={key} 
@@ -640,7 +644,7 @@ export default function SParameterViewer() {
                   <Brush 
                     dataKey="fGHz" 
                     height={30} 
-                    stroke="#8884d8" 
+                    stroke="var(--line-strong)" fill="var(--surface)" travellerWidth={8} 
                     tickFormatter={(val) => val.toFixed(2)} 
                     y={460}
                   />
@@ -650,23 +654,23 @@ export default function SParameterViewer() {
             </>
           ) : viewMode === 'SmithChart' ? (
             <div className="flex flex-col gap-4">
-              <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
-                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">S-Parameter Smith Chart</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+              <div className="rounded-[4px] border border-line bg-bg-raised p-4">
+                <h3 className="text-lg font-semibold [font-stretch:106%]">S-Parameter Smith Chart</h3>
+                <p className="mt-1 text-sm text-ink-2">
                   Continuous frequency trajectories of complex reflection coefficients on the Smith Chart.
                 </p>
               </div>
-              <div className="p-6 w-full flex justify-center items-center bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
+              <div className="flex w-full items-center justify-center rounded-[4px] border border-line bg-bg-raised p-6">
                  <SmithChart 
                    gammaTrajectories={[
                      {
                        points: s11SmithPoints,
-                       color: '#3b82f6',
+                       color: 'var(--series-1)',
                        name: 'S11'
                      },
                      ...(numPorts >= 2 ? [{
                        points: s22SmithPoints,
-                       color: '#ef4444',
+                       color: 'var(--series-2)',
                        name: 'S22'
                      }] : [])
                    ]}
@@ -675,31 +679,31 @@ export default function SParameterViewer() {
             </div>
           ) : (
             <div className="flex flex-col gap-4">
-              <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
-                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">Time-Domain Reflectometry (TDR)</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+              <div className="rounded-[4px] border border-line bg-bg-raised p-4">
+                <h3 className="text-lg font-semibold [font-stretch:106%]">Time-Domain Reflectometry (TDR)</h3>
+                <p className="mt-1 text-sm text-ink-2">
                   Impedance profile calculated via Inverse Fast Fourier Transform (IFFT) of S11 data.
                 </p>
               </div>
-              <div className="h-[500px] w-full mt-2 bg-white dark:bg-slate-900 rounded-xl">
+              <div className="mt-2 h-[500px] w-full rounded-[4px] border border-line bg-bg-raised p-2">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={tdrData} margin={{ top: 10, right: 30, left: 20, bottom: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" opacity={0.3} />
+                    <CartesianGrid strokeDasharray="2 4" stroke="var(--line-strong)" />
                     <XAxis 
                       dataKey="timeNs" 
                       type="number"
                       domain={['dataMin', 'dataMax']}
                       tickCount={10}
-                      label={{ value: 'Time (ns)', position: 'bottom', offset: 0, fill: '#64748b' }}
-                      tick={{ fill: '#64748b', fontSize: 12 }}
+                      label={{ value: 'Time (ns)', position: 'bottom', offset: 0, ...axisLabel }}
+                      tick={axisTick}
                       tickFormatter={(val) => val.toFixed(3)}
-                      stroke="#94a3b8"
+                      stroke="var(--line-strong)"
                     />
                     <YAxis 
-                      label={{ value: 'Impedance (Ω)', angle: -90, position: 'insideLeft', fill: '#64748b' }}
-                      tick={{ fill: '#64748b', fontSize: 12 }}
+                      label={{ value: 'Impedance (Ω)', angle: -90, position: 'insideLeft', ...axisLabel }}
+                      tick={axisTick}
                       domain={['auto', 'auto']}
-                      stroke="#94a3b8"
+                      stroke="var(--line-strong)"
                     />
                     <Tooltip 
                       formatter={(val, name) => [
@@ -713,7 +717,7 @@ export default function SParameterViewer() {
                       type="stepAfter" 
                       dataKey="impedance" 
                       name="impedance"
-                      stroke="#4f46e5" 
+                      stroke="var(--series-1)" 
                       strokeWidth={2.5}
                       dot={false}
                       isAnimationActive={false}
@@ -721,7 +725,7 @@ export default function SParameterViewer() {
                     <Brush 
                       dataKey="timeNs" 
                       height={30} 
-                      stroke="#8884d8" 
+                      stroke="var(--line-strong)" fill="var(--surface)" travellerWidth={8} 
                       tickFormatter={(val) => val.toFixed(3)} 
                       y={460}
                     />

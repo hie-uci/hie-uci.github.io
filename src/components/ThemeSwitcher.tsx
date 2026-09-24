@@ -2,54 +2,44 @@
 
 import { useTheme } from "next-themes";
 import { useSyncExternalStore } from "react";
-import { Moon, Sun } from "lucide-react";
-import { motion } from "framer-motion";
 
 const subscribe = () => () => {};
-const getClientSnapshot = () => true;
-const getServerSnapshot = () => false;
 
-export default function ThemeSwitcher() {
-  const isClient = useSyncExternalStore(subscribe, getClientSnapshot, getServerSnapshot);
-  const { theme, setTheme } = useTheme();
+/**
+ * Single toggle between Cleanroom (light) and Dark Space (dark). The icon shows
+ * the theme you will switch to, and the label says so for screen readers.
+ */
+export default function ThemeSwitcher({ className = "" }: { className?: string }) {
+  const mounted = useSyncExternalStore(subscribe, () => true, () => false);
+  const { resolvedTheme, setTheme } = useTheme();
 
-  if (!isClient) {
-    return null;
+  // Reserve the space before hydration so the rail does not shift.
+  if (!mounted) {
+    return <span className={`inline-block h-8 w-8 ${className}`} aria-hidden="true" />;
   }
 
-  const modes = [
-    { id: "light", icon: Sun, label: "Cleanroom" },
-    { id: "dark", icon: Moon, label: "Dark Space" },
-  ];
+  const isDark = resolvedTheme !== "light";
+  const next = isDark ? "light" : "dark";
+  const label = isDark ? "Switch to Cleanroom light theme" : "Switch to Dark Space theme";
 
   return (
-    <div className="flex items-center p-1 rounded-full glass-ios shadow-sm">
-      {modes.map((mode) => {
-        const Icon = mode.icon;
-        const isActive = theme === mode.id;
-
-        return (
-          <button
-            key={mode.id}
-            type="button"
-            onClick={() => setTheme(mode.id)}
-            aria-label={mode.label}
-            className={`relative flex items-center justify-center w-8 h-8 rounded-full transition-colors duration-300 ${
-              isActive ? "text-uci-blue dark:text-blue-400" : "text-gray-500 hover:text-foreground"
-            }`}
-            title={mode.label}
-          >
-            {isActive && (
-              <motion.div
-                layoutId="theme-active"
-                className="absolute inset-0 rounded-full bg-white/80 dark:bg-white/10 shadow-sm"
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              />
-            )}
-            <Icon className="w-4 h-4 relative z-10" aria-hidden="true" />
-          </button>
-        );
-      })}
-    </div>
+    <button
+      type="button"
+      onClick={() => setTheme(next)}
+      aria-label={label}
+      title={label}
+      className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-line-strong text-ink-2 transition-colors hover:border-ink-3 hover:text-ink ${className}`}
+    >
+      {isDark ? (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+        </svg>
+      ) : (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+          <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
+        </svg>
+      )}
+    </button>
   );
 }

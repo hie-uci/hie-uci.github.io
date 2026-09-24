@@ -1,9 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { calculateMicrostrip, calculateSymmetricStripline } from '@/lib/rfMath';
-import { RFModelBadge } from './RFModelBadge';
+import dynamic from 'next/dynamic';
+import { calculateMicrostrip, calculateSymmetricStripline, waveguideTE10 } from '@/lib/rfMath';
+
+// three.js arrives with the first 3D stage, not with the page.
+const stageLoading = () => <div className="absolute inset-0 animate-pulse bg-surface-2/40" aria-hidden="true" />;
+const TLineStage = dynamic(() => import('./rf/three/TLineStage'), { ssr: false, loading: stageLoading });
+const WaveguideStage = dynamic(() => import('./rf/three/WaveguideStage'), { ssr: false, loading: stageLoading });
 
 /* =========================================================================
    PCBWay Material Specifications
@@ -33,9 +37,11 @@ interface SubstrateSelectorProps {
   thickness?: string;
   setThickness?: (val: string) => void;
   showThickness?: boolean;
+  /** Label for the height field; stripline calls it the ground spacing. */
+  heightLabel?: string;
 }
 
-function SubstrateSelector({ er, setEr, height, setHeight, thickness, setThickness, showThickness = false }: SubstrateSelectorProps) {
+function SubstrateSelector({ er, setEr, height, setHeight, thickness, setThickness, showThickness = false, heightLabel = 'Substrate Height' }: SubstrateSelectorProps) {
   const [matId, setMatId] = useState('fr4_tg130');
   const isCustomCopperThickness = showThickness
     && thickness !== undefined
@@ -61,63 +67,63 @@ function SubstrateSelector({ er, setEr, height, setHeight, thickness, setThickne
     || !mat.thicknesses.some(value => value.toString() === height);
 
   return (
-    <div className="bg-uci-blue/5 border border-uci-blue/10 p-4 rounded-xl space-y-4 mb-4">
+    <div className="rounded-[4px] border border-line bg-surface-2/50 p-4 space-y-4 mb-4">
       <div>
-        <label className="block text-xs font-semibold text-eng-blue dark:text-blue-300 uppercase tracking-wider mb-2">Substrate Preset</label>
-        <select value={matId} onChange={(e) => handleMatChange(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-uci-blue outline-none">
+        <label className="field-label">Substrate Preset</label>
+        <select value={matId} onChange={(e) => handleMatChange(e.target.value)} className="field-input">
           {MATERIALS.map(m => <option key={m.id} value={m.id}>{m.name} (εr={m.epsilonR})</option>)}
         </select>
       </div>
       
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Dielectric Const (εr)</label>
-          <input type="number" step="0.1" value={er} onChange={(e) => { setEr(e.target.value); setMatId('custom'); }} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+          <label className="field-label">Dielectric Const (εr)</label>
+          <input type="number" step="0.1" value={er} onChange={(e) => { setEr(e.target.value); setMatId('custom'); }} className="field-input" />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Substrate Height</label>
+          <label className="field-label">{heightLabel}</label>
           {mat && mat.thicknesses.length > 0 ? (
             <>
               <select
                 value={isCustomHeight ? 'custom' : height}
                 onChange={(e) => setHeight(e.target.value === 'custom' ? '' : e.target.value)}
-                className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono"
+                className="field-input"
               >
                 {mat.thicknesses.map(t => <option key={t} value={t}>{t} mm</option>)}
                 <option value="custom">Custom (Input below)</option>
               </select>
               {isCustomHeight && (
                 <div className="flex items-center gap-2 mt-2">
-                  <input type="number" min="0" step="0.001" value={height} onChange={(e) => setHeight(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" placeholder="Enter substrate height" />
-                  <span className="text-xs text-gray-500">mm</span>
+                  <input type="number" min="0" step="0.001" value={height} onChange={(e) => setHeight(e.target.value)} className="field-input" placeholder="Enter substrate height" />
+                  <span className="text-xs text-ink-3">mm</span>
                 </div>
               )}
             </>
           ) : (
             <div className="flex items-center gap-2">
-              <input type="number" step="0.1" value={height} onChange={(e) => setHeight(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
-              <span className="text-xs text-gray-500">mm</span>
+              <input type="number" step="0.1" value={height} onChange={(e) => setHeight(e.target.value)} className="field-input" />
+              <span className="text-xs text-ink-3">mm</span>
             </div>
           )}
         </div>
         {showThickness && (
           <div className="col-span-2">
-            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Copper Weight / Thickness</label>
+            <label className="field-label">Copper Weight / Thickness</label>
             <select
               value={isCustomCopperThickness ? 'custom' : thickness}
               onChange={(e) => setThickness && setThickness(e.target.value === 'custom' ? '' : e.target.value)}
-              className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono"
+              className="field-input"
             >
               {COPPER_WEIGHTS.map(c => <option key={c.id} value={c.thickness_mm}>{c.label}</option>)}
               <option value="custom">Custom (Input below)</option>
             </select>
             {isCustomCopperThickness && (
-              <input type="number" step="0.001" value={thickness ?? ''} onChange={(e) => setThickness && setThickness(e.target.value)} className="w-full mt-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" placeholder="Enter thickness in mm" />
+              <input type="number" step="0.001" value={thickness ?? ''} onChange={(e) => setThickness && setThickness(e.target.value)} className="field-input mt-2" placeholder="Enter thickness in mm" />
             )}
           </div>
         )}
       </div>
-      <p className="text-[11px] leading-relaxed text-gray-500 dark:text-gray-400">
+      <p className="text-[11px] leading-relaxed text-ink-3">
         Preset εr values are typical design Dk values; FR-4 varies with resin content, glass weave, frequency, and vendor. Confirm the laminate datasheet and fabrication stackup before release.
       </p>
     </div>
@@ -167,18 +173,16 @@ export function VSWRCalculator() {
   const results = calcResults();
 
   return (
-    <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
-      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">VSWR Interactive Calculator</h4>
-      <RFModelBadge level="identity" detail="Lossless single-interface power-wave identities." />
+    <div>
       
       <div className="grid md:grid-cols-2 gap-8">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Input Parameter</label>
+            <label className="field-label">Input Parameter</label>
             <select
               value={inputType}
               onChange={(e) => setInputType(e.target.value as 'vswr' | 'rl' | 'gamma')}
-              className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none"
+              className="field-input"
             >
               <option value="vswr">VSWR</option>
               <option value="rl">Return Loss (dB)</option>
@@ -186,31 +190,31 @@ export function VSWRCalculator() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Value</label>
+            <label className="field-label">Value</label>
             <input
               type="number"
               step="any"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none"
+              className="field-input"
             />
           </div>
         </div>
 
-        <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
-          <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Calculated Results</h5>
+        <div className="readout-panel space-y-3">
+          <h5 className="kicker mb-3">Calculated Results</h5>
           {results ? (
             <>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">VSWR</span> <span className="font-mono font-medium">{results.vswr.toFixed(4)} : 1</span></div>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Return Loss</span> <span className="font-mono font-medium">{results.rl.toFixed(3)} dB</span></div>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">|Γ|</span> <span className="font-mono font-medium">{results.gamma.toFixed(6)}</span></div>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Mismatch Loss</span> <span className="font-mono font-medium">{results.mismatchLoss.toFixed(4)} dB</span></div>
-              <hr className="border-gray-200 dark:border-gray-800 my-2" />
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Reflected Power</span> <span className="font-mono font-medium text-red-500">{results.reflPower.toFixed(2)} %</span></div>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Transmitted Power</span> <span className="font-mono font-medium text-green-600 dark:text-green-400">{results.transPower.toFixed(2)} %</span></div>
+              <div className="flex justify-between items-center"><span className="text-ink-2">VSWR</span> <span className="readout">{results.vswr.toFixed(4)} : 1</span></div>
+              <div className="flex justify-between items-center"><span className="text-ink-2">Return Loss</span> <span className="readout">{results.rl.toFixed(3)} dB</span></div>
+              <div className="flex justify-between items-center"><span className="text-ink-2">|Γ|</span> <span className="readout">{results.gamma.toFixed(6)}</span></div>
+              <div className="flex justify-between items-center"><span className="text-ink-2">Mismatch Loss</span> <span className="readout">{results.mismatchLoss.toFixed(4)} dB</span></div>
+              <hr className="border-line my-2" />
+              <div className="flex justify-between items-center"><span className="text-ink-2">Reflected Power</span> <span className="font-mono font-medium text-marker-ink">{results.reflPower.toFixed(2)} %</span></div>
+              <div className="flex justify-between items-center"><span className="text-ink-2">Transmitted Power</span> <span className="readout text-trace-2">{results.transPower.toFixed(2)} %</span></div>
             </>
           ) : (
-            <div className="text-sm text-gray-400">Invalid input</div>
+            <div className="text-sm text-ink-3">Invalid input</div>
           )}
         </div>
       </div>
@@ -246,18 +250,16 @@ export function DBCalculator() {
   const results = calcPower();
 
   return (
-    <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
-      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Power / dB Calculator</h4>
-      <RFModelBadge level="identity" detail="Unit conversion referenced to 1 mW and 1 W." />
+    <div>
       
       <div className="grid md:grid-cols-2 gap-8">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Input Unit</label>
+            <label className="field-label">Input Unit</label>
             <select
               value={powerUnit}
               onChange={(e) => setPowerUnit(e.target.value as 'dBm' | 'W' | 'mW')}
-              className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none"
+              className="field-input"
             >
               <option value="dBm">dBm</option>
               <option value="W">Watts (W)</option>
@@ -265,28 +267,28 @@ export function DBCalculator() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Value</label>
+            <label className="field-label">Value</label>
             <input
               type="number"
               step="any"
               value={powerInput}
               onChange={(e) => setPowerInput(e.target.value)}
-              className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none"
+              className="field-input"
             />
           </div>
         </div>
 
-        <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
-          <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Calculated Results</h5>
+        <div className="readout-panel space-y-3">
+          <h5 className="kicker mb-3">Calculated Results</h5>
           {results ? (
             <>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">dBm</span> <span className="font-mono font-medium">{results.dBm.toFixed(4)} dBm</span></div>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">dBW</span> <span className="font-mono font-medium">{results.dBW.toFixed(4)} dBW</span></div>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Milliwatts</span> <span className="font-mono font-medium">{results.mW.toFixed(6)} mW</span></div>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Watts</span> <span className="font-mono font-medium">{results.W.toExponential(4)} W</span></div>
+              <div className="flex justify-between items-center"><span className="text-ink-2">dBm</span> <span className="readout">{results.dBm.toFixed(4)} dBm</span></div>
+              <div className="flex justify-between items-center"><span className="text-ink-2">dBW</span> <span className="readout">{results.dBW.toFixed(4)} dBW</span></div>
+              <div className="flex justify-between items-center"><span className="text-ink-2">Milliwatts</span> <span className="readout">{results.mW.toFixed(6)} mW</span></div>
+              <div className="flex justify-between items-center"><span className="text-ink-2">Watts</span> <span className="readout">{results.W.toExponential(4)} W</span></div>
             </>
           ) : (
-            <div className="text-sm text-gray-400">Invalid input</div>
+            <div className="text-sm text-ink-3">Invalid input</div>
           )}
         </div>
       </div>
@@ -320,78 +322,52 @@ export function MicrostripCalculator() {
   const results = calcMicrostrip();
 
   return (
-    <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
-      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Microstrip Transmission Line</h4>
-      <RFModelBadge level="closed-form" detail="Hammerstad–Jensen with thickness correction and Kirschning–Jansen dispersion." />
+    <div>
       
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-4">
           <SubstrateSelector er={er} setEr={setEr} height={height} setHeight={setHeight} thickness={thickness} setThickness={setThickness} showThickness={true} />
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Trace Width (mm)</label>
+              <label className="field-label">Trace Width (mm)</label>
               <input
                 type="number" step="0.1" value={width} onChange={(e) => setWidth(e.target.value)}
-                className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono"
+                className="field-input"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Frequency (GHz)</label>
+              <label className="field-label">Frequency (GHz)</label>
               <input
                 type="number" step="0.1" value={freq} onChange={(e) => setFreq(e.target.value)}
-                className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono"
+                className="field-input"
               />
             </div>
           </div>
 
-          <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3 mt-4 relative overflow-hidden">
-            <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Results (with Dispersion)</h5>
+          <div className="readout-panel space-y-3 mt-4">
+            <h5 className="kicker mb-3">Results (with Dispersion)</h5>
             {results ? (
               <>
-                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Z₀ @ {freq} GHz</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.z0.toFixed(2)} Ω</span></div>
-                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">εeff @ {freq} GHz</span> <span className="font-mono font-medium">{results.effectivePermittivity.toFixed(4)}</span></div>
-                <hr className="border-gray-200 dark:border-gray-800 my-2" />
-                <div className="flex justify-between items-center text-xs opacity-60"><span className="text-gray-600 dark:text-gray-400">Z₀ (quasi-static)</span> <span className="font-mono">{results.staticZ0.toFixed(2)} Ω</span></div>
-                <div className="flex justify-between items-center text-xs opacity-60"><span className="text-gray-600 dark:text-gray-400">εeff (quasi-static)</span> <span className="font-mono">{results.staticEffectivePermittivity.toFixed(4)}</span></div>
-                {results.warnings.map(warning => <p key={warning} className="text-xs text-amber-700 dark:text-amber-300">{warning}</p>)}
-                <p className="text-xs text-gray-500 dark:text-gray-400">Closed-form approximation: full Hammerstad–Jensen quasi-static model with finite conductor thickness and Kirschning–Jansen dispersion. Conductor/dielectric loss, roughness, solder mask, and enclosure effects are excluded; verify final geometry with a 2.5D/3D EM solver.</p>
+                <div className="flex justify-between items-center"><span className="text-ink-2">Z₀ @ {freq} GHz</span> <span className="readout text-lg text-accent-ink">{results.z0.toFixed(2)} Ω</span></div>
+                <div className="flex justify-between items-center"><span className="text-ink-2">εeff @ {freq} GHz</span> <span className="readout">{results.effectivePermittivity.toFixed(4)}</span></div>
+                <hr className="border-line my-2" />
+                <div className="flex justify-between items-center text-xs opacity-60"><span className="text-ink-2">Z₀ (quasi-static)</span> <span className="font-mono">{results.staticZ0.toFixed(2)} Ω</span></div>
+                <div className="flex justify-between items-center text-xs opacity-60"><span className="text-ink-2">εeff (quasi-static)</span> <span className="font-mono">{results.staticEffectivePermittivity.toFixed(4)}</span></div>
+                {results.warnings.map(warning => <p key={warning} className="text-xs text-marker-ink">{warning}</p>)}
+                <p className="text-xs leading-relaxed text-ink-3">Closed-form approximation: full Hammerstad–Jensen quasi-static model with finite conductor thickness and Kirschning–Jansen dispersion. Conductor/dielectric loss, roughness, solder mask, and enclosure effects are excluded; verify final geometry with a 2.5D/3D EM solver.</p>
               </>
             ) : (
-              <div className="text-sm text-gray-400">Invalid input values</div>
+              <div className="text-sm text-ink-3">Invalid input values</div>
             )}
           </div>
         </div>
 
-        {/* 3D Isometric View */}
-        <div 
-          className="flex flex-col items-center justify-center h-full min-h-[250px] bg-slate-100 dark:bg-slate-800/50 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden relative"
-          style={{ perspective: '1000px' }}
-        >
-          <p className="absolute top-3 left-4 text-xs font-semibold text-gray-400 uppercase tracking-widest">3D PCB View</p>
-          
-          <motion.div 
-            className="relative"
-            animate={{ rotateX: 60, rotateZ: -45 }}
-            transition={{ type: "spring", stiffness: 50, damping: 20 }}
-            style={{ transformStyle: 'preserve-3d', width: '200px', height: '200px' }}
-          >
-            {/* Ground Plane (Bottom) */}
-            <div className="absolute inset-0 bg-yellow-600/80 shadow-[0_10px_20px_rgba(0,0,0,0.3)]" style={{ transform: 'translateZ(0px)', borderRadius: '4px' }} />
-            
-            {/* Substrate (Middle) */}
-            <div className="absolute inset-0 bg-green-600/40 backdrop-blur-sm border border-green-500/30" style={{ transform: 'translateZ(20px)', borderRadius: '4px' }} />
-            
-            {/* Trace (Top) */}
-            <motion.div 
-              className="absolute bg-yellow-500 shadow-[0_5px_15px_rgba(255,210,0,0.4)]"
-              style={{ transform: 'translateZ(40px)', height: '100%' }}
-              animate={{ 
-                width: `${Math.min(Math.max((parseFloat(width) / parseFloat(height)) * 20, 10), 180)}px`,
-                left: `calc(50% - ${Math.min(Math.max((parseFloat(width) / parseFloat(height)) * 20, 10), 180)/2}px)`
-              }}
-              transition={{ type: "spring", stiffness: 100 }}
-            />
-          </motion.div>
+        <div className="graph-grid relative min-h-[320px] overflow-hidden rounded-[4px] border border-line bg-bg-raised lg:min-h-[400px]">
+          <TLineStage
+            geometry={{ kind: 'microstrip', widthMm: parseFloat(width), heightMm: parseFloat(height), thicknessMm: parseFloat(thickness) }}
+            label={`Microstrip cross-section, ${width} mm trace on ${height} mm substrate, with quasi-TEM field lines`}
+            caption={results ? `λg = ${(299.792458 / parseFloat(freq) / Math.sqrt(results.effectivePermittivity)).toFixed(1)} mm at ${freq} GHz. The travelling wave is drawn compressed to two cycles.` : undefined}
+          />
         </div>
       </div>
     </div>
@@ -403,46 +379,56 @@ export function MicrostripCalculator() {
    ========================================================================= */
 
 export function WaveguideCalculator() {
-  const [a, setA] = useState<string>('22.86'); // WR90 standard
+  const [a, setA] = useState<string>('22.86'); // WR-90
+  const [freq, setFreq] = useState<string>('10');
 
-  const calcCutoff = () => {
-    const valA = parseFloat(a);
-    if (isNaN(valA) || valA <= 0) return null;
-    
-    // fc = c / 2a
-    const c = 299.792458; // mm/ns -> same as GHz * mm
-    const fc = c / (2 * valA);
-    return { fc };
-  };
-
-  const result = calcCutoff();
+  const aVal = parseFloat(a);
+  const fVal = parseFloat(freq);
+  const result = aVal > 0 && fVal > 0 ? waveguideTE10(aVal, fVal) : null;
 
   return (
-    <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
-      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6 flex items-center gap-3">
-        Rectangular Waveguide (TE₁₀)
-      </h4>
-      <RFModelBadge level="identity" detail="Ideal PEC, homogeneous-fill rectangular-waveguide TE10 cutoff." />
-      
-      <div className="grid md:grid-cols-2 gap-8 items-center">
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Broad Dimension &apos;a&apos; (mm)</label>
-          <input
-            type="number" step="any"
-            value={a}
-            onChange={(e) => setA(e.target.value)}
-            className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono"
-          />
+    <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+      <div className="space-y-5">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="field-label">Broad Dimension &apos;a&apos; (mm)</label>
+            <input type="number" step="any" value={a} onChange={(e) => setA(e.target.value)} className="field-input" />
+          </div>
+          <div>
+            <label className="field-label">Frequency (GHz)</label>
+            <input type="number" step="any" value={freq} onChange={(e) => setFreq(e.target.value)} className="field-input" />
+          </div>
         </div>
 
-        <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
-          <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Results</h5>
+        <div className="readout-panel space-y-3">
+          <h5 className="kicker mb-3">Results</h5>
           {result ? (
-            <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Cutoff Frequency (fc)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{result.fc.toFixed(3)} GHz</span></div>
+            <>
+              <div className="flex justify-between items-center"><span className="text-ink-2">Cutoff Frequency (fc)</span> <span className="readout text-lg text-accent-ink">{result.cutoffGHz.toFixed(3)} GHz</span></div>
+              {result.propagating ? (
+                <div className="flex justify-between items-center"><span className="text-ink-2">Guide Wavelength (λg)</span> <span className="readout">{result.guideWavelengthMm!.toFixed(2)} mm</span></div>
+              ) : (
+                <div className="flex justify-between items-center"><span className="text-ink-2">Below cutoff · attenuation</span> <span className="readout text-marker-ink">{result.attenuationDbPerMm.toFixed(3)} dB/mm</span></div>
+              )}
+              <div className="flex justify-between items-center"><span className="text-ink-2">Free-space λ0</span> <span className="readout">{result.lambda0Mm.toFixed(2)} mm</span></div>
+              <p className="text-xs leading-relaxed text-ink-3">Air-filled guide with perfectly conducting walls. The 3D view draws b = a/2, the proportion of standard WR sizes; the TE10 cutoff does not depend on b.</p>
+            </>
           ) : (
-            <div className="text-sm text-gray-400">Invalid dimension</div>
+            <div className="text-sm text-ink-3">Invalid input values</div>
           )}
         </div>
+      </div>
+
+      <div className="graph-grid relative min-h-[360px] overflow-hidden rounded-[4px] border border-line bg-bg-raised lg:min-h-[440px]">
+        {result && (
+          <WaveguideStage
+            aMm={aVal}
+            bMm={aVal / 2}
+            guideWavelengthMm={result.guideWavelengthMm}
+            attenuationDbPerMm={result.attenuationDbPerMm}
+            label={`TE10 electric field in a ${a} mm waveguide at ${freq} GHz, ${result.propagating ? 'propagating' : 'below cutoff'}`}
+          />
+        )}
       </div>
     </div>
   );
@@ -472,69 +458,37 @@ export function StriplineCalculator() {
   const results = calcStripline();
 
   return (
-    <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
-      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Stripline Calculator</h4>
-      <RFModelBadge level="closed-form" detail="Centered symmetric stripline with infinite planes and homogeneous dielectric." />
+    <div>
       
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-4">
-          <SubstrateSelector er={er} setEr={setEr} height={b} setHeight={setB} thickness={thickness} setThickness={setThickness} showThickness={true} />
+          <SubstrateSelector er={er} setEr={setEr} height={b} setHeight={setB} thickness={thickness} setThickness={setThickness} showThickness={true} heightLabel="Ground Spacing (b)" />
           <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Trace Width (mm)</label>
-            <input type="number" step="0.1" value={width} onChange={(e) => setWidth(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+            <label className="field-label">Trace Width (mm)</label>
+            <input type="number" step="0.1" value={width} onChange={(e) => setWidth(e.target.value)} className="field-input" />
           </div>
 
-          <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3 mt-4">
-            <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Results</h5>
+          <div className="readout-panel space-y-3 mt-4">
+            <h5 className="kicker mb-3">Results</h5>
             {results ? (
               <>
-                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Characteristic Impedance (Z₀)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.z0.toFixed(2)} Ω</span></div>
-                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">TEM Permittivity</span> <span className="font-mono font-medium">{results.effectivePermittivity.toFixed(4)}</span></div>
-                {results.warnings.map(warning => <p key={warning} className="text-xs text-amber-700 dark:text-amber-300">{warning}</p>)}
-                <p className="text-xs text-gray-500 dark:text-gray-400">Closed-form approximation for a symmetric, homogeneous stripline with the trace centered between infinite ground planes. Loss, surface roughness, sidewalls, and trace offset require field simulation.</p>
+                <div className="flex justify-between items-center"><span className="text-ink-2">Characteristic Impedance (Z₀)</span> <span className="readout text-lg text-accent-ink">{results.z0.toFixed(2)} Ω</span></div>
+                <div className="flex justify-between items-center"><span className="text-ink-2">TEM Permittivity</span> <span className="readout">{results.effectivePermittivity.toFixed(4)}</span></div>
+                {results.warnings.map(warning => <p key={warning} className="text-xs text-marker-ink">{warning}</p>)}
+                <p className="text-xs leading-relaxed text-ink-3">Closed-form approximation for a symmetric, homogeneous stripline with the trace centered between infinite ground planes. Loss, surface roughness, sidewalls, and trace offset require field simulation.</p>
               </>
             ) : (
-              <div className="text-sm text-gray-400">Invalid input values</div>
+              <div className="text-sm text-ink-3">Invalid input values</div>
             )}
           </div>
         </div>
 
-        {/* 3D Isometric View */}
-        <div 
-          className="flex flex-col items-center justify-center h-full min-h-[250px] bg-slate-100 dark:bg-slate-800/50 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden relative"
-          style={{ perspective: '1000px' }}
-        >
-          <p className="absolute top-3 left-4 text-xs font-semibold text-gray-400 uppercase tracking-widest">3D PCB View</p>
-          
-          <motion.div 
-            className="relative"
-            animate={{ rotateX: 60, rotateZ: -45 }}
-            transition={{ type: "spring", stiffness: 50, damping: 20 }}
-            style={{ transformStyle: 'preserve-3d', width: '200px', height: '200px' }}
-          >
-            {/* Ground Plane (Bottom) */}
-            <div className="absolute inset-0 bg-yellow-600/80 shadow-[0_10px_20px_rgba(0,0,0,0.3)]" style={{ transform: 'translateZ(0px)', borderRadius: '4px' }} />
-            
-            {/* Substrate (Lower half) */}
-            <div className="absolute inset-0 bg-green-600/40 backdrop-blur-sm border border-green-500/30" style={{ transform: 'translateZ(20px)', borderRadius: '4px' }} />
-            
-            {/* Trace (Middle) */}
-            <motion.div 
-              className="absolute bg-yellow-500 shadow-[0_5px_15px_rgba(255,210,0,0.4)]"
-              style={{ transform: 'translateZ(40px)', height: '100%' }}
-              animate={{ 
-                width: `${Math.min(Math.max((parseFloat(width) / parseFloat(b)) * 40, 10), 180)}px`,
-                left: `calc(50% - ${Math.min(Math.max((parseFloat(width) / parseFloat(b)) * 40, 10), 180)/2}px)`
-              }}
-              transition={{ type: "spring", stiffness: 100 }}
-            />
-
-            {/* Substrate (Upper half) */}
-            <div className="absolute inset-0 bg-green-600/40 backdrop-blur-sm border border-green-500/30" style={{ transform: 'translateZ(60px)', borderRadius: '4px' }} />
-            
-            {/* Ground Plane (Top) */}
-            <div className="absolute inset-0 bg-yellow-600/50 backdrop-blur-[1px] border border-yellow-500/50 shadow-[0_5px_20px_rgba(0,0,0,0.2)]" style={{ transform: 'translateZ(80px)', borderRadius: '4px' }} />
-          </motion.div>
+        <div className="graph-grid relative min-h-[320px] overflow-hidden rounded-[4px] border border-line bg-bg-raised lg:min-h-[400px]">
+          <TLineStage
+            geometry={{ kind: 'stripline', widthMm: parseFloat(width), heightMm: parseFloat(b), thicknessMm: parseFloat(thickness) }}
+            label={`Stripline cross-section, ${width} mm trace centered between ground planes ${b} mm apart`}
+            caption="Upper ground drawn translucent. Field lines are a quasi-static sketch; the wave is schematic."
+          />
         </div>
       </div>
     </div>
@@ -611,85 +565,42 @@ export function CPWCalculator() {
   const results = calcCPW();
 
   return (
-    <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
-      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Coplanar Waveguide (CPW)</h4>
-      <RFModelBadge level="closed-form" detail="Ideal unbacked CPW conformal-mapping model." />
+    <div>
       
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-4">
           <SubstrateSelector er={er} setEr={setEr} height={height} setHeight={setHeight} />
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Center Trace Width (mm)</label>
-              <input type="number" step="0.1" value={width} onChange={(e) => setWidth(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+              <label className="field-label">Center Trace Width (mm)</label>
+              <input type="number" step="0.1" value={width} onChange={(e) => setWidth(e.target.value)} className="field-input" />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Gap (mm)</label>
-              <input type="number" step="0.01" value={gap} onChange={(e) => setGap(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+              <label className="field-label">Gap (mm)</label>
+              <input type="number" step="0.01" value={gap} onChange={(e) => setGap(e.target.value)} className="field-input" />
             </div>
           </div>
 
-          <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3 mt-4">
-            <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Results</h5>
+          <div className="readout-panel space-y-3 mt-4">
+            <h5 className="kicker mb-3">Results</h5>
             {results ? (
               <>
-                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Characteristic Impedance (Z₀)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.z0.toFixed(2)} Ω</span></div>
-                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Effective Permittivity (εeff)</span> <span className="font-mono font-medium">{results.eEff.toFixed(4)}</span></div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Closed-form conformal-mapping approximation for an unbacked CPW on a finite-thickness substrate, with infinite lateral ground width, zero conductor thickness, and no conductor/dielectric loss. Grounded CPW, solder mask, finite ground, and discontinuities require an EM solver.</p>
+                <div className="flex justify-between items-center"><span className="text-ink-2">Characteristic Impedance (Z₀)</span> <span className="readout text-lg text-accent-ink">{results.z0.toFixed(2)} Ω</span></div>
+                <div className="flex justify-between items-center"><span className="text-ink-2">Effective Permittivity (εeff)</span> <span className="readout">{results.eEff.toFixed(4)}</span></div>
+                <p className="text-xs leading-relaxed text-ink-3">Closed-form conformal-mapping approximation for an unbacked CPW on a finite-thickness substrate, with infinite lateral ground width, zero conductor thickness, and no conductor/dielectric loss. Grounded CPW, solder mask, finite ground, and discontinuities require an EM solver.</p>
               </>
             ) : (
-              <div className="text-sm text-gray-400">Invalid input values</div>
+              <div className="text-sm text-ink-3">Invalid input values</div>
             )}
           </div>
         </div>
 
-        {/* 3D Isometric View */}
-        <div 
-          className="flex flex-col items-center justify-center h-full min-h-[250px] bg-slate-100 dark:bg-slate-800/50 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden relative"
-          style={{ perspective: '1000px' }}
-        >
-          <p className="absolute top-3 left-4 text-xs font-semibold text-gray-400 uppercase tracking-widest">3D PCB View</p>
-          
-          <motion.div 
-            className="relative"
-            animate={{ rotateX: 60, rotateZ: -45 }}
-            transition={{ type: "spring", stiffness: 50, damping: 20 }}
-            style={{ transformStyle: 'preserve-3d', width: '200px', height: '200px' }}
-          >
-            {/* Substrate */}
-            <div className="absolute inset-0 bg-green-600/40 backdrop-blur-sm border border-green-500/30" style={{ transform: 'translateZ(0px)', borderRadius: '4px' }} />
-            
-            {/* Top Layer */}
-            <div style={{ transform: 'translateZ(20px)', transformStyle: 'preserve-3d' }} className="absolute inset-0">
-              <motion.div 
-                className="absolute bg-yellow-600 shadow-[0_5px_10px_rgba(0,0,0,0.2)]"
-                style={{ height: '100%', left: '0' }}
-                animate={{ 
-                  width: `calc(50% - ${Math.min(Math.max((parseFloat(width)/2 + parseFloat(gap)) * 20, 10), 90)}px)`
-                }}
-                transition={{ type: "spring", stiffness: 100 }}
-              />
-              
-              <motion.div 
-                className="absolute bg-yellow-500 shadow-[0_5px_15px_rgba(255,210,0,0.4)]"
-                style={{ height: '100%' }}
-                animate={{ 
-                  width: `${Math.min(Math.max(parseFloat(width) * 20, 5), 100)}px`,
-                  left: `calc(50% - ${Math.min(Math.max(parseFloat(width) * 20, 5), 100)/2}px)`
-                }}
-                transition={{ type: "spring", stiffness: 100 }}
-              />
-
-              <motion.div 
-                className="absolute bg-yellow-600 shadow-[0_5px_10px_rgba(0,0,0,0.2)]"
-                style={{ height: '100%', right: '0' }}
-                animate={{ 
-                  width: `calc(50% - ${Math.min(Math.max((parseFloat(width)/2 + parseFloat(gap)) * 20, 10), 90)}px)`
-                }}
-                transition={{ type: "spring", stiffness: 100 }}
-              />
-            </div>
-          </motion.div>
+        <div className="graph-grid relative min-h-[320px] overflow-hidden rounded-[4px] border border-line bg-bg-raised lg:min-h-[400px]">
+          <TLineStage
+            geometry={{ kind: 'cpw', widthMm: parseFloat(width), heightMm: parseFloat(height), thicknessMm: 0.035, gapMm: parseFloat(gap) }}
+            label={`Coplanar waveguide cross-section, ${width} mm center strip with ${gap} mm slots on ${height} mm substrate`}
+            caption="Unbacked CPW: fields fringe across both slots, above and inside the substrate. The wave is schematic."
+          />
         </div>
       </div>
     </div>
@@ -723,16 +634,14 @@ export function SkinDepthCalculator() {
   const results = calcSkinDepth();
 
   return (
-    <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
-      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Skin Depth & Surface Resistance</h4>
-      <RFModelBadge level="closed-form" detail="Good-conductor approximation with μr=1 and bulk resistivity." />
+    <div>
       
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Conductor Material</label>
-              <select value={material} onChange={(e) => setMaterial(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono">
+              <label className="field-label">Conductor Material</label>
+              <select value={material} onChange={(e) => setMaterial(e.target.value)} className="field-input">
                 <option value="1.68e-8">Copper (1.68×10⁻⁸ Ω·m)</option>
                 <option value="2.65e-8">Aluminum (2.65×10⁻⁸ Ω·m)</option>
                 <option value="2.44e-8">Gold (2.44×10⁻⁸ Ω·m)</option>
@@ -740,22 +649,22 @@ export function SkinDepthCalculator() {
               </select>
             </div>
             <div className="col-span-2">
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Frequency (GHz)</label>
-              <input type="number" step="0.1" value={freqStr} onChange={(e) => setFreqStr(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+              <label className="field-label">Frequency (GHz)</label>
+              <input type="number" step="0.1" value={freqStr} onChange={(e) => setFreqStr(e.target.value)} className="field-input" />
             </div>
           </div>
         </div>
 
-        <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
-          <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Results</h5>
+        <div className="readout-panel space-y-3">
+          <h5 className="kicker mb-3">Results</h5>
           {results ? (
             <>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Skin Depth (δ)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.delta_um.toFixed(3)} μm</span></div>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Surface Resistance (Rs)</span> <span className="font-mono font-medium">{results.rs.toFixed(5)} Ω/sq</span></div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Exact good-conductor approximation using μr=1 and the listed room-temperature bulk resistivity. Temperature, alloy/plating, roughness, and anomalous skin effect are excluded.</p>
+              <div className="flex justify-between items-center"><span className="text-ink-2">Skin Depth (δ)</span> <span className="readout text-lg text-accent-ink">{results.delta_um.toFixed(3)} μm</span></div>
+              <div className="flex justify-between items-center"><span className="text-ink-2">Surface Resistance (Rs)</span> <span className="readout">{results.rs.toFixed(5)} Ω/sq</span></div>
+              <p className="text-xs leading-relaxed text-ink-3">Exact good-conductor approximation using μr=1 and the listed room-temperature bulk resistivity. Temperature, alloy/plating, roughness, and anomalous skin effect are excluded.</p>
             </>
           ) : (
-            <div className="text-sm text-gray-400">Invalid input values</div>
+            <div className="text-sm text-ink-3">Invalid input values</div>
           )}
         </div>
       </div>
@@ -809,42 +718,40 @@ export function PCBViaCalculator() {
   const results = calcVia();
 
   return (
-    <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
-      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">PCB Via Parasitics (Goldfarb Model)</h4>
-      <RFModelBadge level="closed-form" detail="Lumped via L/C estimates; distributed behavior requires 3D EM." />
+    <div>
       
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-4">
           <SubstrateSelector er={er} setEr={setEr} height={height} setHeight={setHeight} />
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Drill Diameter (mm)</label>
-              <input type="number" step="0.05" value={drill} onChange={(e) => setDrill(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+              <label className="field-label">Drill Diameter (mm)</label>
+              <input type="number" step="0.05" value={drill} onChange={(e) => setDrill(e.target.value)} className="field-input" />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Pad Diameter (mm)</label>
-              <input type="number" step="0.05" value={pad} onChange={(e) => setPad(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+              <label className="field-label">Pad Diameter (mm)</label>
+              <input type="number" step="0.05" value={pad} onChange={(e) => setPad(e.target.value)} className="field-input" />
             </div>
             <div className="col-span-2">
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Anti-pad Diameter (Clearance, mm)</label>
-              <input type="number" step="0.05" value={antipad} onChange={(e) => setAntipad(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+              <label className="field-label">Anti-pad Diameter (Clearance, mm)</label>
+              <input type="number" step="0.05" value={antipad} onChange={(e) => setAntipad(e.target.value)} className="field-input" />
             </div>
           </div>
         </div>
 
-        <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
-          <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Results</h5>
+        <div className="readout-panel space-y-3">
+          <h5 className="kicker mb-3">Results</h5>
           {results ? (
             <>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Via Inductance (L)</span> <span className="font-mono font-medium">{results.L_nH.toFixed(4)} nH</span></div>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Via Capacitance (C)</span> <span className="font-mono font-medium">{results.C_pF.toFixed(4)} pF</span></div>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">LC Impedance Scale √(L/C)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.Z_ohms.toFixed(2)} Ω</span></div>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Lumped LC Corner Estimate</span> <span className="font-mono font-medium">{results.fres_GHz.toFixed(2)} GHz</span></div>
+              <div className="flex justify-between items-center"><span className="text-ink-2">Via Inductance (L)</span> <span className="readout">{results.L_nH.toFixed(4)} nH</span></div>
+              <div className="flex justify-between items-center"><span className="text-ink-2">Via Capacitance (C)</span> <span className="readout">{results.C_pF.toFixed(4)} pF</span></div>
+              <div className="flex justify-between items-center"><span className="text-ink-2">LC Impedance Scale √(L/C)</span> <span className="readout text-lg text-accent-ink">{results.Z_ohms.toFixed(2)} Ω</span></div>
+              <div className="flex justify-between items-center"><span className="text-ink-2">Lumped LC Corner Estimate</span> <span className="readout">{results.fres_GHz.toFixed(2)} GHz</span></div>
             </>
           ) : (
-            <div className="text-sm text-gray-400">Invalid input values (Ensure Anti-pad &gt; Pad)</div>
+            <div className="text-sm text-ink-3">Invalid input values (Ensure Anti-pad &gt; Pad)</div>
           )}
-          <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 rounded-lg text-xs font-medium border border-amber-200 dark:border-amber-800/30">
+          <div className="mt-4 rounded-[4px] border border-marker-ink/40 bg-marker/10 p-3 text-xs font-medium text-marker-ink">
             <strong>Model limit:</strong> √(L/C) is only an impedance scale and 1/(2π√LC) is a lumped corner estimate—not the via&apos;s distributed Z₀ or a guaranteed physical resonance. Model validity depends on via electrical length, return-via/plane geometry, antipads, pads, and stubs; use 3D EM when these details are electrically significant.
           </div>
         </div>
@@ -903,130 +810,55 @@ export function RadarRangeCalculator() {
   const results = calcRadar();
 
   return (
-    <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
-      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Radar Range Equation & Free Space Path Loss</h4>
-      <RFModelBadge level="closed-form" detail="Classical monostatic free-space radar equation with aggregate loss." />
+    <div>
 
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Tx Power (dBm)</label>
-              <input type="number" step="0.1" value={pt} onChange={(e) => setPt(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+              <label className="field-label">Tx Power (dBm)</label>
+              <input type="number" step="0.1" value={pt} onChange={(e) => setPt(e.target.value)} className="field-input" />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Min Det. Signal (dBm)</label>
-              <input type="number" step="0.1" value={pmin} onChange={(e) => setPmin(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+              <label className="field-label">Min Det. Signal (dBm)</label>
+              <input type="number" step="0.1" value={pmin} onChange={(e) => setPmin(e.target.value)} className="field-input" />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Tx Ant. Gain (dBi)</label>
-              <input type="number" step="0.1" value={gt} onChange={(e) => setGt(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+              <label className="field-label">Tx Ant. Gain (dBi)</label>
+              <input type="number" step="0.1" value={gt} onChange={(e) => setGt(e.target.value)} className="field-input" />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Rx Ant. Gain (dBi)</label>
-              <input type="number" step="0.1" value={gr} onChange={(e) => setGr(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+              <label className="field-label">Rx Ant. Gain (dBi)</label>
+              <input type="number" step="0.1" value={gr} onChange={(e) => setGr(e.target.value)} className="field-input" />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Frequency (GHz)</label>
-              <input type="number" step="0.1" value={freqStr} onChange={(e) => setFreqStr(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+              <label className="field-label">Frequency (GHz)</label>
+              <input type="number" step="0.1" value={freqStr} onChange={(e) => setFreqStr(e.target.value)} className="field-input" />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">RCS σ (m²)</label>
-              <input type="number" step="0.1" value={rcs} onChange={(e) => setRcs(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+              <label className="field-label">RCS σ (m²)</label>
+              <input type="number" step="0.1" value={rcs} onChange={(e) => setRcs(e.target.value)} className="field-input" />
             </div>
             <div className="col-span-2">
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Aggregate System / Propagation Loss (dB)</label>
-              <input type="number" min="0" step="0.1" value={systemLoss} onChange={(e) => setSystemLoss(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+              <label className="field-label">Aggregate System / Propagation Loss (dB)</label>
+              <input type="number" min="0" step="0.1" value={systemLoss} onChange={(e) => setSystemLoss(e.target.value)} className="field-input" />
             </div>
           </div>
         </div>
 
-        <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
-          <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Results</h5>
+        <div className="readout-panel space-y-3">
+          <h5 className="kicker mb-3">Results</h5>
           {results ? (
             <>
-              <div className="flex justify-between items-center mb-4"><span className="text-gray-600 dark:text-gray-400">Max Radar Range</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-2xl">{results.R_max.toFixed(1)} m</span></div>
-              <div className="w-full h-px bg-gray-200 dark:bg-gray-800 my-2"></div>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">FSPL @ 100m</span> <span className="font-mono font-medium">{results.FSPL_100m.toFixed(1)} dB</span></div>
+              <div className="flex justify-between items-center mb-4"><span className="text-ink-2">Max Radar Range</span> <span className="font-mono font-medium text-accent-ink text-2xl">{results.R_max.toFixed(1)} m</span></div>
+              <div className="my-2 h-px w-full bg-line"></div>
+              <div className="flex justify-between items-center"><span className="text-ink-2">FSPL @ 100m</span> <span className="readout">{results.FSPL_100m.toFixed(1)} dB</span></div>
             </>
           ) : (
-            <div className="text-sm text-gray-400">Invalid input values</div>
+            <div className="text-sm text-ink-3">Invalid input values</div>
           )}
-          <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+          <div className="mt-4 text-xs leading-relaxed text-ink-3">
             Closed-form monostatic radar range equation using the entered aggregate loss. Gains, RCS, loss, and minimum detectable power are assumed constant and mutually consistent; real detection probability also depends on waveform integration, target fluctuation, clutter, noise figure, CFAR threshold, polarization, and atmospheric/weather loss.
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* =========================================================================
-   FMCW Radar Calculator
-   ========================================================================= */
-
-export function FMCWRadarCalculator() {
-  const [bw, setBw] = useState<string>('4'); // GHz
-  const [tc, setTc] = useState<string>('20'); // us
-  const [ifBw, setIfBw] = useState<string>('10'); // MHz
-
-  const calcFMCW = () => {
-    const B_GHz = parseFloat(bw);
-    const Tc_us = parseFloat(tc);
-    const ifBw_MHz = parseFloat(ifBw);
-
-    if (isNaN(B_GHz) || isNaN(Tc_us) || isNaN(ifBw_MHz) || B_GHz <= 0 || Tc_us <= 0 || ifBw_MHz <= 0) return null;
-
-    const B_Hz = B_GHz * 1e9;
-    const Tc_s = Tc_us * 1e-6;
-    const ifBw_Hz = ifBw_MHz * 1e6;
-    const c = 299792458; // m/s
-
-    const rangeRes = c / (2 * B_Hz); // meters
-    const chirpSlope = B_Hz / Tc_s; // Hz/s
-    const maxRange = (ifBw_Hz * c) / (2 * chirpSlope);
-
-    return {
-      rangeRes: rangeRes * 100,
-      chirpSlopeMHzPerUs: chirpSlope / 1e12,
-      maxRange,
-    }; // cm, MHz/us, m
-  };
-
-  const results = calcFMCW();
-
-  return (
-    <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
-      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">FMCW Radar Parameters</h4>
-      <RFModelBadge level="closed-form" detail="Ideal linear chirp and stationary-target beat-frequency limit." />
-      <div className="grid lg:grid-cols-2 gap-8 items-start">
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Bandwidth (GHz)</label>
-            <input type="number" step="0.1" value={bw} onChange={(e) => setBw(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Chirp Time Tc (μs)</label>
-            <input type="number" step="1" value={tc} onChange={(e) => setTc(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">IF / ADC Bandwidth (MHz)</label>
-            <input type="number" step="0.1" value={ifBw} onChange={(e) => setIfBw(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
-          </div>
-        </div>
-        <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
-          <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Results</h5>
-          {results ? (
-            <>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Range Resolution</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.rangeRes.toFixed(2)} cm</span></div>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Chirp Slope</span> <span className="font-mono font-medium">{results.chirpSlopeMHzPerUs.toFixed(2)} MHz/μs</span></div>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">IF-Limited Max Range</span> <span className="font-mono font-medium">{results.maxRange.toFixed(2)} m</span></div>
-            </>
-          ) : (
-            <div className="text-sm text-gray-400">Invalid input values</div>
-          )}
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            First-order, stationary-target result. Max range uses the beat-frequency limit Rmax=fIF,max·c/(2S), S=B/Tc; Doppler-range coupling, sampling/Nyquist margin, analog filters, chirp settling, and waveform timing are excluded.
           </div>
         </div>
       </div>
@@ -1057,28 +889,26 @@ export function DopplerCalculator() {
   const results = calcDoppler();
 
   return (
-    <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
-      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Doppler Shift</h4>
-      <RFModelBadge level="closed-form" detail="Monostatic narrowband radial-motion approximation." />
+    <div>
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Carrier Frequency (GHz)</label>
-            <input type="number" step="0.1" value={freq} onChange={(e) => setFreq(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+            <label className="field-label">Carrier Frequency (GHz)</label>
+            <input type="number" step="0.1" value={freq} onChange={(e) => setFreq(e.target.value)} className="field-input" />
           </div>
           <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Radial Velocity (m/s, + approaching)</label>
-            <input type="number" step="1" value={vel} onChange={(e) => setVel(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+              <label className="field-label">Radial Velocity (m/s, + approaching)</label>
+            <input type="number" step="1" value={vel} onChange={(e) => setVel(e.target.value)} className="field-input" />
           </div>
         </div>
-        <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
-          <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Results</h5>
+        <div className="readout-panel space-y-3">
+          <h5 className="kicker mb-3">Results</h5>
           {results ? (
-            <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Doppler Shift (fd)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.fd.toFixed(2)} kHz</span></div>
+            <div className="flex justify-between items-center"><span className="text-ink-2">Doppler Shift (fd)</span> <span className="readout text-lg text-accent-ink">{results.fd.toFixed(2)} kHz</span></div>
           ) : (
-            <div className="text-sm text-gray-400">Invalid input values</div>
+            <div className="text-sm text-ink-3">Invalid input values</div>
           )}
-          <p className="text-xs text-gray-500 dark:text-gray-400">Monostatic, narrowband, direct line-of-sight approximation fd=2v/λ. Positive velocity is defined here as approaching, so positive fd is an upshift.</p>
+          <p className="text-xs leading-relaxed text-ink-3">Monostatic, narrowband, direct line-of-sight approximation fd=2v/λ. Positive velocity is defined here as approaching, so positive fd is an upshift.</p>
         </div>
       </div>
     </div>
@@ -1115,32 +945,30 @@ export function PhaseNoiseCalculator() {
   const results = calcJitter();
 
   return (
-    <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
-      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Phase Noise to Jitter (Spot)</h4>
-      <RFModelBadge level="closed-form" detail="Spot jitter density only; integrated RMS jitter needs the full phase-noise spectrum." />
+    <div>
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Phase Noise L(f) (dBc/Hz)</label>
-            <input type="number" step="1" value={pn} onChange={(e) => setPn(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+            <label className="field-label">Phase Noise L(f) (dBc/Hz)</label>
+            <input type="number" step="1" value={pn} onChange={(e) => setPn(e.target.value)} className="field-input" />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Carrier Frequency (GHz)</label>
-            <input type="number" step="0.1" value={fc} onChange={(e) => setFc(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+            <label className="field-label">Carrier Frequency (GHz)</label>
+            <input type="number" step="0.1" value={fc} onChange={(e) => setFc(e.target.value)} className="field-input" />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Offset Frequency (MHz)</label>
-            <input type="number" step="0.1" value={offset} onChange={(e) => setOffset(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+            <label className="field-label">Offset Frequency (MHz)</label>
+            <input type="number" step="0.1" value={offset} onChange={(e) => setOffset(e.target.value)} className="field-input" />
           </div>
         </div>
-        <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
-          <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Results</h5>
+        <div className="readout-panel space-y-3">
+          <h5 className="kicker mb-3">Results</h5>
           {results ? (
-            <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Spot Jitter Density @ {results.offsetMHz.toFixed(3)} MHz</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.time_jitter_fs.toFixed(3)} fs/√Hz</span></div>
+            <div className="flex justify-between items-center"><span className="text-ink-2">Spot Jitter Density @ {results.offsetMHz.toFixed(3)} MHz</span> <span className="readout text-lg text-accent-ink">{results.time_jitter_fs.toFixed(3)} fs/√Hz</span></div>
           ) : (
-            <div className="text-sm text-gray-400">Invalid input values</div>
+            <div className="text-sm text-ink-3">Invalid input values</div>
           )}
-          <div className="text-xs text-gray-500 mt-2">Note: Spot jitter provides the timing jitter density. Total RMS jitter requires integrating L(f) over an offset bandwidth.</div>
+          <div className="text-xs text-ink-3 mt-2">Note: Spot jitter provides the timing jitter density. Total RMS jitter requires integrating L(f) over an offset bandwidth.</div>
         </div>
       </div>
     </div>
@@ -1163,22 +991,20 @@ export function LinearityCalculator() {
   const results = calcLin();
 
   return (
-    <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
-      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Linearity Rule of Thumb (OP1dB → OIP3)</h4>
-      <RFModelBadge level="rule-of-thumb" detail="Cubic memoryless-model heuristic; not a device identity." />
+    <div>
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <div>
-          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Output 1 dB Compression Point, OP1dB (dBm)</label>
-          <input type="number" step="0.1" value={p1db} onChange={(e) => setP1db(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+          <label className="field-label">Output 1 dB Compression Point, OP1dB (dBm)</label>
+          <input type="number" step="0.1" value={p1db} onChange={(e) => setP1db(e.target.value)} className="field-input" />
         </div>
-        <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
-          <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Results</h5>
+        <div className="readout-panel space-y-3">
+          <h5 className="kicker mb-3">Results</h5>
           {results ? (
-            <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Estimated OIP3</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.oip3.toFixed(1)} dBm</span></div>
+            <div className="flex justify-between items-center"><span className="text-ink-2">Estimated OIP3</span> <span className="readout text-lg text-accent-ink">{results.oip3.toFixed(1)} dBm</span></div>
           ) : (
-            <div className="text-sm text-gray-400">Invalid input</div>
+            <div className="text-sm text-ink-3">Invalid input</div>
           )}
-          <div className="text-xs text-gray-500 mt-2">Rule of thumb only: OIP3 ≈ OP1dB + 9.6 dB for a memoryless weakly nonlinear cubic model. The offset varies substantially by circuit, bias, frequency, matching, thermal effects, and measurement definition; do not use it as a substitute for two-tone characterization.</div>
+          <div className="text-xs text-ink-3 mt-2">Rule of thumb only: OIP3 ≈ OP1dB + 9.6 dB for a memoryless weakly nonlinear cubic model. The offset varies substantially by circuit, bias, frequency, matching, thermal effects, and measurement definition; do not use it as a substitute for two-tone characterization.</div>
         </div>
       </div>
     </div>
@@ -1209,29 +1035,27 @@ export function ThermalNoiseCalculator() {
   const results = calcNoise();
 
   return (
-    <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
-      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Thermal Noise Floor (kTB)</h4>
-      <RFModelBadge level="identity" detail="Johnson–Nyquist available noise power for a matched resistor at temperature T." />
+    <div>
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Temperature (K)</label>
-            <input type="number" step="1" value={temp} onChange={(e) => setTemp(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+            <label className="field-label">Temperature (K)</label>
+            <input type="number" step="1" value={temp} onChange={(e) => setTemp(e.target.value)} className="field-input" />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Bandwidth (MHz)</label>
-            <input type="number" step="1" value={bw} onChange={(e) => setBw(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+            <label className="field-label">Bandwidth (MHz)</label>
+            <input type="number" step="1" value={bw} onChange={(e) => setBw(e.target.value)} className="field-input" />
           </div>
         </div>
-        <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
-          <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Results</h5>
+        <div className="readout-panel space-y-3">
+          <h5 className="kicker mb-3">Results</h5>
           {results ? (
             <>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Noise Density</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.p_density_dBm_Hz.toFixed(1)} dBm/Hz</span></div>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Total Noise Power</span> <span className="font-mono font-medium">{results.p_dBm.toFixed(1)} dBm</span></div>
+              <div className="flex justify-between items-center"><span className="text-ink-2">Noise Density</span> <span className="readout text-lg text-accent-ink">{results.p_density_dBm_Hz.toFixed(1)} dBm/Hz</span></div>
+              <div className="flex justify-between items-center"><span className="text-ink-2">Total Noise Power</span> <span className="readout">{results.p_dBm.toFixed(1)} dBm</span></div>
             </>
           ) : (
-            <div className="text-sm text-gray-400">Invalid input</div>
+            <div className="text-sm text-ink-3">Invalid input</div>
           )}
         </div>
       </div>

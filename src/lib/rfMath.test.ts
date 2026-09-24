@@ -5,6 +5,7 @@ import {
   calculateSymmetricStripline,
   capacitiveReactanceOhms,
   parallelCapacitanceFromSusceptance,
+  waveguideTE10,
 } from './rfMath';
 
 const closeTo = (actual: number, expected: number, tolerance = 1e-9) => {
@@ -65,5 +66,29 @@ describe('microstrip', () => {
   it('reports when the impedance-dispersion model is used outside its validity range', () => {
     const result = calculateMicrostrip({ er: 20, heightMm: 1, widthMm: 20, frequencyGHz: 100 });
     assert.ok(result.warnings.length > 0);
+  });
+});
+
+describe('rectangular waveguide TE10', () => {
+  it('matches the WR-90 cutoff and the 10 GHz guide wavelength', () => {
+    const r = waveguideTE10(22.86, 10);
+    closeTo(r.cutoffGHz, 6.557, 1e-3);
+    assert.equal(r.propagating, true);
+    // lambda0 = 29.979 mm, lambda_g = lambda0 / sqrt(1 - (6.557/10)^2) = 39.70 mm
+    closeTo(r.guideWavelengthMm!, 39.70, 0.01);
+    assert.equal(r.attenuationDbPerMm, 0);
+  });
+
+  it('reports evanescent decay below cutoff instead of a wavelength', () => {
+    const r = waveguideTE10(22.86, 5);
+    assert.equal(r.propagating, false);
+    assert.equal(r.guideWavelengthMm, null);
+    // alpha = (2 pi / 59.96 mm) * sqrt((6.557/5)^2 - 1) = 0.0889 Np/mm = 0.772 dB/mm
+    closeTo(r.attenuationDbPerMm, 0.772, 0.002);
+  });
+
+  it('rejects non-physical input', () => {
+    assert.throws(() => waveguideTE10(0, 10));
+    assert.throws(() => waveguideTE10(22.86, -1));
   });
 });
