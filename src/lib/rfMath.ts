@@ -244,3 +244,87 @@ export function calculateSymmetricStripline(input: StriplineInput): StriplineRes
     warnings,
   };
 }
+
+export interface WaveguideTE10Result {
+  cutoffGHz: number;
+  /** Free-space wavelength, mm. */
+  lambda0Mm: number;
+  propagating: boolean;
+  /** Guide wavelength, mm; null below cutoff. */
+  guideWavelengthMm: number | null;
+  /** Evanescent attenuation, dB/mm; 0 above cutoff. */
+  attenuationDbPerMm: number;
+}
+
+/**
+ * TE10 mode of an air-filled rectangular waveguide with PEC walls:
+ * fc = c / 2a, lambda_g = lambda0 / sqrt(1 - (fc/f)^2) above cutoff,
+ * alpha = (2 pi / lambda0) sqrt((fc/f)^2 - 1) below it.
+ */
+export function waveguideTE10(broadWallMm: number, frequencyGHz: number): WaveguideTE10Result {
+  assertPositiveFinite(broadWallMm, 'Broad dimension a');
+  assertPositiveFinite(frequencyGHz, 'Frequency');
+  const cMmGHz = 299.792458; // c in mm·GHz
+  const cutoffGHz = cMmGHz / (2 * broadWallMm);
+  const lambda0Mm = cMmGHz / frequencyGHz;
+  const ratio = cutoffGHz / frequencyGHz;
+  if (ratio < 1) {
+    return { cutoffGHz, lambda0Mm, propagating: true, guideWavelengthMm: lambda0Mm / Math.sqrt(1 - ratio * ratio), attenuationDbPerMm: 0 };
+  }
+  const alphaNpPerMm = ((2 * Math.PI) / lambda0Mm) * Math.sqrt(ratio * ratio - 1);
+  return { cutoffGHz, lambda0Mm, propagating: false, guideWavelengthMm: null, attenuationDbPerMm: (20 / Math.LN10) * alphaNpPerMm };
+}
+
+export interface CoplanarInput {
+  /** Centre-strip width S, mm. */
+  widthMm: number;
+  /** Slot width W between the strip and each ground, mm. */
+  gapMm: number;
+  /** Substrate height h, mm. */
+  heightMm: number;
+  er: number;
+}
+
+export interface CoplanarResult {
+  z0: number;
+  effectivePermittivity: number;
+}
+
+/** Arithmetic-geometric mean. */
+function agm(a: number, b: number): number {
+  for (let i = 0; i < 64 && Math.abs(a - b) > 1e-15 * a; i++) [a, b] = [(a + b) / 2, Math.sqrt(a * b)];
+  return a;
+}
+
+/** K(k) / K(k'), exact: K(k) = pi / (2 AGM(1, k')), so the ratio is AGM(1, k) / AGM(1, k'). */
+export function ellipticModulusRatio(k: number): number {
+  return agm(1, k) / agm(1, Math.sqrt(1 - k * k));
+}
+
+/** sinh(a) / sinh(b) without overflow for large arguments. */
+function sinhRatio(a: number, b: number): number {
+  return (Math.exp(a - b) * -Math.expm1(-2 * a)) / -Math.expm1(-2 * b);
+}
+
+/**
+ * Conventional (unbacked) coplanar waveguide on a substrate of finite height, by quasi-static
+ * conformal mapping (Simons, Coplanar Waveguide Circuits, Components, and Systems, 2001, ch. 2):
+ * k0 = S / (S + 2W), k1 = sinh(pi S / 4h) / sinh(pi (S + 2W) / 4h),
+ * eps_eff = 1 + (er - 1)/2 * K(k1) K(k0') / (K(k1') K(k0)), Z0 = 30 pi / sqrt(eps_eff) * K(k0') / K(k0).
+ * Infinitely wide grounds and substrate, zero conductor thickness, no loss.
+ */
+export function calculateCoplanarWaveguide({ widthMm, gapMm, heightMm, er }: CoplanarInput): CoplanarResult {
+  assertPositiveFinite(widthMm, 'Centre-strip width');
+  assertPositiveFinite(gapMm, 'Slot width');
+  assertPositiveFinite(heightMm, 'Substrate height');
+  assertPositiveFinite(er, 'Relative permittivity');
+  if (er < 1) throw new Error('Relative permittivity must be at least 1.');
+  const outer = widthMm + 2 * gapMm;
+  const k0 = widthMm / outer;
+  const k1 = sinhRatio((Math.PI * widthMm) / (4 * heightMm), (Math.PI * outer) / (4 * heightMm));
+  const effectivePermittivity = 1 + ((er - 1) / 2) * (ellipticModulusRatio(k1) / ellipticModulusRatio(k0));
+  return {
+    z0: (30 * Math.PI) / Math.sqrt(effectivePermittivity) / ellipticModulusRatio(k0),
+    effectivePermittivity,
+  };
+}

@@ -25,7 +25,86 @@
   --navy: #0f172a;
 }
 
+/* ═══════ RF Toolbox instrument tokens ═══════
+   The interactive tools (3D stages, phased-array lab, FMCW scope, cascade
+   lineup) read these names in CSS and in JS (src/components/rf/three/palette.ts).
+   Values follow the site palette: slate neutrals, UCI Blue traces, UCI Gold markers. */
+:root {
+  --bg: #ffffff;
+  --bg-raised: #f8fafc;
+  --surface: #ffffff;
+  --surface-2: #f1f5f9;
+  --ink: #1f2937;
+  --ink-2: #4b5563;
+  --ink-3: #6b7280;
+  --line: rgba(15, 23, 42, 0.1);
+  --line-strong: rgba(15, 23, 42, 0.2);
+  --accent-ink: #0064a4;
+  --trace: #0064a4;
+  --trace-2: #528188;
+  --marker: #ffd200;
+  --marker-ink: #a16207;
+  --on-marker: #00386d;
+  --alert: #dc2626;
+  --grid-dot: rgba(0, 100, 164, 0.07);
+  /* Categorical series for cascade stages: distinct in hue and lightness. */
+  --series-1: #0064a4;
+  --series-2: #a16207;
+  --series-3: #528188;
+  --series-4: #c2410c;
+  --series-5: #7c3aed;
+  --series-6: #15803d;
+  --series-7: #be185d;
+  --series-8: #78716c;
+}
+
+.dark {
+  --bg: #0f172a;
+  --bg-raised: #020617;
+  --surface: #0f172a;
+  --surface-2: #1e293b;
+  --ink: #e2e8f0;
+  --ink-2: #cbd5e1;
+  --ink-3: #94a3b8;
+  --line: rgba(255, 255, 255, 0.1);
+  --line-strong: rgba(255, 255, 255, 0.2);
+  --accent-ink: #7dd3fc;
+  --trace: #38bdf8;
+  --trace-2: #5eead4;
+  --marker: #ffd200;
+  --marker-ink: #fcd34d;
+  --on-marker: #0f172a;
+  --alert: #f87171;
+  --grid-dot: rgba(148, 178, 214, 0.08);
+  --series-1: #38bdf8;
+  --series-2: #ffd200;
+  --series-3: #5eead4;
+  --series-4: #fb923c;
+  --series-5: #a78bfa;
+  --series-6: #4ade80;
+  --series-7: #f472b6;
+  --series-8: #d6d3d1;
+}
+
 @theme inline {
+  --color-bg: var(--bg);
+  --color-bg-raised: var(--bg-raised);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-accent-ink: var(--accent-ink);
+  --color-trace: var(--trace);
+  --color-trace-2: var(--trace-2);
+  --color-marker: var(--marker);
+  --color-marker-ink: var(--marker-ink);
+  --color-on-marker: var(--on-marker);
+  /* White on UCI Blue. text-white would lose to the subpage hero rule that recolours .text-white. */
+  --color-on-accent: #ffffff;
+  --color-alert: var(--alert);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-uci-blue: #0064a4;
@@ -613,11 +692,227 @@ h3 {
   color: #64748b;
 }
 
+/* ═══════ RF Toolbox instruments ═══════ */
+
+/* Small uppercase caption, the style of the calculators' "Results" headings. */
+@utility kicker {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* Numeric readout: mono digits that keep their width as they change. */
+@utility readout {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Form label, matching the calculators' input labels. */
+@utility field-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+/* Inset plot panel, matching the calculators' result panels. */
+@utility readout-panel {
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+}
+
+@utility panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+}
+
+/* Graph-paper grid behind the 3D stages, on the page grid's 40px pitch. */
+@utility graph-grid {
+  background-image:
+    linear-gradient(var(--grid-dot) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-dot) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Secondary button: the outlined style of the cascade builder's part buttons. */
+@utility btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 500;
+  transition:
+    border-color 0.2s,
+    color 0.2s,
+    box-shadow 0.2s;
+  &:hover {
+    border-color: #60a5fa;
+    color: var(--accent-ink);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  }
+}
+
+/* Range slider: a 3px track filled in trace blue (gold for steering) and a round thumb. */
+.range {
+  --range-fill: var(--trace);
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 22px;
+  background: transparent;
+  cursor: pointer;
+}
+.range-accent {
+  --range-fill: var(--marker);
+}
+.range::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--range-fill) var(--fill, 50%), var(--line-strong) var(--fill, 50%));
+}
+.range::-moz-range-track {
+  height: 3px;
+  border-radius: 3px;
+  background: var(--line-strong);
+}
+.range::-moz-range-progress {
+  height: 3px;
+  border-radius: 3px;
+  background: var(--range-fill);
+}
+.range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -6.5px;
+  border-radius: 50%;
+  background: var(--range-fill);
+  border: 3px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--range-fill), 0 1px 3px rgba(15, 23, 42, 0.2);
+  transition: transform 0.15s ease-out;
+}
+.range::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--range-fill);
+  border: 3px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--range-fill), 0 1px 3px rgba(15, 23, 42, 0.2);
+}
+.range:active::-webkit-slider-thumb {
+  transform: scale(1.15);
+}
+.range:focus-visible {
+  outline: none;
+}
+.range:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 1px var(--range-fill), 0 0 0 5px color-mix(in srgb, var(--range-fill) 30%, transparent);
+}
+.range:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 1px var(--range-fill), 0 0 0 5px color-mix(in srgb, var(--range-fill) 30%, transparent);
+}
+
+/* React Flow inside the cascade builder uses the instrument tokens. */
+.cascade-flow {
+  --xy-background-color: transparent;
+  --xy-background-pattern-color: var(--line-strong);
+  --xy-edge-stroke: var(--trace);
+  --xy-edge-stroke-width: 1.5;
+  --xy-edge-stroke-selected: var(--marker);
+  --xy-connectionline-stroke: var(--marker);
+  --xy-connectionline-stroke-width: 1.5;
+  --xy-handle-background-color: var(--trace);
+  --xy-handle-border-color: var(--surface);
+  --xy-selection-background-color: color-mix(in srgb, var(--trace) 8%, transparent);
+  --xy-selection-border: 1px dashed var(--trace);
+  --xy-controls-button-background-color: var(--surface);
+  --xy-controls-button-background-color-hover: var(--surface-2);
+  --xy-controls-button-color: var(--ink-2);
+  --xy-controls-button-color-hover: var(--ink);
+  --xy-controls-button-border-color: var(--line);
+  --xy-controls-box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --xy-attribution-background-color: transparent;
+}
+.cascade-flow .react-flow__controls {
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+.cascade-flow .react-flow__attribution a {
+  color: var(--ink-3);
+}
+.cascade-flow .react-flow__handle {
+  width: 10px;
+  height: 10px;
+  border-width: 2px;
+  border-radius: 50%;
+}
+/* Phone layout: the canvas is a static stack, so a swipe over it scrolls the page. */
+.cascade-flow-static .react-flow__pane {
+  touch-action: pan-y;
+  cursor: default;
+}
+.cascade-flow-static .react-flow__node {
+  cursor: default;
+}
+
+/* Math variables inside labels: an italic serif keeps τ from reading as T. */
+.math-var {
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+}
+
+/* FMCW scope: a sweep cursor crosses two chirps; the beat trace scrolls by one period. */
+@keyframes fmcw-sweep {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(var(--sweep));
+  }
+}
+@keyframes fmcw-if {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-1 * var(--period)));
+  }
+}
+.fmcw-sweep {
+  animation: fmcw-sweep 4.8s linear infinite;
+}
+.fmcw-if {
+  animation: fmcw-if 1s linear infinite;
+}
+
+/* The subpage input override above must not paint a box behind the sliders. */
+.dark .subpage-shell input[type="range"] {
+  background-color: transparent !important;
+  border-color: transparent !important;
+}
+
 /* ═══════ Reduced motion ═══════ */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .fmcw-sweep {
+    display: none;
   }
 }

@@ -123,7 +123,7 @@ function SystemLinkSection() {
     <div className="space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
         <h3 className="text-2xl font-bold text-eng-blue dark:text-blue-300 mb-2">System Cascade Chain Builder</h3>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Interactive drag-and-drop block diagram for cascade Gain, Noise Figure, and OIP3/IIP3 analysis.</p>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Interactive drag-and-drop block diagram for cascade Gain, Noise Figure, and OIP3/IIP3 analysis, with a live level diagram and noise and linearity budgets.</p>
         <SystemCascadeBuilder />
       </div>
 
@@ -153,7 +153,7 @@ function RadarSensingSection() {
 
       <div>
         <h3 className="text-2xl font-bold text-eng-blue dark:text-blue-300 mb-2">FMCW & CW Radar Toolset</h3>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Determine range resolution, IF-limited range, and Doppler shifts for mmWave sensors.</p>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Watch the chirp, beat tone and range profile move as you set range resolution and IF-limited range, then estimate Doppler shifts for mmWave sensors.</p>
         <FMCWRadarCalculator />
         <DopplerCalculator />
       </div>
@@ -197,7 +197,7 @@ function AntennasMatchingSection() {
 
       <div>
         <h3 className="text-2xl font-bold text-eng-blue dark:text-blue-300 mb-2">Phased Array & Antenna Synthesis</h3>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Calculate optimal physical dimensions for patch antennas and visualize array factor patterns.</p>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Calculate optimal physical dimensions for patch antennas and steer planar arrays in 3D.</p>
         <PatchAntennaCalculator />
         <PhasedArrayCalculator />
       </div>
@@ -267,7 +267,7 @@ function FundamentalsSection() {
 
       <div>
         <h3 className="text-2xl font-bold text-eng-blue dark:text-blue-300 mb-2">Waveguide Tools</h3>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Cutoff frequency calculators and standard reference tables for rectangular waveguides.</p>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">TE₁₀ cutoff and guide wavelength with a 3D field view, plus standard reference tables for rectangular waveguides.</p>
         <WaveguideCalculator />
       </div>
       

@@ -1,9 +1,17 @@
 'use client';
 
 import React, { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { SmithChart } from './SmithChart';
-import { PolarPlot } from './PolarPlot';
 import { RFModelBadge } from './RFModelBadge';
+import PhasedArrayLab from './rf/PhasedArrayLab';
+import { designRectangularPatch } from '@/lib/patchAntenna';
+
+// three.js loads with the first 3D stage that mounts, never with the page.
+const PatchStage = dynamic(() => import('./rf/three/PatchStage'), {
+  ssr: false,
+  loading: () => <div className="absolute inset-0 animate-pulse bg-surface-2/40" aria-hidden="true" />,
+});
 
 /* =========================================================================
    Impedance Matching Synthesizer (L-Match)
@@ -320,66 +328,16 @@ export function PatchAntennaCalculator() {
   const [height, setHeight] = useState<string>('1.6');
   const [freq, setFreq] = useState<string>('2.45');
 
-  const calcAntenna = () => {
-    const e = parseFloat(er);
-    const h = parseFloat(height) * 1e-3; // convert to meters
-    const fGHz = parseFloat(freq);
-    
-    if (isNaN(e) || isNaN(h) || isNaN(fGHz) || e < 1 || h <= 0 || fGHz <= 0) return null;
-
-    const f = fGHz * 1e9;
-    const c = 299792458.0;
-
-    // Patch width
-    const w = c / (2.0 * f) * Math.sqrt(2.0 / (e + 1.0));
-
-    // Effective permittivity
-    const eEff = (e + 1.0) / 2.0 + ((e - 1.0) / 2.0) * (1.0 / Math.sqrt(1.0 + 12.0 * h / w));
-
-    // Extension length
-    const deltaL = 0.412 * h * ((eEff + 0.3) * (w / h + 0.264)) / ((eEff - 0.258) * (w / h + 0.8));
-
-    // Patch length
-    const l = c / (2.0 * f * Math.sqrt(eEff)) - 2.0 * deltaL;
-
-    // Free-space wavelength
-    const lambda0 = c / f;
-    const k0 = 2.0 * Math.PI / lambda0;
-
-    // Radiation conductance G1
-    const k0h = k0 * h;
-    const g1 = (w / (120.0 * lambda0)) * (1.0 - k0h * k0h / 24.0);
-
-    // Directivity approximation
-    const k0w = k0 * w;
-    let i1 = 0.0;
-    const numSteps = 200;
-    const dTheta = Math.PI / numSteps;
-    for (let i = 0; i <= numSteps; i++) {
-        const theta = i * dTheta;
-        const cosT = Math.cos(theta);
-        const sinT = Math.sin(theta);
-        const slotFactor = Math.abs(cosT) < 1e-10 ? k0w / 2.0 : Math.sin(k0w * cosT / 2.0) / cosT;
-        const weight = (i === 0 || i === numSteps) ? 0.5 : 1.0;
-        i1 += slotFactor * slotFactor * sinT * weight * dTheta;
-    }
-    const dLinear = 2.0 * k0w * k0w / Math.max(i1, 1e-15);
-    const directivity = 10.0 * Math.log10(Math.max(dLinear, 1.0));
-
-    return { 
-      width: w * 1e3, 
-      length: l * 1e3, 
-      directivity,
-      rin: 1.0 / (2.0 * Math.max(g1, 1e-15))
-    };
-  };
-
-  const results = calcAntenna();
+  const erVal = parseFloat(er);
+  const heightVal = parseFloat(height);
+  const freqVal = parseFloat(freq);
+  const valid = [erVal, heightVal, freqVal].every(Number.isFinite) && erVal >= 1 && heightVal > 0 && freqVal > 0;
+  const results = valid ? designRectangularPatch({ er: erVal, heightMm: heightVal, frequencyGHz: freqVal }) : null;
 
   return (
     <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
       <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Microstrip Patch Antenna Synthesis</h4>
-      <RFModelBadge level="closed-form" detail="First-order rectangular-patch/cavity synthesis; verify with full-wave EM." />
+      <RFModelBadge level="closed-form" detail="Balanis transmission-line and cavity models for the TM010 patch; verify with full-wave EM." />
       
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-4">
@@ -397,21 +355,35 @@ export function PatchAntennaCalculator() {
               <input type="number" step="0.1" value={freq} onChange={(e) => setFreq(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
             </div>
           </div>
+
+          <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
+            <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Physical Dimensions</h5>
+            {results ? (
+              <>
+                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Patch Width (W)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.widthMm.toFixed(2)} mm</span></div>
+                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Patch Length (L)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.lengthMm.toFixed(2)} mm</span></div>
+                <hr className="border-gray-200 dark:border-gray-700 my-2" />
+                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Effective Permittivity (εeff)</span> <span className="font-mono font-medium">{results.effectivePermittivity.toFixed(3)}</span></div>
+                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Edge Resistance at Resonance</span> <span className="font-mono font-medium">{results.edgeResistanceOhm.toFixed(1)} Ω</span></div>
+                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Directivity</span> <span className="font-mono font-medium text-eecs-teal">{results.directivityDbi.toFixed(2)} dBi</span></div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">First-order models from Balanis, <i>Antenna Theory</i>, ch. 14, for the TM₀₁₀ mode on a thin substrate over an infinite ground plane. W, εeff, the fringing extension ΔL and L come from the transmission-line model. The edge resistance is 1 / (2(G₁ + G₁₂)), with the slot conductance G₁ and the mutual conductance G₁₂ between the two radiating slots integrated numerically. The directivity integrates the two-slot cavity-model pattern that the 3D view draws. Feed geometry, finite ground, conductor and dielectric loss, surface waves, fabrication tolerance, and bandwidth need full-wave EM.</p>
+              </>
+            ) : (
+              <div className="text-sm text-gray-400">Invalid input values</div>
+            )}
+          </div>
         </div>
 
-        <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
-          <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Physical Dimensions</h5>
-          {results ? (
-            <>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Patch Width (W)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.width.toFixed(2)} mm</span></div>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Patch Length (L)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.length.toFixed(2)} mm</span></div>
-              <hr className="border-gray-200 dark:border-gray-700 my-2" />
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Edge Input Impedance</span> <span className="font-mono font-medium">{results.rin.toFixed(1)} Ω</span></div>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Directivity</span> <span className="font-mono font-medium text-eecs-teal">{results.directivity.toFixed(2)} dBi</span></div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">First-order rectangular-patch/cavity approximation. W, εeff, fringing extension, and L are synthesis estimates; the displayed edge resistance and directivity are rough slot-model values. Feed geometry, finite ground, conductor/dielectric loss, surface waves, fabrication tolerance, and bandwidth require full-wave EM optimization.</p>
-            </>
-          ) : (
-            <div className="text-sm text-gray-400">Invalid input values</div>
+        <div className="graph-grid relative min-h-[320px] overflow-hidden rounded-xl border border-line bg-bg-raised lg:min-h-[400px]">
+          {results && (
+            <PatchStage
+              widthMm={results.widthMm}
+              lengthMm={results.lengthMm}
+              effectiveLengthMm={results.effectiveLengthMm}
+              heightMm={heightVal}
+              freqGHz={freqVal}
+              label={`Rectangular patch ${results.widthMm.toFixed(1)} by ${results.lengthMm.toFixed(1)} mm on a ${height} mm substrate, with its broadside pattern`}
+            />
           )}
         </div>
       </div>
@@ -420,110 +392,16 @@ export function PatchAntennaCalculator() {
 }
 
 /* =========================================================================
-   Phased Array & Array Factor Analysis
+   Phased Array Beam Lab (3D). The 2D linear-array calculator it replaced is
+   frozen in archive/components/PhasedArrayCalculator.tsx.
    ========================================================================= */
 
 export function PhasedArrayCalculator() {
-  const [numElements, setNumElements] = useState<string>('8');
-  const [spacing, setSpacing] = useState<string>('0.5'); // Lambda
-  const [scanAngle, setScanAngle] = useState<string>('0'); // Degrees
-
-  const calcPattern = () => {
-    const n = Number(numElements);
-    const d = parseFloat(spacing);
-    const scan = parseFloat(scanAngle);
-    if (!Number.isInteger(n) || isNaN(d) || isNaN(scan) || n <= 0 || d <= 0 || scan < -90 || scan > 90) return [];
-
-    const k = 2.0 * Math.PI;
-    const beta = -k * d * Math.sin(scan * Math.PI / 180.0);
-
-    let maxAF = 0;
-    const rawVals = [];
-
-    // Calculate over 360 degrees
-    for (let i = 0; i <= 360; i++) {
-        const thetaDeg = -180.0 + 360.0 * (i / 360.0);
-        const thetaRad = thetaDeg * Math.PI / 180.0;
-        // The Swift code maps theta 0 to broadside. 
-        // sin(theta) means 0 deg is broadside, 90 is endfire.
-        const psi = k * d * Math.sin(thetaRad) + beta;
-
-        let afReal = 0;
-        let afImag = 0;
-        for (let elem = 0; elem < n; elem++) {
-            const phase = elem * psi;
-            afReal += Math.cos(phase);
-            afImag += Math.sin(phase);
-        }
-        const afMag = Math.sqrt(afReal * afReal + afImag * afImag);
-        rawVals.push({ angle: thetaDeg, mag: afMag });
-        if (afMag > maxAF) maxAF = afMag;
-    }
-
-    const norm = Math.max(maxAF, 1e-30);
-    return rawVals.map(pt => {
-        const db = 20 * Math.log10(Math.max(pt.mag / norm, 1e-5));
-        return {
-            angleDegrees: pt.angle,
-            value: db
-        };
-    });
-  };
-
-  const patternData = calcPattern();
-
-  // Basic HPBW and Max Spacing calculation
-  const cosTheta = Math.cos(parseFloat(scanAngle) * Math.PI / 180.0);
-  const nd = Number(numElements) * parseFloat(spacing);
-  const hpbw = (0.886 / (nd * Math.max(Math.abs(cosTheta), 1e-10))) * 180.0 / Math.PI;
-  const maxD = 1.0 / (1.0 + Math.abs(Math.sin(parseFloat(scanAngle) * Math.PI / 180.0)));
-
   return (
-    <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
-      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Phased Array & Array Factor Analysis (ULA)</h4>
-      <RFModelBadge level="closed-form" detail="Uniform isotropic narrowband array factor, not realized radiation pattern." />
-      
-      <div className="grid lg:grid-cols-2 gap-8 items-start">
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Number of Elements (N)</label>
-              <input type="number" step="1" min="1" value={numElements} onChange={(e) => setNumElements(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Element Spacing (λ)</label>
-              <input type="number" step="0.05" min="0.1" value={spacing} onChange={(e) => setSpacing(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
-            </div>
-            <div className="col-span-2">
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Scan Angle (Degrees from Broadside)</label>
-              <input type="number" step="1" value={scanAngle} onChange={(e) => setScanAngle(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
-            </div>
-          </div>
-
-          <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3 mt-4">
-            <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Array Metrics</h5>
-            {patternData.length > 0 ? (
-              <>
-                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Approx. HPBW</span> <span className="font-mono font-medium">{Math.min(hpbw, 180).toFixed(1)}°</span></div>
-                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Max Spacing (Grating Lobe Free)</span> <span className="font-mono font-medium">{maxD.toFixed(3)} λ</span></div>
-                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Grating Lobes Present?</span> <span className={`font-mono font-bold ${parseFloat(spacing) >= maxD ? 'text-red-500' : 'text-green-500'}`}>{parseFloat(spacing) >= maxD ? 'Yes' : 'No'}</span></div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Closed-form HPBW/grating-lobe estimates for a uniform, narrowband linear array of equal isotropic elements. The plot is normalized array factor—not the realized antenna radiation pattern—and excludes element pattern, mutual coupling, scan loss, feed errors, edge effects, and polarization.</p>
-              </>
-            ) : (
-              <div className="text-sm text-gray-400">Invalid input values</div>
-            )}
-          </div>
-        </div>
-
-        <div className="flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-gray-200 dark:border-gray-700 p-4 min-h-[300px]">
-          <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-4 w-full text-left">Normalized Array Factor (dB)</h5>
-          {patternData.length > 0 ? (
-            <PolarPlot data={patternData} isDb={true} minDb={-40} />
-          ) : (
-            <div className="text-sm text-gray-400">Waiting for valid inputs to plot.</div>
-          )}
-        </div>
-      </div>
+    <div className="bg-white/70 dark:bg-slate-900/70 p-4 sm:p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
+      <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">Phased Array Beam Lab</h4>
+      <RFModelBadge level="closed-form" detail="Uniform-grid narrowband array factor times an ideal element pattern; not a realized radiation pattern." />
+      <PhasedArrayLab />
     </div>
   );
 }

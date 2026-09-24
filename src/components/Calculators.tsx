@@ -1,9 +1,18 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { calculateMicrostrip, calculateSymmetricStripline } from '@/lib/rfMath';
+import dynamic from 'next/dynamic';
+import { calculateCoplanarWaveguide, calculateMicrostrip, calculateSymmetricStripline, waveguideTE10 } from '@/lib/rfMath';
 import { RFModelBadge } from './RFModelBadge';
+import FmcwScope from './rf/fmcw/FmcwScope';
+
+// three.js loads with the first 3D stage that mounts, never with the page.
+const stageLoading = () => <div className="absolute inset-0 animate-pulse bg-surface-2/40" aria-hidden="true" />;
+const TLineStage = dynamic(() => import('./rf/three/TLineStage'), { ssr: false, loading: stageLoading });
+const WaveguideStage = dynamic(() => import('./rf/three/WaveguideStage'), { ssr: false, loading: stageLoading });
+
+// The box a 3D stage fills; it replaces the old CSS isometric view.
+const STAGE_BOX = 'graph-grid relative min-h-[320px] overflow-hidden rounded-xl border border-line bg-bg-raised lg:min-h-[400px]';
 
 /* =========================================================================
    PCBWay Material Specifications
@@ -33,9 +42,10 @@ interface SubstrateSelectorProps {
   thickness?: string;
   setThickness?: (val: string) => void;
   showThickness?: boolean;
+  heightLabel?: string;
 }
 
-function SubstrateSelector({ er, setEr, height, setHeight, thickness, setThickness, showThickness = false }: SubstrateSelectorProps) {
+function SubstrateSelector({ er, setEr, height, setHeight, thickness, setThickness, showThickness = false, heightLabel = 'Substrate Height' }: SubstrateSelectorProps) {
   const [matId, setMatId] = useState('fr4_tg130');
   const isCustomCopperThickness = showThickness
     && thickness !== undefined
@@ -75,7 +85,7 @@ function SubstrateSelector({ er, setEr, height, setHeight, thickness, setThickne
           <input type="number" step="0.1" value={er} onChange={(e) => { setEr(e.target.value); setMatId('custom'); }} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Substrate Height</label>
+          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{heightLabel}</label>
           {mat && mat.thicknesses.length > 0 ? (
             <>
               <select
@@ -362,36 +372,12 @@ export function MicrostripCalculator() {
           </div>
         </div>
 
-        {/* 3D Isometric View */}
-        <div 
-          className="flex flex-col items-center justify-center h-full min-h-[250px] bg-slate-100 dark:bg-slate-800/50 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden relative"
-          style={{ perspective: '1000px' }}
-        >
-          <p className="absolute top-3 left-4 text-xs font-semibold text-gray-400 uppercase tracking-widest">3D PCB View</p>
-          
-          <motion.div 
-            className="relative"
-            animate={{ rotateX: 60, rotateZ: -45 }}
-            transition={{ type: "spring", stiffness: 50, damping: 20 }}
-            style={{ transformStyle: 'preserve-3d', width: '200px', height: '200px' }}
-          >
-            {/* Ground Plane (Bottom) */}
-            <div className="absolute inset-0 bg-yellow-600/80 shadow-[0_10px_20px_rgba(0,0,0,0.3)]" style={{ transform: 'translateZ(0px)', borderRadius: '4px' }} />
-            
-            {/* Substrate (Middle) */}
-            <div className="absolute inset-0 bg-green-600/40 backdrop-blur-sm border border-green-500/30" style={{ transform: 'translateZ(20px)', borderRadius: '4px' }} />
-            
-            {/* Trace (Top) */}
-            <motion.div 
-              className="absolute bg-yellow-500 shadow-[0_5px_15px_rgba(255,210,0,0.4)]"
-              style={{ transform: 'translateZ(40px)', height: '100%' }}
-              animate={{ 
-                width: `${Math.min(Math.max((parseFloat(width) / parseFloat(height)) * 20, 10), 180)}px`,
-                left: `calc(50% - ${Math.min(Math.max((parseFloat(width) / parseFloat(height)) * 20, 10), 180)/2}px)`
-              }}
-              transition={{ type: "spring", stiffness: 100 }}
-            />
-          </motion.div>
+        <div className={STAGE_BOX}>
+          <TLineStage
+            geometry={{ kind: 'microstrip', widthMm: parseFloat(width), heightMm: parseFloat(height), thicknessMm: parseFloat(thickness) }}
+            label={`Microstrip cross-section, ${width} mm trace on ${height} mm substrate, with quasi-TEM field lines`}
+            caption={results ? `λg = c / (f √εeff) = ${(299.792458 / parseFloat(freq) / Math.sqrt(results.effectivePermittivity)).toFixed(1)} mm at ${freq} GHz. The field lines are a qualitative quasi-TEM sketch, not a field solution; the travelling wave is drawn compressed to two cycles and slowed down.` : undefined}
+          />
         </div>
       </div>
     </div>
@@ -404,18 +390,12 @@ export function MicrostripCalculator() {
 
 export function WaveguideCalculator() {
   const [a, setA] = useState<string>('22.86'); // WR90 standard
+  const [freq, setFreq] = useState<string>('10');
 
-  const calcCutoff = () => {
-    const valA = parseFloat(a);
-    if (isNaN(valA) || valA <= 0) return null;
-    
-    // fc = c / 2a
-    const c = 299.792458; // mm/ns -> same as GHz * mm
-    const fc = c / (2 * valA);
-    return { fc };
-  };
-
-  const result = calcCutoff();
+  const aVal = parseFloat(a);
+  const fVal = parseFloat(freq);
+  const valid = Number.isFinite(aVal) && Number.isFinite(fVal) && aVal > 0 && fVal > 0;
+  const result = valid ? waveguideTE10(aVal, fVal) : null;
 
   return (
     <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
@@ -423,24 +403,48 @@ export function WaveguideCalculator() {
         Rectangular Waveguide (TE₁₀)
       </h4>
       <RFModelBadge level="identity" detail="Ideal PEC, homogeneous-fill rectangular-waveguide TE10 cutoff." />
-      
-      <div className="grid md:grid-cols-2 gap-8 items-center">
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Broad Dimension &apos;a&apos; (mm)</label>
-          <input
-            type="number" step="any"
-            value={a}
-            onChange={(e) => setA(e.target.value)}
-            className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono"
-          />
+
+      <div className="grid lg:grid-cols-2 gap-8 items-start">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Broad Dimension &apos;a&apos; (mm)</label>
+              <input type="number" step="any" value={a} onChange={(e) => setA(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Frequency (GHz)</label>
+              <input type="number" step="any" value={freq} onChange={(e) => setFreq(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
+            </div>
+          </div>
+
+          <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
+            <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Results</h5>
+            {result ? (
+              <>
+                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Cutoff Frequency (fc)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{result.cutoffGHz.toFixed(3)} GHz</span></div>
+                {result.guideWavelengthMm !== null ? (
+                  <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Guide Wavelength (λg)</span> <span className="font-mono font-medium">{result.guideWavelengthMm.toFixed(2)} mm</span></div>
+                ) : (
+                  <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Below cutoff · attenuation</span> <span className="font-mono font-medium text-amber-700 dark:text-amber-300">{result.attenuationDbPerMm.toFixed(3)} dB/mm</span></div>
+                )}
+                <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Free-space Wavelength (λ₀)</span> <span className="font-mono font-medium">{result.lambda0Mm.toFixed(2)} mm</span></div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Air-filled guide with perfectly conducting walls. The 3D view draws b = a/2, the proportion of standard WR sizes; the TE10 cutoff does not depend on b.</p>
+              </>
+            ) : (
+              <div className="text-sm text-gray-400">Invalid input values</div>
+            )}
+          </div>
         </div>
 
-        <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
-          <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Results</h5>
-          {result ? (
-            <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Cutoff Frequency (fc)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{result.fc.toFixed(3)} GHz</span></div>
-          ) : (
-            <div className="text-sm text-gray-400">Invalid dimension</div>
+        <div className={STAGE_BOX}>
+          {result && (
+            <WaveguideStage
+              aMm={aVal}
+              bMm={aVal / 2}
+              guideWavelengthMm={result.guideWavelengthMm}
+              attenuationDbPerMm={result.attenuationDbPerMm}
+              label={`TE10 electric field in a ${a} mm waveguide at ${freq} GHz, ${result.propagating ? 'propagating' : 'below cutoff'}`}
+            />
           )}
         </div>
       </div>
@@ -478,7 +482,7 @@ export function StriplineCalculator() {
       
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-4">
-          <SubstrateSelector er={er} setEr={setEr} height={b} setHeight={setB} thickness={thickness} setThickness={setThickness} showThickness={true} />
+          <SubstrateSelector er={er} setEr={setEr} height={b} setHeight={setB} thickness={thickness} setThickness={setThickness} showThickness={true} heightLabel="Ground Spacing (b)" />
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Trace Width (mm)</label>
             <input type="number" step="0.1" value={width} onChange={(e) => setWidth(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
@@ -499,42 +503,12 @@ export function StriplineCalculator() {
           </div>
         </div>
 
-        {/* 3D Isometric View */}
-        <div 
-          className="flex flex-col items-center justify-center h-full min-h-[250px] bg-slate-100 dark:bg-slate-800/50 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden relative"
-          style={{ perspective: '1000px' }}
-        >
-          <p className="absolute top-3 left-4 text-xs font-semibold text-gray-400 uppercase tracking-widest">3D PCB View</p>
-          
-          <motion.div 
-            className="relative"
-            animate={{ rotateX: 60, rotateZ: -45 }}
-            transition={{ type: "spring", stiffness: 50, damping: 20 }}
-            style={{ transformStyle: 'preserve-3d', width: '200px', height: '200px' }}
-          >
-            {/* Ground Plane (Bottom) */}
-            <div className="absolute inset-0 bg-yellow-600/80 shadow-[0_10px_20px_rgba(0,0,0,0.3)]" style={{ transform: 'translateZ(0px)', borderRadius: '4px' }} />
-            
-            {/* Substrate (Lower half) */}
-            <div className="absolute inset-0 bg-green-600/40 backdrop-blur-sm border border-green-500/30" style={{ transform: 'translateZ(20px)', borderRadius: '4px' }} />
-            
-            {/* Trace (Middle) */}
-            <motion.div 
-              className="absolute bg-yellow-500 shadow-[0_5px_15px_rgba(255,210,0,0.4)]"
-              style={{ transform: 'translateZ(40px)', height: '100%' }}
-              animate={{ 
-                width: `${Math.min(Math.max((parseFloat(width) / parseFloat(b)) * 40, 10), 180)}px`,
-                left: `calc(50% - ${Math.min(Math.max((parseFloat(width) / parseFloat(b)) * 40, 10), 180)/2}px)`
-              }}
-              transition={{ type: "spring", stiffness: 100 }}
-            />
-
-            {/* Substrate (Upper half) */}
-            <div className="absolute inset-0 bg-green-600/40 backdrop-blur-sm border border-green-500/30" style={{ transform: 'translateZ(60px)', borderRadius: '4px' }} />
-            
-            {/* Ground Plane (Top) */}
-            <div className="absolute inset-0 bg-yellow-600/50 backdrop-blur-[1px] border border-yellow-500/50 shadow-[0_5px_20px_rgba(0,0,0,0.2)]" style={{ transform: 'translateZ(80px)', borderRadius: '4px' }} />
-          </motion.div>
+        <div className={STAGE_BOX}>
+          <TLineStage
+            geometry={{ kind: 'stripline', widthMm: parseFloat(width), heightMm: parseFloat(b), thicknessMm: parseFloat(thickness) }}
+            label={`Stripline cross-section, ${width} mm trace centered between ground planes ${b} mm apart`}
+            caption="Upper ground drawn translucent. The field lines are a qualitative TEM sketch, not a field solution; the travelling wave is schematic."
+          />
         </div>
       </div>
     </div>
@@ -551,61 +525,14 @@ export function CPWCalculator() {
   const [width, setWidth] = useState<string>('2.0');
   const [gap, setGap] = useState<string>('0.2');
 
-  const ellipticRatio = (k: number) => {
-    const kp = Math.sqrt(1.0 - k * k);
-    const threshold = 1.0 / Math.sqrt(2.0);
-    if (k <= threshold) {
-      const sqrtKp = Math.sqrt(kp);
-      const num = 2.0 * (1.0 + sqrtKp);
-      const den = 1.0 - sqrtKp;
-      if (den <= 0) return 1e10;
-      return Math.PI / Math.log(num / den);
-    } else {
-      const sqrtK = Math.sqrt(k);
-      const num = 2.0 * (1.0 + sqrtK);
-      const den = 1.0 - sqrtK;
-      if (den <= 0) return 1e10;
-      return Math.log(num / den) / Math.PI;
-    }
-  };
-
   const calcCPW = () => {
     const e = parseFloat(er);
     const h = parseFloat(height);
     const w = parseFloat(width);
     const s = parseFloat(gap);
-    
-    if (isNaN(e) || isNaN(h) || isNaN(w) || isNaN(s) || w <= 0 || s <= 0 || h <= 0 || e < 1) return null;
-
-    const a = w / 2.0;
-    const ab = a + s;
-    
-    const k0 = a / ab;
-    const ratio0 = ellipticRatio(k0);
-    
-    const piA = Math.PI * a / (4.0 * h);
-    const piAB = Math.PI * ab / (4.0 * h);
-    const tanhA = Math.tanh(piA);
-    const tanhAB = Math.tanh(piAB);
-    
-    let k1 = 0;
-    if (tanhAB > 1e-15) {
-      k1 = tanhA / tanhAB;
-    }
-    
-    const ratio1 = k1 > 0 ? ellipticRatio(k1) : 0;
-    let eEff = (e + 1) / 2;
-    if (ratio0 > 1e-15) {
-      eEff = 1.0 + (e - 1.0) / 2.0 * (ratio1 / ratio0);
-    }
-    
-    const ratio = ellipticRatio(k0);
-    let z0 = 50;
-    if (ratio > 0) {
-      z0 = 30.0 * Math.PI / Math.sqrt(eEff) / ratio;
-    }
-
-    return { z0, eEff };
+    if (![e, h, w, s].every(Number.isFinite) || w <= 0 || s <= 0 || h <= 0 || e < 1) return null;
+    const line = calculateCoplanarWaveguide({ widthMm: w, gapMm: s, heightMm: h, er: e });
+    return { z0: line.z0, eEff: line.effectivePermittivity };
   };
 
   const results = calcCPW();
@@ -635,7 +562,7 @@ export function CPWCalculator() {
               <>
                 <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Characteristic Impedance (Z₀)</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.z0.toFixed(2)} Ω</span></div>
                 <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Effective Permittivity (εeff)</span> <span className="font-mono font-medium">{results.eEff.toFixed(4)}</span></div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Closed-form conformal-mapping approximation for an unbacked CPW on a finite-thickness substrate, with infinite lateral ground width, zero conductor thickness, and no conductor/dielectric loss. Grounded CPW, solder mask, finite ground, and discontinuities require an EM solver.</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Quasi-static conformal map for an unbacked CPW on a finite-height substrate (Simons, 2001), with exact elliptic integrals, infinitely wide grounds, zero conductor thickness, and no conductor or dielectric loss. Grounded CPW, solder mask, finite ground width, and discontinuities require an EM solver.</p>
               </>
             ) : (
               <div className="text-sm text-gray-400">Invalid input values</div>
@@ -643,53 +570,12 @@ export function CPWCalculator() {
           </div>
         </div>
 
-        {/* 3D Isometric View */}
-        <div 
-          className="flex flex-col items-center justify-center h-full min-h-[250px] bg-slate-100 dark:bg-slate-800/50 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden relative"
-          style={{ perspective: '1000px' }}
-        >
-          <p className="absolute top-3 left-4 text-xs font-semibold text-gray-400 uppercase tracking-widest">3D PCB View</p>
-          
-          <motion.div 
-            className="relative"
-            animate={{ rotateX: 60, rotateZ: -45 }}
-            transition={{ type: "spring", stiffness: 50, damping: 20 }}
-            style={{ transformStyle: 'preserve-3d', width: '200px', height: '200px' }}
-          >
-            {/* Substrate */}
-            <div className="absolute inset-0 bg-green-600/40 backdrop-blur-sm border border-green-500/30" style={{ transform: 'translateZ(0px)', borderRadius: '4px' }} />
-            
-            {/* Top Layer */}
-            <div style={{ transform: 'translateZ(20px)', transformStyle: 'preserve-3d' }} className="absolute inset-0">
-              <motion.div 
-                className="absolute bg-yellow-600 shadow-[0_5px_10px_rgba(0,0,0,0.2)]"
-                style={{ height: '100%', left: '0' }}
-                animate={{ 
-                  width: `calc(50% - ${Math.min(Math.max((parseFloat(width)/2 + parseFloat(gap)) * 20, 10), 90)}px)`
-                }}
-                transition={{ type: "spring", stiffness: 100 }}
-              />
-              
-              <motion.div 
-                className="absolute bg-yellow-500 shadow-[0_5px_15px_rgba(255,210,0,0.4)]"
-                style={{ height: '100%' }}
-                animate={{ 
-                  width: `${Math.min(Math.max(parseFloat(width) * 20, 5), 100)}px`,
-                  left: `calc(50% - ${Math.min(Math.max(parseFloat(width) * 20, 5), 100)/2}px)`
-                }}
-                transition={{ type: "spring", stiffness: 100 }}
-              />
-
-              <motion.div 
-                className="absolute bg-yellow-600 shadow-[0_5px_10px_rgba(0,0,0,0.2)]"
-                style={{ height: '100%', right: '0' }}
-                animate={{ 
-                  width: `calc(50% - ${Math.min(Math.max((parseFloat(width)/2 + parseFloat(gap)) * 20, 10), 90)}px)`
-                }}
-                transition={{ type: "spring", stiffness: 100 }}
-              />
-            </div>
-          </motion.div>
+        <div className={STAGE_BOX}>
+          <TLineStage
+            geometry={{ kind: 'cpw', widthMm: parseFloat(width), heightMm: parseFloat(height), thicknessMm: 0.035, gapMm: parseFloat(gap) }}
+            label={`Coplanar waveguide cross-section, ${width} mm center strip with ${gap} mm slots on ${height} mm substrate`}
+            caption="Unbacked CPW: the field fringes across both slots, above and inside the substrate. The field lines are a qualitative sketch and the travelling wave is schematic."
+          />
         </div>
       </div>
     </div>
@@ -966,70 +852,11 @@ export function RadarRangeCalculator() {
    ========================================================================= */
 
 export function FMCWRadarCalculator() {
-  const [bw, setBw] = useState<string>('4'); // GHz
-  const [tc, setTc] = useState<string>('20'); // us
-  const [ifBw, setIfBw] = useState<string>('10'); // MHz
-
-  const calcFMCW = () => {
-    const B_GHz = parseFloat(bw);
-    const Tc_us = parseFloat(tc);
-    const ifBw_MHz = parseFloat(ifBw);
-
-    if (isNaN(B_GHz) || isNaN(Tc_us) || isNaN(ifBw_MHz) || B_GHz <= 0 || Tc_us <= 0 || ifBw_MHz <= 0) return null;
-
-    const B_Hz = B_GHz * 1e9;
-    const Tc_s = Tc_us * 1e-6;
-    const ifBw_Hz = ifBw_MHz * 1e6;
-    const c = 299792458; // m/s
-
-    const rangeRes = c / (2 * B_Hz); // meters
-    const chirpSlope = B_Hz / Tc_s; // Hz/s
-    const maxRange = (ifBw_Hz * c) / (2 * chirpSlope);
-
-    return {
-      rangeRes: rangeRes * 100,
-      chirpSlopeMHzPerUs: chirpSlope / 1e12,
-      maxRange,
-    }; // cm, MHz/us, m
-  };
-
-  const results = calcFMCW();
-
   return (
-    <div className="bg-white/70 dark:bg-slate-900/70 p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
+    <div className="bg-white/70 dark:bg-slate-900/70 p-4 sm:p-6 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm mt-8">
       <h4 className="text-lg font-bold text-eng-blue dark:text-blue-300 mb-6">FMCW Radar Parameters</h4>
       <RFModelBadge level="closed-form" detail="Ideal linear chirp and stationary-target beat-frequency limit." />
-      <div className="grid lg:grid-cols-2 gap-8 items-start">
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Bandwidth (GHz)</label>
-            <input type="number" step="0.1" value={bw} onChange={(e) => setBw(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Chirp Time Tc (μs)</label>
-            <input type="number" step="1" value={tc} onChange={(e) => setTc(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">IF / ADC Bandwidth (MHz)</label>
-            <input type="number" step="0.1" value={ifBw} onChange={(e) => setIfBw(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-uci-blue outline-none font-mono" />
-          </div>
-        </div>
-        <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
-          <h5 className="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-2">Results</h5>
-          {results ? (
-            <>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Range Resolution</span> <span className="font-mono font-medium text-uci-blue dark:text-blue-400 text-lg">{results.rangeRes.toFixed(2)} cm</span></div>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">Chirp Slope</span> <span className="font-mono font-medium">{results.chirpSlopeMHzPerUs.toFixed(2)} MHz/μs</span></div>
-              <div className="flex justify-between items-center"><span className="text-gray-600 dark:text-gray-400">IF-Limited Max Range</span> <span className="font-mono font-medium">{results.maxRange.toFixed(2)} m</span></div>
-            </>
-          ) : (
-            <div className="text-sm text-gray-400">Invalid input values</div>
-          )}
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            First-order, stationary-target result. Max range uses the beat-frequency limit Rmax=fIF,max·c/(2S), S=B/Tc; Doppler-range coupling, sampling/Nyquist margin, analog filters, chirp settling, and waveform timing are excluded.
-          </div>
-        </div>
-      </div>
+      <FmcwScope />
     </div>
   );
 }

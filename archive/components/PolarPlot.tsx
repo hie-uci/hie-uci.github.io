@@ -1,3 +1,5 @@
+// ARCHIVED 2026-09-24. Polar plot used only by the 2D phased-array calculator
+// (archive/components/PhasedArrayCalculator.tsx). Not built, linted or type-checked.
 'use client';
 
 import React from 'react';
