@@ -2,31 +2,34 @@
 
 ## Current state
 
-- The live site is back to its pre-redesign style. The working tree matches commit
-  `624388b` exactly, restored with a revert commit on `main` (no history rewritten).
-- Gates as before the redesign: lint, typecheck, 29 tests, build.
+- The site keeps its pre-redesign look (restored earlier today with a revert commit).
+- The RF Toolbox now carries the tools ported from the redesign branch, restyled to the
+  current look: phased-array beam lab, FMCW chirp scope, cascade level diagram and
+  budgets, and three.js stages in the microstrip, stripline, CPW, patch and waveguide
+  calculators. Merged to `main` from `feature/rf-tools-port` and deployed on approval.
+- Gates: lint, typecheck, 68 tests, build.
 
 ## Important context
 
-- A complete redesign was built, deployed and reverted today because the maintainer does
-  not like its look. It is kept on branch `redesign/signal-and-silicon` and in the
-  history of `main`.
-- Parts of it are independent of the look and could be ported into the current style if
-  wanted: RF Toolbox 3D stages and the FMCW chirp scope, the cascade level diagram and
-  budgets, ⌘K site search, publication search with shareable links, deep links to single
-  chips, and WebP copies of the heavy research figures.
-- Show screenshots or a local preview before deploying any future visual change.
+- The maintainer wants the overall UI unchanged, every toolbox formula real and checked,
+  and every illustrative element labelled as such. `STATE.md` → "RF Toolbox models"
+  lists what was verified and the four model errors that were fixed.
+- The audit scripts (numpy/scipy re-implementations and a 2D finite-difference field
+  solver) are kept outside the repo; the unit tests carry their reference values.
+- Switching between this branch line and `redesign/signal-and-silicon` leaves stale CSS
+  in `.next/dev`; move it aside and restart the dev server.
 
 ## Next steps
 
-- [ ] Only if the maintainer asks: port chosen features from the redesign branch in the
-      current style.
-- [ ] Three alumni photos look swapped against the names: Mengjie (Kaylee) Xie uses
-      `alumni-annika.png`, Kelly Aung Lu uses `alumni-kaylee.jpg`, Annika Ageles Del
-      Rosario uses `alumni-kelly.jpg`.
-- [ ] Most PhD portraits are only 160–230 px wide; better photos would help.
+- [ ] Audit the remaining toolbox calculators (listed under "Open" in `STATE.md`).
+- [ ] Fix the dark-on-blue active sidebar title in light mode, if the maintainer wants it.
+- [ ] Still open from before: three alumni photos look swapped against the names, and
+      most PhD portraits are low resolution.
 
 ## Decisions made
 
-- Reverted with `git revert` rather than a force-push; the repository is public and its
-  history stays intact.
+- Tool chrome maps the redesign's token names to the site palette in `globals.css`
+  instead of rewriting every component, so the tools and the site share one palette.
+- Layouts use container queries: the toolbox content column is only about 540–800 px.
+- Model fixes follow the named references (Balanis ch. 14, Simons ch. 2) rather than
+  keeping the old numbers; each fix has a unit test that fails on the old formula.

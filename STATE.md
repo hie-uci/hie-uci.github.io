@@ -8,6 +8,12 @@ Last updated: 2026-09-24
 > `redesign/signal-and-silicon` and in `main`'s history (commits `44473c3` to `8e00916`),
 > so individual features can be brought back later. **Preview any visual change with the
 > maintainer before deploying it.**
+>
+> **Later on 2026-09-24 the redesign's RF Toolbox tools were ported into the current
+> look** — 3D stages, phased-array beam lab, FMCW chirp scope, cascade level diagram and
+> budgets — with a formula audit that fixed four pre-existing model errors (see "RF
+> Toolbox models"). The maintainer approved screenshots first; the work was merged to
+> `main` from branch `feature/rf-tools-port` and deployed the same day.
 
 ## What this is
 
@@ -100,23 +106,55 @@ Plus `robots.ts` and `sitemap.ts` (generated at build).
 
 ## Code
 
-- `src/components/` — 26 components. Navbar (two-tier, fixed), Footer, ThemeSwitcher
+- `src/components/` — Navbar (two-tier, fixed), Footer, ThemeSwitcher
   (next-themes, dark/light), several canvas/physics backgrounds
   (`FluidPlasmaBackground`, `FallingChipsBackground` via Matter.js, `ParticleField`),
-  and the RF visualisation set (`SmithChart`, `InteractiveSmithChart`, `PolarPlot`,
+  and the RF visualisation set (`SmithChart`, `InteractiveSmithChart`,
   `SParameterViewer`, `SystemCascadeBuilder` on XYFlow).
+- `src/components/rf/` — the RF Toolbox instruments: `controls.tsx`,
+  `PhasedArrayLab`, `CascadeLineup`, `fmcw/` (chirp scope) and `three/` (three.js stages
+  for microstrip, stripline, CPW, patch, waveguide and the array pattern; loaded lazily,
+  rendered on demand, paused off-screen, still under `prefers-reduced-motion`). They read
+  the instrument tokens (`--ink`, `--trace`, `--line`, …) defined in `globals.css` with
+  the site palette, and size themselves with container queries because the toolbox
+  content column is narrower than the viewport.
 - `src/lib/` — the only tested code: `cascadeMath.ts`, `rfMath.ts`,
-  `sParameterEngine.ts` (each with a `.test.ts`), plus `basePath.ts` and `metadata.ts`.
+  `sParameterEngine.ts`, `arrayPattern.ts`, `fmcw.ts`, `patchAntenna.ts` (each with a
+  `.test.ts`), plus the client hooks `useElementWidth.ts`, `useMediaQuery.ts`,
+  `useMotionMode.ts`, and `basePath.ts` and `metadata.ts`.
 - `public/images/` — 21 member photos, 40 research images, 5 composite chip images,
   15 individual die photos, 1 logo.
 
-## Quality gates — green as of 2026-08-28
+## Quality gates — green as of 2026-09-24
 
 | | |
 |---|---|
 | `npm run lint` | clean |
 | `npm run typecheck` | clean — `tsc --noEmit`, no `ignoreBuildErrors` escape hatch any more |
-| `npm test` | **29 tests, 7 suites, 0 fail** (node:test over `src/lib/*.test.ts`) |
+| `npm test` | **68 tests, 0 fail** (node:test over `src/lib/*.test.ts`) |
+
+## RF Toolbox models (audited 2026-09-24)
+
+The ported tools and the calculators they sit in were cross-checked against independent
+implementations of the textbook formulas (numpy/scipy) and, for the transmission lines, a
+2D finite-difference Laplace solve of each cross-section. The scripts are kept outside
+this repo; the unit tests carry the reference values and say where each came from.
+
+| Tool | Model | Status |
+|---|---|---|
+| Phased array | planar array factor × cos^q θ element; D = 4πU_max/∫U dΩ | D within 0.01 dB of exact/numeric references |
+| | peak sidelobe | **fixed**: was the φ-cut sidelobe (up to 16 dB optimistic); now a whole-pattern (u, v) search |
+| | grating lobes | **fixed**: was the worst case 1/(1+sin θ₀); now the exact lattice check with φ₀ |
+| FMCW | ΔR = c/2B, S = B/Tc, R_max = f_IF·c/2S, f_b = S·2R/c, rect/Hann responses | exact |
+| Cascade | Friis NF, 1/IIP3 = Σ G/IIP3ᵢ, kT₀B·F·G, SFDR = ⅔(IIP3 − N_in) | exact |
+| Waveguide | TE₁₀ f_c = c/2a, λg, evanescent α | exact |
+| Microstrip / stripline | Hammerstad–Jensen + Kirschning–Jansen / Cohn–Pozar | field solve agrees to 0.2 % |
+| CPW | Simons finite-substrate conformal map | **fixed**: k₁ used tanh(πS/8h); now sinh(πS/4h)/sinh(π(S+2W)/4h), exact K(k)/K(k′) (was 4–5 % off in Z₀) |
+| Patch | Balanis ch. 14 TL model; Rin = 1/(2(G₁+G₁₂)); two-slot directivity | **fixed**: Rin used the wide-slot asymptote and no G₁₂ (≈40 % low); directivity integral lacked sin²θ |
+
+What is illustrative rather than computed is stated in each tool's note: T-line field
+lines are sketches, the travelling waves and every animation are slowed down, the array's
+element grid size and travelling rings are decorative, the FMCW magnifier states its zoom.
 
 ## Known gotchas
 
@@ -158,6 +196,12 @@ Plus `robots.ts` and `sitemap.ts` (generated at build).
       should point at the other rather than drifting separately.
 - [ ] Continued expansion of the RF Toolbox and the measurement video resources
       (the only feature work that was outstanding as of May 2026).
+- [ ] Audit the toolbox calculators the 2026-09-24 pass did not cover (VSWR, dB, skin
+      depth, via, radar range, Doppler, phase noise, linearity, thermal noise, L-match,
+      Smith chart, receiver cascade, PLL, S-parameter viewer) the same way.
+- [ ] On the RF Toolbox the active sidebar button's title is dark blue on blue in light
+      mode: the subpage hero rule recolours every `.text-white` inside the page's first
+      section. Pre-existing; a one-line fix.
 
 Superseded history lives in `archive/PROGRESS.md` (design-change log, Feb–May 2026) and
 is not linked from anywhere active.
