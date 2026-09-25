@@ -9,6 +9,8 @@ export interface StageInit {
   orbit?: boolean;
   minDistance?: number;
   maxDistance?: number;
+  /** Refuse a software (CPU) WebGL context, so a decorative stage falls back instead of stalling the page. */
+  requireGpu?: boolean;
 }
 
 export type FrameHandler = (elapsedSeconds: number, deltaSeconds: number) => void;
@@ -36,7 +38,13 @@ export class StageRuntime {
   private elapsed = 0;
 
   constructor(init: StageInit) {
-    this.renderer = new THREE.WebGLRenderer({ canvas: init.canvas, antialias: true, alpha: true, powerPreference: 'low-power' });
+    this.renderer = new THREE.WebGLRenderer({
+      canvas: init.canvas,
+      antialias: true,
+      alpha: true,
+      powerPreference: 'low-power',
+      failIfMajorPerformanceCaveat: init.requireGpu ?? false,
+    });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setClearColor(0x000000, 0);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;

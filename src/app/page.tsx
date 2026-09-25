@@ -1,6 +1,7 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, useScroll, useTransform } from 'framer-motion';
@@ -9,10 +10,15 @@ import AnimatedResearchIcon from '@/components/AnimatedResearchIcon';
 import WaveformDivider from '@/components/WaveformDivider';
 import SectionHeader from "@/components/SectionHeader";
 import ChipMarquee from '@/components/ChipMarquee';
-import FluidPlasmaBackground from '@/components/FluidPlasmaBackground';
 import ResearchVisual from '@/components/ResearchVisual';
 import MagneticWrapper from '@/components/MagneticWrapper';
 import { labNews, newsCategoryLabels } from '@/data/news';
+import { HERO_DIE_DIR, HERO_DIES } from '@/components/home/heroDies';
+import RadarLiveLayer from '@/components/home/RadarLiveLayer';
+import { useMediaQuery } from '@/lib/useMediaQuery';
+import { useMotionMode } from '@/lib/useMotionMode';
+
+const HeroDieField = dynamic(() => import('@/components/home/HeroDieField'), { ssr: false });
 
 /* ──────────────────────────── helpers ──────────────────────────── */
 
@@ -101,12 +107,17 @@ export default function HomePage() {
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
   const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 150]);
+  const wideScreen = useMediaQuery('(min-width: 640px)');
+  const motionMode = useMotionMode();
+  const [dieFieldShown, setDieFieldShown] = useState(false);
+  const [liveCard, setLiveCard] = useState<number | null>(null);
+  const pct = (v?: number) => (v === undefined ? undefined : `${v}%`);
 
   return (
     <main className="overflow-hidden bg-background text-foreground transition-colors duration-500 relative">
       
-      {/* Dynamic Background Rendering */}
-      <FluidPlasmaBackground className="z-0" />
+      {/* Dot grid (static; the hero's motion now lives in the 3D die field) */}
+      <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(rgba(0,100,164,0.16)_1.2px,transparent_1.8px)] bg-[size:55px_55px] dark:bg-[radial-gradient(rgba(56,189,248,0.38)_1.2px,transparent_1.8px)]" />
       
       {/* Glowing Orbs for visionOS Glassmorphism Refraction */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
@@ -120,48 +131,25 @@ export default function HomePage() {
         {/* Background layers */}
         <GradientMesh />
 
-        {/* Floating chip die photos — decorative background mosaic */}
-        <div className="absolute inset-0 z-[1] pointer-events-none overflow-hidden">
-          {/* Top-left cluster */}
-          <Image src="/images/chips/individual/sheet1-01-pmcw-radar.png" alt="" width={240} height={240} 
-            className="absolute top-[6%] left-[3%] opacity-[0.16] blur-[0.5px] rotate-[-8deg]" />
-          <Image src="/images/chips/individual/sheet1-05-3.1-4.7-ghz-class-d-vco.png" alt="" width={160} height={160} 
-            className="absolute top-[22%] left-[12%] opacity-[0.12] blur-[1px] rotate-[5deg]" />
-
-          {/* Top-right cluster */}
-          <Image src="/images/chips/individual/sheet1-06-174-232-ghz-sige-vco.png" alt="" width={200} height={200} 
-            className="absolute top-[4%] right-[6%] opacity-[0.15] blur-[0.5px] rotate-[12deg]" />
-          <Image src="/images/chips/individual/sheet2-01-23-27-and-69-81-ghz-mimo-fmcw-radar.png" alt="" width={170} height={170} 
-            className="absolute top-[18%] right-[18%] opacity-[0.11] blur-[1px] rotate-[-4deg]" />
-
-          {/* Middle-left */}
-          <Image src="/images/chips/individual/sheet1-03-110-143-ghz-pa-in-65nm-cmos.png" alt="" width={190} height={190} 
-            className="absolute top-[42%] left-[2%] opacity-[0.14] blur-[0.5px] rotate-[3deg]" />
-          <Image src="/images/chips/individual/sheet3-02-90-ghz-efficient-oscillator.png" alt="" width={140} height={140} 
-            className="absolute top-[55%] left-[14%] opacity-[0.10] blur-[1.5px] rotate-[-10deg]" />
-
-          {/* Middle-right */}
-          <Image src="/images/chips/individual/sheet1-02-low-noise-76-82-ghz-vco.png" alt="" width={210} height={210} 
-            className="absolute top-[38%] right-[3%] opacity-[0.16] blur-[0.5px] rotate-[-5deg]" />
-          <Image src="/images/chips/individual/sheet2-4-channel-tia-for-mems-pnt.png" alt="" width={150} height={150} 
-            className="absolute top-[52%] right-[16%] opacity-[0.11] blur-[1px] rotate-[7deg]" />
-
-          {/* Bottom-left */}
-          <Image src="/images/chips/individual/sheet2-0.48-thz-frequency-doubler.png" alt="" width={180} height={180} 
-            className="absolute bottom-[18%] left-[6%] opacity-[0.13] blur-[1px] rotate-[9deg]" />
-
-          {/* Bottom-right cluster */}
-          <Image src="/images/chips/individual/sheet2-0.32-thz-sige-transmitter.png" alt="" width={260} height={260} 
-            className="absolute bottom-[8%] right-[5%] opacity-[0.18] blur-[0.3px] rotate-[6deg]" />
-          <Image src="/images/chips/individual/sheet1-04-49-63-ghz-fmcw-radar.png" alt="" width={150} height={150} 
-            className="absolute bottom-[25%] right-[22%] opacity-[0.10] blur-[1.5px] rotate-[-12deg]" />
-
-          {/* Center-bottom accent */}
-          <Image src="/images/chips/individual/sheet2-02-monostatic-50-60-ghz-fmcw-radar.png" alt="" width={170} height={170} 
-            className="absolute bottom-[12%] left-[38%] opacity-[0.09] blur-[1.5px] rotate-[3deg]" />
-          <Image src="/images/chips/individual/sheet2-0.92-thz-sige-quadrupler.png" alt="" width={130} height={130} 
-            className="absolute bottom-[30%] left-[28%] opacity-[0.08] blur-[2px] rotate-[-6deg]" />
+        {/* Chip die photos: flat mosaic first, replaced by the 3D field once it is drawn */}
+        <div aria-hidden="true" className={`absolute inset-0 z-[1] pointer-events-none overflow-hidden transition-opacity duration-1000 ${dieFieldShown ? 'opacity-0' : 'opacity-100'}`}>
+          {HERO_DIES.map((die) => (
+            <Image
+              key={die.file}
+              src={HERO_DIE_DIR + die.file}
+              alt=""
+              width={die.width}
+              height={die.width}
+              className="absolute"
+              style={{ top: pct(die.top), bottom: pct(die.bottom), left: pct(die.left), right: pct(die.right), height: 'auto', opacity: die.opacity, filter: `blur(${die.blurPx}px)`, transform: `rotate(${die.rotateDeg}deg)` }}
+            />
+          ))}
         </div>
+        {wideScreen && motionMode === 'full' && (
+          <div aria-hidden="true" className="absolute inset-0 z-[1] pointer-events-none">
+            <HeroDieField onShown={() => setDieFieldShown(true)} />
+          </div>
+        )}
 
         <motion.div
           style={{ opacity: heroOpacity, y: heroY }}
@@ -519,6 +507,10 @@ export default function HomePage() {
                 whileHover={{
                   y: -10,
                 }}
+                onHoverStart={() => setLiveCard(i)}
+                onHoverEnd={() => setLiveCard((c) => (c === i ? null : c))}
+                onFocus={() => setLiveCard(i)}
+                onBlur={() => setLiveCard((c) => (c === i ? null : c))}
                 transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 className={`group relative flex min-h-[470px] flex-col overflow-hidden rounded-2xl border border-white/70 bg-white/90 shadow-[0_18px_60px_rgba(0,56,109,0.10)] backdrop-blur-xl transition-[transform,box-shadow,border-color] duration-500 dark:border-white/10 dark:bg-slate-950/75 dark:shadow-[0_18px_60px_rgba(0,0,0,0.30)] hover:border-uci-blue/35 hover:shadow-[0_24px_70px_rgba(0,100,164,0.18)] ${
                   i < 2 ? 'lg:col-span-3' : 'lg:col-span-2'
@@ -528,6 +520,7 @@ export default function HomePage() {
               >
                 <div className="relative h-60 overflow-hidden border-b border-slate-200/80 bg-slate-50 dark:border-white/10 dark:bg-slate-900/80">
                   <ResearchVisual variant={area.iconVariant} />
+                  {area.iconVariant === 'radar' && <RadarLiveLayer active={liveCard === i} />}
                 </div>
 
                 <div className="relative flex flex-1 flex-col p-6">

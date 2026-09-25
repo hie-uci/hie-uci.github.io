@@ -11,6 +11,8 @@ interface ThreeCanvasProps {
   /** What the picture shows, for screen readers. */
   label: string;
   className?: string;
+  /** Shown instead of the default message when WebGL fails; null shows nothing. */
+  fallback?: ReactNode;
   children?: ReactNode;
 }
 
@@ -19,7 +21,7 @@ interface ThreeCanvasProps {
  * its box, pauses it off-screen, and disposes of it on unmount. It fills its
  * nearest positioned ancestor, which owns the size.
  */
-export default function ThreeCanvas({ init, onReady, label, className = '', children }: ThreeCanvasProps) {
+export default function ThreeCanvas({ init, onReady, label, className = '', fallback, children }: ThreeCanvasProps) {
   const boxRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const runtimeRef = useRef<StageRuntime | null>(null);
@@ -96,11 +98,14 @@ export default function ThreeCanvas({ init, onReady, label, className = '', chil
         onDoubleClick={() => runtimeRef.current?.resetView()}
         className="absolute inset-0 h-full w-full touch-pan-y select-none"
       />
-      {failed && (
-        <p className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-ink-3">
-          This 3D view needs WebGL, which this browser has turned off. The calculator and its readouts still work.
-        </p>
-      )}
+      {failed &&
+        (fallback !== undefined ? (
+          fallback
+        ) : (
+          <p className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-ink-3">
+            This 3D view needs WebGL, which this browser has turned off. The calculator and its readouts still work.
+          </p>
+        ))}
       {children}
     </div>
   );
