@@ -110,10 +110,18 @@ Plus `robots.ts` and `sitemap.ts` (generated at build).
 ## Code
 
 - `src/components/` — Navbar (two-tier, fixed), Footer, ThemeSwitcher
-  (next-themes, dark/light), several canvas/physics backgrounds
-  (`FluidPlasmaBackground`, `FallingChipsBackground` via Matter.js, `ParticleField`),
-  and the RF visualisation set (`SmithChart`, `InteractiveSmithChart`,
-  `SParameterViewer`, `SystemCascadeBuilder` on XYFlow).
+  (next-themes, dark/light), `CircuitBackground` (the subpage heroes' 2D canvas), and the
+  RF visualisation set (`SmithChart`, `InteractiveSmithChart`, `SParameterViewer`,
+  `SystemCascadeBuilder` on XYFlow). `FallingChipsBackground`, `ParticleField` and
+  `WaveInterferenceBackground` are not rendered anywhere; `FluidPlasmaBackground` was
+  moved to `archive/components/` when Home stopped using it.
+- `src/components/home/` — Home's 3D pieces, on the RF Toolbox's stage runtime:
+  `HeroDieField` (the hero's die photos as slabs in depth, from the list in `heroDies.ts`;
+  the flat mosaic stays as first paint and fallback) and `RadarScene` with
+  `RadarLiveLayer` (the radar card's live FMCW scene over its photo; readouts from
+  `fmcw.ts` and the drawn geometry). Both pass `requireGpu`, so a software WebGL context
+  falls back to the photos, and neither mounts on phones or under reduced motion
+  (the radar card offers a tap button on touch screens).
 - `src/components/rf/` — the RF Toolbox instruments: `controls.tsx`,
   `PhasedArrayLab`, `CascadeLineup`, `fmcw/` (chirp scope) and `three/` (three.js stages
   for microstrip, stripline, CPW, patch, waveguide, via, skin depth and the array pattern;
@@ -218,8 +226,9 @@ element grid size and travelling rings are decorative, the FMCW magnifier states
 - [ ] The S-parameter viewer's Smith Chart toggle is white on emerald-600: 3.65:1 in both
       themes, below WCAG AA (4.5:1). emerald-700 would give about 5.4:1; it is a visual
       change, so preview it first.
-- [ ] 3D / animated visuals for the Home page and every subpage: brainstorm delivered
-      2026-09-24, nothing built yet. Candidates and constraints are in `HANDOFF.md`.
+- [ ] More 3D / animated visuals. Deployed 2026-09-24: the Home hero die field and the
+      radar card's live scene. Candidates not yet picked, and the constraints, are in
+      `HANDOFF.md`.
 
 Superseded history lives in `archive/PROGRESS.md` (design-change log, Feb–May 2026) and
 is not linked from anywhere active.

@@ -2,48 +2,48 @@
 
 ## Current state
 
-- Deployed on `main` (`3a227d4`): six buttons that showed eng-blue text on a coloured fill
-  in light mode now use `text-on-accent` — the RF Toolbox's active category, the
-  S-parameter upload button and its three view toggles, and the tutorials page's
-  Subscribe button. Verified on all four Pages CDN nodes and by a light + dark contrast
-  scan of every route on the live site; dark mode renders pixel-identical to before.
-- The RF Toolbox audits from earlier today stand as recorded in `STATE.md`.
-- A brainstorm of 3D / animated visuals for the Home page and every subpage was given in
-  the session. Nothing is built yet.
+- Deployed on `main` today, each verified on all four Pages CDN nodes:
+  - `3a227d4` — six buttons that showed eng-blue text on a coloured fill in light mode now
+    use `text-on-accent` (RF Toolbox active category, the S-parameter upload button and
+    view toggles, the tutorials page's Subscribe button).
+  - `9706223` — Home 3D: the hero's 13 die photos as slabs in depth with pointer parallax,
+    drift and an occasional ring; the radar card's photo stays its cover and a live FMCW
+    scene fades in on hover (lab's 49–63 GHz die, corner reflector, sphere on a linear
+    stage, readouts from `fmcw.ts`). Checked in a real browser on the live site: the 3D
+    layers draw, no failed requests, no console errors.
+- `FluidPlasmaBackground` no longer runs on Home (a static dot grid replaced it) and was
+  moved to `archive/components/`.
+- Gates green: lint, typecheck, 80 tests, build.
 
 ## Important context
 
-- The maintainer prefers the existing style: new visuals go into existing slots (the
-  hero's die photos, the research card images, the contact map placeholder), and every
-  visual change is previewed locally before it is deployed.
+- The maintainer prefers the existing style: new visuals go into existing slots, and
+  every visual change is previewed before it is deployed. What worked today: a local
+  branch, screenshots, and the dev server's URL; the maintainer then said "deploy".
 - Physics visuals follow the RF Toolbox rule: computed from a named model, or labelled
-  illustrative.
-- Reuse the RF Toolbox 3D kit — `src/components/rf/three/stageRuntime.ts`,
-  `ThreeCanvas.tsx`, `palette.ts`: lazy loading, render on demand, off-screen pause,
-  reduced motion, theme colours.
-- Performance debts to settle before adding 3D: `FluidPlasmaBackground` (Home) runs its
-  canvas loop continuously, with no off-screen pause or reduced-motion check; the
-  tutorials page loads four YouTube iframes eagerly (branch `redesign/signal-and-silicon`
-  has a click-to-load `VideoFacade`); framer-motion loops ignore reduced motion.
+  illustrative (the radar caption states the example chirp and the slowed waves).
+- New 3D pieces reuse `src/components/rf/three/stageRuntime.ts` and `ThreeCanvas.tsx`;
+  decorative ones pass `requireGpu` — on a software WebGL context this page runs at
+  0.3 fps. Screenshot 3D with default headless Chrome (it uses the GPU); forcing
+  SwiftShader makes the page look broken when it is not.
 
 ## Next steps
 
-- [ ] The maintainer picks which 3D ideas to prototype. Candidates: a Home hero die field
-      (the 14 blurred die photos in real depth, replacing FluidPlasma); research card
-      scenes (radar first on `fmcw.ts`, a reflectarray beam on `arrayPattern.ts`); one
-      shared WebGL hero field replacing the 2D `CircuitBackground` on the eight subpage
-      heroes; a 3D die-on-probe-station view in the chip lightbox; a globe of invited
-      talks and alumni destinations; a 60 GHz antenna-pattern turntable on the tutorials
-      page.
+- [ ] Candidates from the brainstorm, not yet picked: the other research cards
+      (reflectarray beam on `arrayPattern.ts` next); the radar scene on the research
+      page; one shared WebGL hero field for the eight subpage heroes (replacing the 2D,
+      hard-coded-colour `CircuitBackground`); a 3D die-on-probe-station view in the chip
+      lightbox; a globe of invited talks and alumni destinations; a 60 GHz
+      antenna-pattern turntable on the tutorials page (after click-to-load videos).
 - [ ] Optional: the Smith Chart toggle is white on emerald-600, 3.65:1 in both themes.
-- [ ] Still open from before: three alumni photos look swapped against the names, and
-      most PhD portraits are low resolution.
+- [ ] Still open: three alumni photos look swapped against the names, and most PhD
+      portraits are low resolution.
 
 ## Decisions made
 
-- The six buttons moved to `text-on-accent` instead of the hero rule being narrowed.
-  Exempting elements that carry their own `bg-*` class would also exempt hero ghost
-  buttons (`hover:bg-white/10 text-white`), which would then turn white on the light
-  glass hero.
-- The emerald Smith Chart toggle was left alone: its contrast is the same in both themes
-  and the hero rule does not cause it, so changing it is a visual change to preview.
+- The light-mode buttons moved to `text-on-accent` rather than narrowing the hero rule,
+  which would also exempt hero ghost buttons (`hover:bg-white/10 text-white`).
+- The radar card's second target is a sphere, not the photo's plate: a sphere echoes the
+  same from every angle, so the scene stays physically consistent as it moves.
+- The hero keeps the flat mosaic's layout: each die sits at the depth its old blur
+  implied and at its old on-screen size, and far dies keep a baked-in blur.
