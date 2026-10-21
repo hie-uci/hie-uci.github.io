@@ -13,6 +13,17 @@ import { labNews } from '@/data/news';
 import NewsPanel from '@/components/NewsPanel';
 import { HERO_DIE_DIR, HERO_DIES } from '@/components/home/heroDies';
 import RadarLiveLayer from '@/components/home/RadarLiveLayer';
+import { Flanked } from '@/components/home/vignettes/frame';
+import VitalSigns from '@/components/home/vignettes/VitalSigns';
+import ThzImaging from '@/components/home/vignettes/ThzImaging';
+import AntennaPattern from '@/components/home/vignettes/AntennaPattern';
+import VcoSpectrum from '@/components/home/vignettes/VcoSpectrum';
+import SubThzLink from '@/components/home/vignettes/SubThzLink';
+import ThzSpectroscopy from '@/components/home/vignettes/ThzSpectroscopy';
+import RobotSafety from '@/components/home/vignettes/RobotSafety';
+import BridgeMonitoring from '@/components/home/vignettes/BridgeMonitoring';
+import AiLayout from '@/components/home/vignettes/AiLayout';
+import SteepSwitching from '@/components/home/vignettes/SteepSwitching';
 import { useMediaQuery } from '@/lib/useMediaQuery';
 import { useMotionMode } from '@/lib/useMotionMode';
 
@@ -402,10 +413,13 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-[linear-gradient(rgba(0,100,164,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(0,100,164,0.05)_1px,transparent_1px)] bg-[size:64px_64px] opacity-70 dark:bg-[linear-gradient(rgba(125,211,252,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(125,211,252,0.07)_1px,transparent_1px)] dark:opacity-45" />
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <SectionHeader
-            title="Our Fabricated Chips"
-            subtitle="A selection of integrated circuits designed and fabricated by the HIE Lab, from mm-wave radars to THz transmitters."
-          />
+          {/* What the chips are for, in the margins beside the heading (wide screens only) */}
+          <Flanked left={<VitalSigns />} right={<ThzImaging />}>
+            <SectionHeader
+              title="Our Fabricated Chips"
+              subtitle="A selection of integrated circuits designed and fabricated by the HIE Lab, from mm-wave radars to THz transmitters."
+            />
+          </Flanked>
           <div className="mt-10 glass-ios rounded-2xl p-2 sm:p-3">
             <ChipMarquee />
           </div>
@@ -431,10 +445,12 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-[linear-gradient(rgba(0,100,164,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(0,100,164,0.1)_1px,transparent_1px)] bg-[size:40px_40px]" />
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <SectionHeader
-            title="Measurements & Design Tutorials"
-            subtitle="Videos recorded at our bench: an antenna pattern sweep, a radar target demo, a VCO measurement, and an HFSS-to-KiCad walkthrough."
-          />
+          <Flanked left={<AntennaPattern />} right={<VcoSpectrum />}>
+            <SectionHeader
+              title="Measurements & Design Tutorials"
+              subtitle="Videos recorded at our bench: an antenna pattern sweep, a radar target demo, a VCO measurement, and an HFSS-to-KiCad walkthrough."
+            />
+          </Flanked>
           {/* Each clip keeps its own shape: the two filmed upright on a phone stand
               upright either side of the two landscape ones, instead of being
               pillarboxed into identical 16:9 cards. */}
@@ -500,10 +516,12 @@ export default function HomePage() {
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <SectionHeader
-            title="Research Highlights"
-            subtitle="Five active research thrusts spanning circuit innovation, system design, and computational intelligence."
-          />
+          <Flanked left={<SubThzLink />} right={<ThzSpectroscopy />}>
+            <SectionHeader
+              title="Research Highlights"
+              subtitle="Five active research thrusts spanning circuit innovation, system design, and computational intelligence."
+            />
+          </Flanked>
 
           <motion.div
             initial="hidden"
@@ -555,10 +573,12 @@ export default function HomePage() {
       {/* ═══════ LATEST NEWS ═══════ */}
       <section className="relative py-24 lg:py-32 bg-background z-10 border-t border-gray-200 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <SectionHeader
-            title="Latest News"
-            subtitle="Recent highlights and achievements from the HIE Lab."
-          />
+          <Flanked left={<RobotSafety />} right={<BridgeMonitoring />}>
+            <SectionHeader
+              title="Latest News"
+              subtitle="Recent highlights and achievements from the HIE Lab."
+            />
+          </Flanked>
 
           {/* One panel, one row per item: the date is a column, not a box inside a box. */}
           <motion.div
@@ -591,10 +611,12 @@ export default function HomePage() {
       <section className="relative py-24 lg:py-32 bg-slate-warm dark:bg-transparent z-10">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(0,100,164,0.04),transparent_60%)] pointer-events-none" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <SectionHeader
-            title="Impactful Research Output"
-            subtitle="Our work is published in the most prestigious venues in electronics and computer science."
-          />
+          <Flanked left={<AiLayout />} right={<SteepSwitching />}>
+            <SectionHeader
+              title="Impactful Research Output"
+              subtitle="Our work is published in the most prestigious venues in electronics and computer science."
+            />
+          </Flanked>
 
           {/* Venue names as type, in their own casing (NeurIPS, not NEURIPS). */}
           <motion.ul
