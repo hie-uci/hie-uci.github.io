@@ -27,7 +27,7 @@ export default function SectionHeader({
       transition={{ duration: 0.6 }}
       className={`mb-12 ${centered ? 'text-center' : ''}`}
     >
-      <Heading className={`text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight ${
+      <Heading className={`text-3xl sm:text-4xl lg:text-[2.75rem] font-semibold ${
         light ? 'text-white' : 'text-eng-blue dark:text-white'
       }`}>
         {title}

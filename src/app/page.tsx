@@ -252,7 +252,7 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold tracking-[-0.04em] leading-[1.1] mb-6 text-eng-blue dark:text-white"
+            className="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-semibold leading-[1.08] mb-6 text-eng-blue dark:text-white"
           >
             High-speed Integrated
             <br />
@@ -289,7 +289,7 @@ export default function HomePage() {
       </section>
 
       {/* ═══════ ABOUT ═══════ */}
-      <section className="relative py-24 lg:py-32 bg-background relative z-10">
+      <section className="relative py-20 lg:py-24 bg-background relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeader
             title="Designing the Future of High-Frequency Electronics"
@@ -509,7 +509,7 @@ export default function HomePage() {
       <WaveformDivider color="teal" />
 
       {/* ═══════ RESEARCH HIGHLIGHTS ═══════ */}
-      <section id="research-highlights" className="relative scroll-mt-24 py-24 lg:py-32 bg-slate-warm dark:bg-transparent z-10 overflow-hidden">
+      <section id="research-highlights" className="relative scroll-mt-24 py-20 lg:py-24 bg-slate-warm dark:bg-transparent z-10 overflow-hidden">
         <div className="absolute inset-0 pointer-events-none opacity-70 dark:opacity-40">
           <div className="absolute inset-0 bg-[linear-gradient(rgba(0,100,164,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(0,100,164,0.08)_1px,transparent_1px)] bg-[size:72px_72px]" />
           <div className="absolute inset-0 bg-[linear-gradient(115deg,transparent_0%,rgba(255,210,0,0.10)_42%,transparent_68%)]" />
@@ -571,7 +571,7 @@ export default function HomePage() {
       </section>
 
       {/* ═══════ LATEST NEWS ═══════ */}
-      <section className="relative py-24 lg:py-32 bg-background z-10 border-t border-gray-200 dark:border-gray-800">
+      <section className="relative py-20 lg:py-24 bg-background z-10 border-t border-gray-200 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Flanked left={<RobotSafety />} right={<BridgeMonitoring />}>
             <SectionHeader
@@ -608,7 +608,7 @@ export default function HomePage() {
       <WaveformDivider color="gold" />
 
       {/* ═══════ PUBLICATIONS HIGHLIGHT ═══════ */}
-      <section className="relative py-24 lg:py-32 bg-slate-warm dark:bg-transparent z-10">
+      <section className="relative py-20 lg:py-24 bg-slate-warm dark:bg-transparent z-10">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(0,100,164,0.04),transparent_60%)] pointer-events-none" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <Flanked left={<AiLayout />} right={<SteepSwitching />}>
@@ -689,7 +689,7 @@ export default function HomePage() {
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
           >
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight mb-4">
+            <h2 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-semibold text-white mb-4">
               Join the HIE Lab
             </h2>
             <p className="text-lg text-white/70 max-w-2xl mx-auto mb-10 leading-relaxed">

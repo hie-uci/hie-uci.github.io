@@ -168,7 +168,7 @@ export default function AvailablePositionsPage() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Interested?</h2>
+            <h2 className="text-3xl sm:text-4xl font-semibold text-white mb-4">Interested?</h2>
             <p className="text-lg text-white/60 mb-8 leading-relaxed">
               Reach out to Prof. Hamidreza Aghasi to discuss opportunities.
             </p>

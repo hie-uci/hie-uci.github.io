@@ -261,7 +261,7 @@ export default function TeamPage() {
               <Image src={director.image} alt={director.name} width={176} height={176} className="w-44 h-44 rounded-full object-cover object-[center_15%] ring-1 ring-black/5 dark:ring-white/10" />
             </div>
             <div className="flex-1 text-center md:text-left">
-              <h2 className="text-2xl sm:text-3xl font-bold text-eng-blue">{director.name}</h2>
+              <h2 className="text-2xl sm:text-3xl font-semibold text-eng-blue">{director.name}</h2>
               <p className="text-uci-blue font-medium mt-1">{director.title}</p>
               <div className="flex flex-wrap gap-3 mt-3 justify-center md:justify-start text-sm text-gray-500">
                 <a href={`mailto:${director.email}`} className="hover:text-uci-blue transition-colors">{director.email}</a>

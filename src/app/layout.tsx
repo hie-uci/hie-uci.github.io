@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono, Montserrat } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import Navbar from "@/components/Navbar";
@@ -7,8 +7,10 @@ import Footer from "@/components/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
 import { DEFAULT_SOCIAL_IMAGE, serializeJsonLd, SITE_NAME, SITE_URL } from "@/lib/metadata";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Montserrat is UC Irvine's primary typeface (brand.uci.edu); headings use it and text stays in
+// the system UI face. Geist Mono is for the RF Toolbox's numeric readouts.
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin"],
 });
 
@@ -91,7 +93,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased transition-colors duration-500`}
+        className={`${montserrat.variable} ${geistMono.variable} antialiased transition-colors duration-500`}
       >
         <Providers>
           <script

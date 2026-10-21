@@ -209,7 +209,7 @@ function PublicationRow({ pub }: { pub: Publication }) {
   return (
     <li className="grid gap-x-6 px-5 py-4 sm:grid-cols-[1fr_7rem] sm:px-6">
       <div className="min-w-0">
-        <h3 className="text-[15px] font-semibold leading-snug text-eng-blue">
+        <h3 className="font-sans text-[15px] font-semibold leading-snug text-eng-blue [text-wrap:wrap]">
           {pub.link ? (
             <a href={pub.link} target="_blank" rel="noopener noreferrer" className="hover:text-uci-blue hover:underline underline-offset-4">
               {pub.title}

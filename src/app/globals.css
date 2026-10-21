@@ -122,7 +122,9 @@
   --color-navy-light: #2d4562;
   --color-slate-warm: #f8f9fc;
   --color-accent-glow: #00b4d8;
-  --font-sans: var(--font-geist-sans);
+  /* Inline theme values go into utilities only; they are not emitted as CSS variables, so the
+     plain CSS below names the next/font variables (--font-montserrat, --font-geist-mono) itself. */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: var(--font-geist-mono);
 }
 
@@ -137,20 +139,24 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   overflow-x: hidden;
   min-height: 100vh;
   min-height: 100dvh;
 }
 
-/* Premium typography - tighter tracking on large headings (Linear/Vercel style) */
-h1, h2 {
-  letter-spacing: -0.03em;
-  line-height: 1.1;
-}
-
-h3 {
-  letter-spacing: -0.02em;
+/* Headings in Montserrat, UC Irvine's primary typeface; text stays in the system UI face. It is
+   wide, so it keeps near-normal tracking. In the base layer, so a utility on a heading still wins. */
+@layer base {
+  h1, h2, h3, h4 {
+    font-family: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+    text-wrap: pretty;
+  }
+  h1, h2 {
+    letter-spacing: -0.015em;
+    line-height: 1.15;
+    text-wrap: balance;
+  }
 }
 
 /* Selection color */
@@ -538,7 +544,7 @@ h3 {
 
 /* Numeric readout: mono digits that keep their width as they change. */
 @utility readout {
-  font-family: var(--font-mono);
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
 }

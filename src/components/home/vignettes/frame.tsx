@@ -88,10 +88,14 @@ export function Label({ x, y, children, anchor = 'start' }: { x: number; y: numb
   );
 }
 
-/** A section heading with a vignette in each margin; the drawings show from xl up. */
+/**
+ * A section heading with a vignette in each margin; the drawings show from xl up. The heading
+ * keeps to the 704 px between them, so a long title wraps instead of running into a drawing,
+ * and the block is at least as tall as a drawing with its caption (214 px) plus some air.
+ */
 export function Flanked({ left, right, children }: { left: ReactNode; right: ReactNode; children: ReactNode }) {
   return (
-    <div className="relative xl:pt-10 xl:pb-6 xl:min-h-[262px]">
+    <div className="relative xl:px-[256px] xl:pt-6 xl:min-h-[230px]">
       {children}
       <div className="hidden xl:block absolute left-0 top-0">{left}</div>
       <div className="hidden xl:block absolute right-0 top-0">{right}</div>

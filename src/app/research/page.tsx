@@ -187,7 +187,7 @@ function ProjectCard({ project }: { project: Project }) {
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       className="glass-ios rounded-2xl px-6 sm:px-10 py-8 sm:py-10"
     >
-      <h3 className="text-2xl sm:text-3xl font-bold text-eng-blue tracking-tight leading-tight">{project.title}</h3>
+      <h3 className="text-2xl sm:text-3xl font-semibold text-eng-blue leading-tight">{project.title}</h3>
       <p className="mt-2 text-base text-uci-blue">{project.tagline}</p>
 
       <div className="mt-6 max-w-4xl">
@@ -271,7 +271,7 @@ export default function ResearchPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
           >
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white tracking-tight mb-4">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold text-white mb-4">
               Research Projects
             </h1>
             <p className="text-lg text-white/60 max-w-2xl mx-auto leading-relaxed">
@@ -333,7 +333,7 @@ export default function ResearchPage() {
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
           >
-            <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight mb-4">
+            <h2 className="text-3xl sm:text-4xl font-semibold text-white mb-4">
               Interested in Collaboration?
             </h2>
             <p className="text-lg text-white/60 max-w-2xl mx-auto mb-10 leading-relaxed">

@@ -8,7 +8,8 @@ Last updated: 2026-10-21
 > and centred headings, and adds ten chip-application line drawings beside Home's section
 > headings (`src/components/home/vignettes/`). The maintainer approved the direction; deploy
 > only on their word. UCI's official colours (`#255799`, `#fecc07`) and Montserrat were
-> previewed, not adopted.
+> previewed; Montserrat headings are now on the branch (`text stays in the system face`),
+> the colours are not.
 
 > **2026-09-24: a full visual redesign was deployed and then reverted the same day** at
 > the maintainer's request; they prefer the existing style. The site's tree is identical
@@ -225,6 +226,13 @@ element grid size and travelling rings are decorative, the FMCW magnifier states
   element; its edge colour is `--card-border` (`border-panel-line`, `divide-panel-line`).
   Buttons are `.btn` plus `.btn-primary|gold|outline|on-dark` in `@layer components`, so a
   utility on the element still wins.
+- **`@theme inline` values are not CSS variables.** They are inlined into utilities, so plain
+  CSS that reads `var(--font-sans)` or `var(--font-mono)` gets nothing: that is why Geist was
+  downloaded but never shown (the site rendered in the system font) and the RF Toolbox
+  `.readout` was not monospaced until 2026-10-21. Plain CSS names `--font-montserrat` and
+  `--font-geist-mono` (set by next/font on `<body>`) directly.
+- **Do not run `next build` in this folder while `next dev` is running.** The dev server then
+  serves stale CSS. Build in a copy, or stop the dev server and move `.next` aside first.
 - **Home's vignettes draw on the client only.** Node and Chrome can differ in the last
   digits of `Math.sin`; a server-rendered SVG attribute that differed broke hydration.
 - **`.claude/settings.local.json` is not tracked**, and should not be re-added. It

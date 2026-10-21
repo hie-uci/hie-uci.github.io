@@ -12,6 +12,10 @@
     Positions, Teaching, Chip Gallery (keyboard-openable photos, Escape closes).
   - `bbddb1b` — ten chip-application line drawings beside Home's section headings,
     `src/components/home/vignettes/` (shared `frame.tsx`: clock, `Vignette`, `Flanked`).
+  - The typography commit after it: Montserrat (UCI's primary face) for headings, the system
+    face for text, semibold headings with near-normal tracking, balanced display headings,
+    one section rhythm on Home, a fixed 704 px heading column between the drawings. It also
+    fixes fonts that never applied (see STATE "Known gotchas").
 - Gates green on the branch: lint, typecheck, 80 tests, build; two-theme contrast scan
   shows only the known Smith Chart toggle; no console errors on Home.
 
