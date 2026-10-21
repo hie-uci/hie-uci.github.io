@@ -2,30 +2,19 @@
 
 Last updated: 2026-10-21
 
-> **2026-10-21: a design pass waits on branch `design/fewer-boxes`, not deployed**
-> (`3196ae1`, `4da3c35`, `bbddb1b`). It strips template chrome (caps pill badges, gradient
-> bars and text, glow buttons, card stacks, particles) but keeps the palette, glass panels
-> and centred headings, and adds ten chip-application line drawings beside Home's section
-> headings (`src/components/home/vignettes/`). The maintainer approved the direction; deploy
-> only on their word. UCI's official colours (`#255799`, `#fecc07`) and Montserrat were
-> previewed; Montserrat headings are now on the branch (text stays in the system face), the
-> colours are not.
+> **2026-10-21: a design pass was deployed** (branch `design/fewer-boxes`, fast-forwarded
+> into `main` at `5e64327`; every CDN node checked). It strips template chrome (caps pill
+> badges, gradient bars and text, glow buttons, card stacks, particles) but keeps the
+> palette, glass panels and centred headings; adds ten chip-application line drawings
+> beside Home's section headings; and sets headings in Montserrat, UCI's primary typeface,
+> with text in the system face. UCI's official colours (`#255799`, `#fecc07`) were
+> previewed and not adopted.
 
-> **2026-09-24: a full visual redesign was deployed and then reverted the same day** at
-> the maintainer's request; they prefer the existing style. The site's tree is identical
-> to commit `624388b` again. The redesign is preserved on branch
-> `redesign/signal-and-silicon` and in `main`'s history (commits `44473c3` to `8e00916`),
-> so individual features can be brought back later. **Preview any visual change with the
-> maintainer before deploying it.**
->
-> **Later on 2026-09-24 the redesign's RF Toolbox tools were ported into the current
-> look** — 3D stages, phased-array beam lab, FMCW chirp scope, cascade level diagram and
-> budgets — with a formula audit that fixed four pre-existing model errors (see "RF
-> Toolbox models"). The maintainer approved screenshots first; the work was merged to
-> `main` from branch `feature/rf-tools-port` and deployed the same day. A second audit then
-> covered every remaining calculator and the reference tables, fixed four more errors, and
-> added a 3D via, a 3D skin-depth view and an animated VSWR standing wave (branch
-> `feature/rf-toolbox-audit-2`, also merged and deployed that day).
+> **2026-09-24:** a full visual redesign was deployed and reverted the same day; the
+> maintainer prefers the existing style. It is kept on branch `redesign/signal-and-silicon`
+> and in `main`'s history (`44473c3` to `8e00916`). Its RF Toolbox tools were then ported
+> into the current look, with two formula audits (see "RF Toolbox models"). **Preview any
+> visual change with the maintainer before deploying it.**
 
 ## What this is
 
@@ -95,6 +84,16 @@ update, so run the gates locally first:
 npm run lint && npm run typecheck && npm test   # or: npm run validate (adds build)
 ```
 
+Push as the `hie-uci` GitHub account. If the GitHub CLI's active account is a different
+one, the push fails with 403 ("Permission … denied"). Either `gh auth switch --user hie-uci`
+(and switch back afterwards), or push once with that account's token:
+
+```bash
+git -c credential.https://github.com.helper= \
+    -c 'credential.https://github.com.helper=!f() { test "$1" = get || exit 0; echo username=hie-uci; echo "password=$(gh auth token --user hie-uci)"; }; f' \
+    push origin main
+```
+
 ## Site map
 
 Twelve routes, each a directory under `src/app/` with its own `layout.tsx` for metadata:
@@ -131,6 +130,11 @@ Plus `robots.ts` and `sitemap.ts` (generated at build).
   `fmcw.ts` and the drawn geometry). Both pass `requireGpu`, so a software WebGL context
   falls back to the photos, and neither mounts on phones or under reduced motion
   (the radar card offers a tap button on touch screens).
+- `src/components/home/vignettes/` — ten line drawings of the lab's chips in use, a pair
+  beside each of five Home headings, xl screens and up. `frame.tsx` holds the shared clock,
+  `Vignette` (drawn on the client only, paused off screen, a still frame under reduced
+  motion, captioned "Illustration, <chip>") and `Flanked`, which keeps the heading in a
+  704 px column between the pair. Home's news and the News page share `NewsPanel`.
 - `src/components/rf/` — the RF Toolbox instruments: `controls.tsx`,
   `PhasedArrayLab`, `CascadeLineup`, `fmcw/` (chirp scope) and `three/` (three.js stages
   for microstrip, stripline, CPW, patch, waveguide, via, skin depth and the array pattern;
@@ -147,7 +151,7 @@ Plus `robots.ts` and `sitemap.ts` (generated at build).
 - `public/images/` — 21 member photos, 40 research images, 5 composite chip images,
   15 individual die photos, 1 logo.
 
-## Quality gates — green as of 2026-09-24
+## Quality gates — green as of 2026-10-21
 
 | | |
 |---|---|
@@ -221,7 +225,9 @@ element grid size and travelling rings are decorative, the FMCW magnifier states
   Seen 2026-08-28 — one node served a cached 404 while the other three served the file.
   Fix: `gh run rerun <run-id>` on the deploy workflow — a fresh Pages deployment purges the
   CDN. Do not declare a deploy done until the CSS referenced by the live HTML returns 200
-  from every `dig +short hie.eng.uci.edu` IP (`curl --resolve hie.eng.uci.edu:443:<ip>`).
+  from every `dig +short hie.eng.uci.edu` IP (`curl --resolve hie.eng.uci.edu:443:<ip>`);
+  the JS chunks and the fonts the CSS names (`../media/*.woff2`) can miss the same way.
+  The RF Toolbox page prints the deployed commit, which tells you each node's build.
 - **`.glass-ios` is unlayered CSS**, so its `border` beats any `border-*` utility on the same
   element; its edge colour is `--card-border` (`border-panel-line`, `divide-panel-line`).
   Buttons are `.btn` plus `.btn-primary|gold|outline|on-dark` in `@layer components`, so a
@@ -248,14 +254,17 @@ element grid size and travelling rings are decorative, the FMCW magnifier states
 - [ ] The S-parameter viewer's Smith Chart toggle is white on emerald-600: 3.65:1 in both
       themes, below WCAG AA (4.5:1). emerald-700 would give about 5.4:1; it is a visual
       change, so preview it first.
-- [ ] Decide on UCI's official colours and Montserrat (brand.uci.edu, verified 2026-10-21).
+- [ ] Decide on UCI's official colours, `#255799` / `#fecc07` (brand.uci.edu, verified
+      2026-10-21); the site still uses `#0064a4` / `#ffd200`. `#255799` is about 2.7:1 on
+      the dark theme's background, so dark mode would need a lighter tint.
 - [ ] Team and Publications heroes stay dark in light mode: their JSON-LD `<script>` is the
       first child, so the light-hero rule's `section:first-child` misses them.
 - [ ] Content to confirm: Allen Huang's bio starts "received the B.S."; the tutorials
-      subtitle promises VNA calibration videos that do not exist yet.
-- [ ] More 3D / animated visuals. Deployed 2026-09-24: the Home hero die field and the
-      radar card's live scene. Candidates not yet picked, and the constraints, are in
-      `HANDOFF.md`.
+      subtitle promises VNA calibration videos that do not exist yet; three alumni photos
+      may be swapped against the names.
+- [ ] More 3D / animated visuals. Deployed: the Home hero die field and the radar card's
+      live scene (2026-09-24), the chip-application drawings (2026-10-21). The 3D
+      candidates not yet picked are in `git show 20d8de0:HANDOFF.md`.
 
 Superseded history lives in `archive/PROGRESS.md` (design-change log, Feb–May 2026) and
 is not linked from anywhere active.
