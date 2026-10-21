@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import PageWrapper from '@/components/PageWrapper';
@@ -52,6 +52,16 @@ export default function ChipGalleryPage() {
 
   const filtered = filter === 'All' ? chips : chips.filter(c => c.category === filter);
 
+  // Escape closes the enlarged photo, as it would any dialog.
+  useEffect(() => {
+    if (!lightbox) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setLightbox(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [lightbox]);
+
   return (
     <PageWrapper>
       {/* Hero */}
@@ -73,26 +83,29 @@ export default function ChipGalleryPage() {
 
       {/* Filter */}
       <section className="sticky top-16 lg:top-20 z-30 bg-white/80 backdrop-blur-lg border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3">
-          <div className="flex flex-wrap gap-2 justify-center">
-            {categories.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setFilter(cat)}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-                  filter === cat
-                    ? 'bg-eng-blue text-white shadow-md'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                {cat}
-                {cat !== 'All' && (
-                  <span className="ml-1.5 text-xs opacity-70">
-                    ({chips.filter(c => c.category === cat).length})
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div role="group" aria-label="Filter chips by category" className="flex flex-wrap gap-x-7 justify-center">
+            {categories.map(cat => {
+              const active = filter === cat;
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setFilter(cat)}
+                  aria-pressed={active}
+                  className={`-mb-px border-b-2 py-3 text-sm font-medium transition-colors ${
+                    active
+                      ? 'border-uci-blue text-slate-900 dark:border-uci-gold dark:text-white'
+                      : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
+                  }`}
+                >
+                  {cat}
+                  <span className="ml-1.5 tabular-nums text-slate-500 dark:text-slate-400">
+                    {cat === 'All' ? chips.length : chips.filter(c => c.category === cat).length}
                   </span>
-                )}
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -110,44 +123,28 @@ export default function ChipGalleryPage() {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ duration: 0.35 }}
-                  className="group cursor-zoom-in"
-                  onClick={() => setLightbox(chip)}
                 >
-                  <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 hover:shadow-2xl hover:border-uci-blue/20 transition-all duration-300">
-                    {/* Die photo — large */}
-                    <div className="relative bg-gray-50 overflow-hidden">
+                  <div className="glass-ios rounded-2xl">
+                    {/* The photo is a button, so it opens from the keyboard as well as by click. */}
+                    <button
+                      type="button"
+                      onClick={() => setLightbox(chip)}
+                      aria-label={`Enlarge ${chip.name}`}
+                      className="block w-full cursor-zoom-in bg-gray-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-uci-blue-light"
+                    >
                       <Image
                         src={chip.image}
-                        alt={chip.name}
+                        alt=""
                         width={chip.width}
                         height={chip.height}
-                        className="w-full h-auto transition-transform duration-500 group-hover:scale-105"
+                        className="w-full h-auto"
                         quality={95}
                       />
-                      {/* Hover zoom hint */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
-                        <span className="bg-white/90 backdrop-blur-sm text-eng-blue font-medium px-4 py-1.5 rounded-full text-xs shadow-lg flex items-center gap-1.5">
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                          </svg>
-                          Click to enlarge
-                        </span>
-                      </div>
-                    </div>
-                    {/* Info */}
+                    </button>
                     <div className="p-6">
                       <h2 className="font-bold text-eng-blue text-xl leading-snug">{chip.name}</h2>
-                      <div className="mt-3 flex flex-wrap gap-2.5">
-                        <span className="px-3 py-1 rounded-full bg-uci-blue/8 text-uci-blue text-sm font-medium border border-uci-blue/10">
-                          {chip.technology}
-                        </span>
-                        <span className="px-3 py-1 rounded-full bg-eecs-teal/8 text-eecs-teal text-sm font-medium border border-eecs-teal/10">
-                          {chip.frequency}
-                        </span>
-                        <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-500 text-sm font-medium">
-                          {chip.category}
-                        </span>
-                      </div>
+                      <p className="mt-2 text-sm text-gray-700">{chip.technology}, {chip.frequency}</p>
+                      <p className="mt-0.5 text-sm text-gray-500">{chip.category}</p>
                     </div>
                   </div>
                 </motion.div>
@@ -174,7 +171,9 @@ export default function ChipGalleryPage() {
             onClick={() => setLightbox(null)}
           >
             <button
+              type="button"
               onClick={() => setLightbox(null)}
+              aria-label="Close"
               className="absolute top-5 right-5 z-10 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 transition-colors flex items-center justify-center text-white"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -184,7 +183,7 @@ export default function ChipGalleryPage() {
 
             <div className="absolute top-5 left-5 z-10">
               <p className="text-white font-semibold text-2xl">{lightbox.name}</p>
-              <p className="text-white/60 text-base mt-1">{lightbox.technology} · {lightbox.frequency}</p>
+              <p className="text-white/60 text-base mt-1">{lightbox.technology}, {lightbox.frequency}</p>
             </div>
 
             <motion.div

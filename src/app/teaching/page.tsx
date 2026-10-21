@@ -11,7 +11,6 @@ interface Course {
   name: string;
   semesters: string;
   level: 'undergraduate' | 'graduate';
-  note?: string;
 }
 
 const uciCourses: Course[] = [
@@ -23,54 +22,45 @@ const uciCourses: Course[] = [
 ];
 
 const cornellCourses: Course[] = [
-  { code: 'ECE 5790', name: 'Advanced High-Speed and RF ICs', semesters: 'Spring 2014', level: 'graduate', note: 'Instructor' },
+  { code: 'ECE 5790', name: 'Advanced High-Speed and RF ICs', semesters: 'Spring 2014', level: 'graduate' },
 ];
 
-function CourseCard({ course, index, accentColor }: { course: Course; index: number; accentColor: 'blue' | 'red' }) {
-  const isGrad = course.level === 'graduate';
+/** A course list as rows of one panel: code, title, level, terms. */
+function CourseList({ courses }: { courses: Course[] }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
+    <motion.ul
+      initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-30px' }}
-      transition={{ duration: 0.4, delay: index * 0.08 }}
-      className="glass rounded-xl overflow-hidden card-hover group hover:shadow-lg hover:shadow-uci-blue/8 transition-shadow duration-300"
+      transition={{ duration: 0.5 }}
+      className="glass-ios rounded-2xl divide-y divide-panel-line"
     >
-      {/* Top accent bar */}
-      <div className={`h-1 ${accentColor === 'blue' ? 'bg-gradient-to-r from-uci-blue to-eecs-teal' : 'bg-gradient-to-r from-red-600 to-red-400'}`} />
-      <div className="p-5">
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div>
-            <h3 className={`text-lg font-bold ${accentColor === 'blue' ? 'text-eng-blue' : 'text-red-800'}`}>
-              {course.code}
-            </h3>
-            <p className="text-gray-700 font-medium">{course.name}</p>
-          </div>
-          <span className={`flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold ${
-            isGrad
-              ? 'bg-uci-blue/10 text-uci-blue border border-uci-blue/20'
-              : 'bg-uci-gold/20 text-eng-gold border border-eng-gold/30'
-          }`}>
-            {isGrad ? 'Graduate' : 'Undergraduate'}
+      {courses.map((course) => (
+        <li
+          key={course.code}
+          className="grid grid-cols-[6.5rem_1fr] gap-x-4 gap-y-1 px-5 py-4 sm:grid-cols-[7rem_1fr_8rem_11rem] sm:items-baseline sm:px-6"
+        >
+          <span className="font-semibold tabular-nums text-eng-blue">{course.code}</span>
+          <span className="font-medium text-gray-800">{course.name}</span>
+          <span className="col-start-2 text-sm text-gray-500 sm:col-start-auto">
+            {course.level === 'graduate' ? 'Graduate' : 'Undergraduate'}
           </span>
-        </div>
+          <span className="col-start-2 text-sm tabular-nums text-gray-500 sm:col-start-auto">{course.semesters}</span>
+        </li>
+      ))}
+    </motion.ul>
+  );
+}
 
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-          {course.semesters}
-        </div>
-
-        {course.note && (
-          <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-            accentColor === 'blue' ? 'bg-eecs-teal/10 text-eecs-teal' : 'bg-red-50 text-red-600'
-          } mb-2`}>
-            {course.note}
-          </span>
-        )}
+function Institution({ logo, logoAlt, name, role }: { logo: string; logoAlt: string; name: string; role: string }) {
+  return (
+    <div className="flex items-center gap-4 mb-6">
+      <Image src={logo} alt={logoAlt} width={48} height={48} className="w-12 h-12 rounded-xl object-contain" />
+      <div>
+        <h2 className="text-2xl font-bold text-eng-blue">{name}</h2>
+        <p className="text-gray-500">{role}</p>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -91,52 +81,25 @@ export default function TeachingPage() {
         </div>
       </section>
 
-      {/* UCI Section */}
       <section className="py-16 bg-slate-warm">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="flex items-center gap-4 mb-10"
-          >
-            <Image src="/images/teaching/uci-logo.png" alt="UC Irvine logo" width={48} height={48} className="w-12 h-12 rounded-xl object-contain" />
-            <div>
-              <h2 className="text-2xl font-bold text-eng-blue">University of California, Irvine</h2>
-              <p className="text-gray-500">Associate Professor, EECS Department</p>
-            </div>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {uciCourses.map((course, i) => (
-              <CourseCard key={course.code} course={course} index={i} accentColor="blue" />
-            ))}
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 space-y-14">
+          <div>
+            <Institution
+              logo="/images/teaching/uci-logo.png"
+              logoAlt="UC Irvine logo"
+              name="University of California, Irvine"
+              role="Associate Professor, EECS Department"
+            />
+            <CourseList courses={uciCourses} />
           </div>
-        </div>
-      </section>
-
-      <div className="section-divider" />
-
-      {/* Cornell Section */}
-      <section className="py-16 bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="flex items-center gap-4 mb-10"
-          >
-            <Image src="/images/teaching/cornell-logo.png" alt="Cornell University logo" width={48} height={48} className="w-12 h-12 rounded-xl object-contain" />
-            <div>
-              <h2 className="text-2xl font-bold text-red-800">Cornell University</h2>
-              <p className="text-gray-500">Instructor, ECE Department</p>
-            </div>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {cornellCourses.map((course, i) => (
-              <CourseCard key={course.code} course={course} index={i} accentColor="red" />
-            ))}
+          <div>
+            <Institution
+              logo="/images/teaching/cornell-logo.png"
+              logoAlt="Cornell University logo"
+              name="Cornell University"
+              role="Instructor, ECE Department"
+            />
+            <CourseList courses={cornellCourses} />
           </div>
         </div>
       </section>

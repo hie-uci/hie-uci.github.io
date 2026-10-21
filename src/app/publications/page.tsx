@@ -1,52 +1,10 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
-import { motion, AnimatePresence, useSpring, useTransform } from 'framer-motion';
+import { useState, useMemo } from 'react';
 import PageWrapper from '@/components/PageWrapper';
 import SectionHeader from '@/components/SectionHeader';
 import CircuitBackground from '@/components/CircuitBackground';
 import { serializeJsonLd, SITE_URL } from '@/lib/metadata';
-
-// --------------- components ---------------
-
-function AnimatedCounter({ value }: { value: number }) {
-  const spring = useSpring(0, { stiffness: 40, damping: 20 });
-  const displayValue = useTransform(spring, (v) => Math.floor(v));
-  const [current, setCurrent] = useState(0);
-
-  useEffect(() => {
-    spring.set(value);
-    return displayValue.on('change', (v) => setCurrent(v));
-  }, [value, spring, displayValue]);
-
-  return <>{current}</>;
-}
-
-function Sparkline({ data, color, label }: { data: number[]; color: string; label: string }) {
-  const max = Math.max(...data, 1);
-  const points = data.map((v, i) => ({
-    x: (i / (data.length - 1)) * 100,
-    y: 100 - (v / max) * 100,
-  }));
-
-  const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
-
-  return (
-    <svg viewBox="0 0 100 100" className="w-16 h-8 opacity-40" role="img" aria-label={label}>
-      <motion.path
-        d={path}
-        fill="none"
-        stroke={color}
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        initial={{ pathLength: 0 }}
-        animate={{ pathLength: 1 }}
-        transition={{ duration: 1.5, ease: "easeOut" }}
-      />
-    </svg>
-  );
-}
 
 // --------------- types ---------------
 
@@ -214,29 +172,8 @@ const publicationJsonLd = {
     })),
 };
 
-const latestPublicationYear = Math.max(...publications.map((publication) => publication.year));
-const publicationTrendYears = Array.from(
-  { length: 7 },
-  (_, index) => latestPublicationYear - 6 + index,
-);
-const publicationStats: Record<PubType, number> = {
-  journal: 0,
-  conference: 0,
-  patent: 0,
-  talk: 0,
-};
-const publicationTrends: Record<PubType, number[]> = {
-  journal: publicationTrendYears.map(() => 0),
-  conference: publicationTrendYears.map(() => 0),
-  patent: publicationTrendYears.map(() => 0),
-  talk: publicationTrendYears.map(() => 0),
-};
-
-for (const publication of publications) {
-  publicationStats[publication.type] += 1;
-  const trendIndex = publicationTrendYears.indexOf(publication.year);
-  if (trendIndex >= 0) publicationTrends[publication.type][trendIndex] += 1;
-}
+const publicationCounts: Record<PubType, number> = { journal: 0, conference: 0, patent: 0, talk: 0 };
+for (const publication of publications) publicationCounts[publication.type] += 1;
 
 // --------------- helpers ---------------
 
@@ -248,20 +185,59 @@ const filterTabs: { label: string; value: PubType | 'all' }[] = [
   { label: 'Talks', value: 'talk' },
 ];
 
-function venueColor(type: PubType) {
-  switch (type) {
-    case 'journal': return 'bg-uci-blue/10 text-uci-blue border-uci-blue/20';
-    case 'conference': return 'bg-eecs-teal/10 text-eecs-teal border-eecs-teal/20';
-    case 'patent': return 'bg-uci-gold/10 text-uci-gold-light border-uci-gold/20';
-    case 'talk': return 'bg-purple-100 text-purple-700 border-purple-200';
-  }
-}
+const countOf = (value: PubType | 'all') =>
+  value === 'all' ? publications.length : publicationCounts[value];
 
-const cardVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
-  exit: { opacity: 0, y: -10, transition: { duration: 0.2 } },
+const typeLabel: Record<PubType, string> = {
+  journal: 'Journal',
+  conference: 'Conference',
+  patent: 'Patent',
+  talk: 'Invited talk',
 };
+
+const typeTone: Record<PubType, string> = {
+  journal: 'text-uci-blue dark:text-sky-300',
+  conference: 'text-teal-700 dark:text-teal-300',
+  patent: 'text-amber-700 dark:text-uci-gold',
+  talk: 'text-violet-700 dark:text-violet-300',
+};
+
+/** One entry, set like a reference: title, authors, venue in italics, then any honour. */
+function PublicationRow({ pub }: { pub: Publication }) {
+  const status = pub.status && pub.status !== 'Published' ? pub.status : undefined;
+  const details = [pub.highlight, status].filter(Boolean).join(', ');
+  return (
+    <li className="grid gap-x-6 px-5 py-4 sm:grid-cols-[1fr_7rem] sm:px-6">
+      <div className="min-w-0">
+        <h3 className="text-[15px] font-semibold leading-snug text-eng-blue">
+          {pub.link ? (
+            <a href={pub.link} target="_blank" rel="noopener noreferrer" className="hover:text-uci-blue hover:underline underline-offset-4">
+              {pub.title}
+              <svg aria-hidden="true" className="ml-1 inline-block w-3.5 h-3.5 -translate-y-px text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              <span className="sr-only"> (opens in a new tab)</span>
+            </a>
+          ) : (
+            pub.title
+          )}
+        </h3>
+        <p className="mt-1 text-sm text-gray-500">{pub.authors}</p>
+        {(pub.venue || details) && (
+          <p className="mt-1 text-sm">
+            {pub.venue && <span className="italic text-gray-700">{pub.venue}</span>}
+            {pub.venue && details && <span className="text-gray-500">, </span>}
+            {details && <span className="font-medium text-amber-700 dark:text-uci-gold">{details}</span>}
+          </p>
+        )}
+      </div>
+      <span className={`mt-2 inline-flex items-center gap-1.5 self-start text-xs font-medium sm:mt-1 ${typeTone[pub.type]}`}>
+        <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
+        {typeLabel[pub.type]}
+      </span>
+    </li>
+  );
+}
 
 // --------------- page ---------------
 
@@ -284,7 +260,7 @@ export default function PublicationsPage() {
     return list;
   }, [filter, search]);
 
-  // Group by year, newest first; within each year: journals → conferences → patents
+  // Group by year, newest first; within each year: journals → conferences → patents → talks
   const grouped = useMemo(() => {
     const typeOrder: Record<PubType, number> = { journal: 0, conference: 1, patent: 2, talk: 3 };
     const map = new Map<number, Publication[]>();
@@ -307,7 +283,7 @@ export default function PublicationsPage() {
         dangerouslySetInnerHTML={{ __html: serializeJsonLd(publicationJsonLd) }}
       />
       {/* Hero */}
-      <section className="relative bg-gradient-to-b from-eng-blue via-navy to-eng-blue py-24 overflow-hidden">
+      <section className="relative bg-gradient-to-b from-eng-blue via-navy to-eng-blue pt-24 pb-20 overflow-hidden">
         <CircuitBackground density={50} />
         <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6">
           <SectionHeader
@@ -317,176 +293,65 @@ export default function PublicationsPage() {
             centered
             light
           />
-
-          {/* Stats Dashboard */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-            className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mt-10 max-w-4xl mx-auto"
-          >
-            {[
-              { 
-                label: 'Journals', 
-                count: publicationStats.journal,
-                color: 'text-uci-gold',
-                sparkData: publicationTrends.journal,
-              },
-              { 
-                label: 'Conferences', 
-                count: publicationStats.conference,
-                color: 'text-eecs-teal-light',
-                sparkData: publicationTrends.conference,
-              },
-              { 
-                label: 'Patents', 
-                count: publicationStats.patent,
-                color: 'text-uci-gold',
-                sparkData: publicationTrends.patent,
-              },
-              { 
-                label: 'Talks', 
-                count: publicationStats.talk,
-                color: 'text-purple-300',
-                sparkData: publicationTrends.talk,
-              },
-            ].map((s) => (
-              <div key={s.label} className="relative glass-ios p-4 rounded-2xl flex flex-col items-center group hover:bg-white/10 transition-colors">
-                <div className="flex items-end gap-2 mb-2">
-                  <p className={`text-3xl sm:text-4xl font-bold ${s.color}`}>
-                    <AnimatedCounter value={s.count} />
-                  </p>
-                  <Sparkline
-                    data={s.sparkData}
-                    color="currentColor"
-                    label={`${s.label} per year, ${publicationTrendYears[0]}–${latestPublicationYear}`}
-                  />
-                </div>
-                <p className="text-white/60 text-[10px] uppercase tracking-widest font-bold">{s.label}</p>
-              </div>
-            ))}
-          </motion.div>
         </div>
       </section>
 
-      {/* Controls */}
+      {/* Controls: search, and tabs that carry each type's count */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 -mt-8 relative z-20">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
-          className="glass rounded-2xl p-4 sm:p-5 shadow-lg flex flex-col sm:flex-row gap-4 items-center"
-        >
-          {/* Search */}
-          <div className="relative flex-1 w-full">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="rounded-2xl bg-[#ffffff] dark:bg-[#0b1220] border border-panel-line px-4 sm:px-5 flex flex-col md:flex-row md:items-center gap-x-6">
+          <div className="relative flex-1 w-full pt-4 md:py-3">
+            <svg aria-hidden="true" className="absolute left-3 top-1/2 translate-y-[0.125rem] md:-translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input
-              type="text"
-              placeholder="Search by title, author, or venue..."
+              type="search"
+              aria-label="Search publications"
+              placeholder="Search by title, author, or venue"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-uci-blue/30 focus:border-uci-blue transition-all"
+              className="w-full pl-10 pr-4 py-2.5 rounded-md border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-uci-blue/30 focus:border-uci-blue transition-colors"
             />
           </div>
-
-          {/* Filter tabs */}
-          <div className="flex gap-1 p-1 rounded-xl bg-gray-100">
-            {filterTabs.map((tab) => (
-              <button
-                key={tab.value}
-                onClick={() => setFilter(tab.value)}
-                className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  filter === tab.value
-                    ? 'bg-uci-blue text-white shadow'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+          <div role="group" aria-label="Filter by type" className="flex flex-wrap gap-x-5">
+            {filterTabs.map((tab) => {
+              const active = filter === tab.value;
+              return (
+                <button
+                  key={tab.value}
+                  type="button"
+                  onClick={() => setFilter(tab.value)}
+                  aria-pressed={active}
+                  className={`-mb-px border-b-2 py-4 text-sm font-medium transition-colors ${
+                    active
+                      ? 'border-uci-blue text-slate-900 dark:border-uci-gold dark:text-white'
+                      : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
+                  }`}
+                >
+                  {tab.label}
+                  <span className="ml-1.5 tabular-nums text-slate-500 dark:text-slate-400">{countOf(tab.value)}</span>
+                </button>
+              );
+            })}
           </div>
-        </motion.div>
+        </div>
       </section>
 
-      {/* Timeline */}
+      {/* One panel per year */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 py-16">
         {grouped.length === 0 && (
           <p className="text-center text-gray-400 py-20">No publications match your search.</p>
         )}
 
-        <div className="relative">
-          {/* Vertical line */}
-          {grouped.length > 0 && (
-            <div className="absolute left-4 sm:left-6 top-0 bottom-0 w-px bg-gradient-to-b from-uci-blue/30 via-uci-blue/10 to-transparent" />
-          )}
-
-          <AnimatePresence mode="wait">
-            <motion.div key={filter + search} initial="hidden" animate="visible" exit="exit">
-              {grouped.map(([year, pubs]) => (
-                <div key={year} className="mb-12 last:mb-0">
-                  {/* Year label */}
-                  <motion.div
-                    variants={cardVariants}
-                    className="flex items-center gap-4 mb-6 relative"
-                  >
-                    <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-uci-blue to-uci-gold flex items-center justify-center text-white font-bold text-xs sm:text-sm shadow-lg relative z-10">
-                      {year}
-                    </div>
-                    <div className="h-px flex-1 bg-gray-200" />
-                    <span className="text-xs text-gray-400 font-medium">{pubs.length} publication{pubs.length !== 1 ? 's' : ''}</span>
-                  </motion.div>
-
-                  {/* Publications */}
-                  <div className="pl-12 sm:pl-16 space-y-3">
-                    {pubs.map((pub, pi) => (
-                      <motion.div
-                        key={pub.title}
-                        variants={cardVariants}
-                        transition={{ delay: pi * 0.05 }}
-                        whileHover={{ x: 4, transition: { duration: 0.2 } }}
-                        className="glass rounded-xl p-4 sm:p-5 group card-hover"
-                      >
-                        <div className="flex flex-wrap items-start gap-2 mb-2">
-                          <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold border ${venueColor(pub.type)}`}>
-                            {pub.type === 'talk' ? (pub.venue ? `Invited Talk — ${pub.venue}` : 'Invited Talk') : pub.venue}
-                          </span>
-                          {pub.status && (
-                            <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-500 border border-gray-200">
-                              {pub.status}
-                            </span>
-                          )}
-                          {pub.highlight && (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-uci-gold/10 text-uci-gold-light border border-uci-gold/20">
-                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176 0l-3.37 2.448c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.063 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z" /></svg>
-                              {pub.highlight}
-                            </span>
-                          )}
-                        </div>
-                        {pub.link ? (
-                          <a href={pub.link} target="_blank" rel="noopener noreferrer" className="flex items-start gap-1.5 group/link" onClick={(e) => e.stopPropagation()}>
-                            <h3 className="text-sm sm:text-base font-semibold text-eng-blue leading-snug group-hover/link:text-uci-blue transition-colors hover:underline underline-offset-2">
-                              {pub.title}
-                            </h3>
-                            <svg className="w-3.5 h-3.5 mt-1 shrink-0 text-gray-300 group-hover/link:text-uci-blue transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                          </a>
-                        ) : (
-                          <h3 className="text-sm sm:text-base font-semibold text-eng-blue leading-snug group-hover:text-uci-blue transition-colors">
-                            {pub.title}
-                          </h3>
-                        )}
-                        <p className="text-xs text-gray-400 mt-1.5">{pub.authors}</p>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
+        {grouped.map(([year, pubs]) => (
+          <div key={year} className="mb-12 last:mb-0">
+            <h2 className="mb-4 text-2xl font-bold tabular-nums text-eng-blue dark:text-white">{year}</h2>
+            <ul className="glass-ios rounded-2xl divide-y divide-panel-line">
+              {pubs.map((pub) => (
+                <PublicationRow key={`${pub.venue}-${pub.title}`} pub={pub} />
               ))}
-            </motion.div>
-          </AnimatePresence>
-        </div>
+            </ul>
+          </div>
+        ))}
       </section>
     </PageWrapper>
   );

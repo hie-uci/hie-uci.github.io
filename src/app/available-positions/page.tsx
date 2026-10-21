@@ -19,45 +19,27 @@ const positions = [
   {
     title: 'Postdoctoral Scholars',
     status: 'Actively recruiting',
-    icon: (
-      <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.627 48.627 0 0 1 12 20.904a48.627 48.627 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.57 50.57 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342" />
-      </svg>
-    ),
     text: 'We welcome postdoctoral candidates whose research experience aligns with the laboratory’s high-frequency circuits, devices, and systems programs.',
     backgrounds: ['RF/mm-wave circuit design', 'Microwave theory', 'Solid-state device physics', 'Nonlinear dynamics'],
     materials: ['Cover letter', 'Curriculum vitae', 'Research statement', 'Contact information for 2–3 references'],
     emailSubject: 'HIE Lab postdoctoral scholar inquiry',
-    gradient: 'from-[#0064a4] to-[#00386d]',
   },
   {
     title: 'Graduate Students',
     status: 'Prospective students welcome',
-    icon: (
-      <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
-      </svg>
-    ),
     text: 'Prospective M.S. and Ph.D. students should complete the official UCI graduate application and may also email the lab to introduce their interests and preparation.',
     backgrounds: ['Analog and RF circuit design', 'Microwave engineering', 'Electromagnetics and antennas', 'AI-assisted hardware design'],
     materials: ['Curriculum vitae', 'Unofficial transcripts', 'Brief summary of research interests'],
     emailSubject: 'Prospective HIE Lab graduate student',
     applicationLink: 'https://grad.uci.edu/admissions/applying-to-uci/',
-    gradient: 'from-[#203043] to-[#528188]',
   },
   {
     title: 'Undergraduate Researchers',
     status: 'UCI students welcome',
-    icon: (
-      <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
-      </svg>
-    ),
     text: 'UCI undergraduates interested in mm-wave circuits and related hardware research may contact the lab to discuss preparation and potential projects.',
     backgrounds: ['Circuit analysis and electronics', 'Signals and systems', 'Electromagnetics', 'Programming or numerical methods'],
     materials: ['Unofficial transcript', 'Short summary of research interests', 'Relevant coursework or project experience'],
     emailSubject: 'HIE Lab undergraduate research inquiry',
-    gradient: 'from-[#00386d] to-[#528188]',
   },
 ];
 
@@ -84,15 +66,15 @@ export default function AvailablePositionsPage() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="p-8 rounded-2xl bg-gradient-to-r from-uci-blue/5 via-eecs-teal/5 to-uci-gold/5 border border-uci-blue/10 text-center"
+            className="text-center"
           >
             <p className="text-lg text-gray-700 leading-relaxed">
               The HIE Lab at UC Irvine welcomes inquiries from motivated postdoctoral scholars,
               graduate students, and undergraduate researchers interested in advancing high-speed
               integrated electronics.
             </p>
-            <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-uci-blue">
-              Application information updated July 2026
+            <p className="mt-3 text-sm text-gray-500">
+              Application information updated July 2026.
             </p>
           </motion.div>
         </div>
@@ -112,42 +94,32 @@ export default function AvailablePositionsPage() {
                 key={pos.title}
                 variants={fadeUp}
                 custom={i}
-                className="group rounded-2xl border border-gray-100 bg-white overflow-hidden hover:shadow-xl hover:shadow-uci-blue/8 transition-all duration-500"
+                className="glass-ios rounded-2xl"
               >
-                {/* Gradient header */}
-                <div className={`relative bg-gradient-to-r ${pos.gradient} px-8 py-6 flex items-center gap-4`}>
-                  <div className="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center text-white">
-                    {pos.icon}
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-white">{pos.title}</h2>
-                    <span className="mt-1.5 inline-flex rounded-full border border-white/20 bg-white/10 px-2.5 py-0.5 text-xs font-semibold text-white/85">
-                      {pos.status}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Content */}
                 <div className="p-8">
-                  <p className="text-gray-700 leading-relaxed">{pos.text}</p>
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+                    <h2 className="text-2xl font-bold text-eng-blue">{pos.title}</h2>
+                    <p className="text-sm font-medium text-teal-700 dark:text-teal-300">{pos.status}</p>
+                  </div>
+                  <p className="mt-4 text-gray-700 leading-relaxed">{pos.text}</p>
                   <div className="mt-6 grid gap-6 md:grid-cols-2">
                     <div>
-                      <h3 className="text-sm font-bold uppercase tracking-wider text-eng-blue">Relevant backgrounds</h3>
+                      <h3 className="text-sm font-semibold text-eng-blue">Relevant backgrounds</h3>
                       <ul className="mt-3 space-y-2 text-sm text-gray-600">
                         {pos.backgrounds.map((background) => (
                           <li key={background} className="flex items-start gap-2">
-                            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-eecs-teal" />
+                            <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-gray-400" />
                             {background}
                           </li>
                         ))}
                       </ul>
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold uppercase tracking-wider text-eng-blue">What to send</h3>
+                      <h3 className="text-sm font-semibold text-eng-blue">What to send</h3>
                       <ul className="mt-3 space-y-2 text-sm text-gray-600">
                         {pos.materials.map((material) => (
                           <li key={material} className="flex items-start gap-2">
-                            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-uci-gold" />
+                            <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-gray-400" />
                             {material}
                           </li>
                         ))}

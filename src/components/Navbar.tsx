@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion, AnimatePresence, useScroll, useSpring } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import { Lock } from 'lucide-react';
 import ThemeSwitcher from '@/components/ThemeSwitcher';
@@ -37,9 +37,6 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
 
-  const { scrollYProgress } = useScroll();
-  const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
-
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     handleScroll();
@@ -54,20 +51,12 @@ export default function Navbar() {
 
   return (
     <>
-      <motion.div
-        className="fixed top-0 left-0 right-0 h-[2px] z-[60] origin-left"
-        style={{ scaleX, background: 'linear-gradient(90deg, #0064a4, #ffd200, #528188)' }}
-      />
-
       {/* glass-ios sets `position: relative`, and it collides with Tailwind's
           `fixed` at equal specificity -- whichever ships later in the stylesheet
           wins. It was winning, so the bar stopped being fixed the moment it
           gained the glass class and scrolled away for good. Keeping the two on
           separate elements removes the race instead of out-specifying it. */}
-      <motion.nav
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
+      <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-500 ${
           isScrolled ? 'bg-white/90 dark:bg-[#0b1220]/93' : ''
         }`}
@@ -87,14 +76,9 @@ export default function Navbar() {
               href="https://engineering.uci.edu"
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-navy/55 transition-colors hover:text-uci-blue dark:text-slate-400 dark:hover:text-blue-300"
+              className="text-xs font-medium text-navy/65 transition-colors hover:text-uci-blue dark:text-slate-400 dark:hover:text-blue-300"
             >
-              <span className="grid h-3.5 w-3.5 place-items-center rounded-full bg-uci-blue text-[6px] font-bold leading-none text-white">
-                UCI
-              </span>
-              UC Irvine
-              <span className="text-uci-gold" aria-hidden="true">·</span>
-              Samueli School of Engineering
+              UC Irvine Samueli School of Engineering
             </a>
 
             <div className="flex items-center gap-2.5">
@@ -103,10 +87,10 @@ export default function Navbar() {
                 href={PORTAL_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 rounded-full bg-uci-blue px-2.5 py-[3px] text-[10px] font-semibold uppercase tracking-[0.14em] text-white transition-colors hover:bg-uci-blue-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-uci-gold"
+                className="flex items-center gap-1.5 rounded-md bg-uci-blue px-2.5 py-1 text-xs font-semibold text-white transition-colors hover:bg-uci-blue-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-uci-gold"
               >
-                <Lock className="h-2.5 w-2.5 shrink-0" aria-hidden="true" />
-                Member Login
+                <Lock className="h-3 w-3 shrink-0" aria-hidden="true" />
+                Member login
               </a>
             </div>
           </div>
@@ -126,7 +110,7 @@ export default function Navbar() {
                 alt="HIE Lab logo"
                 width={1112}
                 height={1020}
-                className="h-10 w-auto object-contain transition-all duration-500 group-hover:opacity-90 lg:h-12 dark:saturate-150 dark:brightness-110 dark:drop-shadow-[0_0_15px_rgba(56,189,248,0.5)]"
+                className="h-10 w-auto object-contain transition-all duration-500 group-hover:opacity-90 lg:h-12 dark:saturate-150 dark:brightness-110"
                 priority
               />
             </Link>
@@ -219,25 +203,22 @@ export default function Navbar() {
                     className="flex items-center gap-2 rounded-lg bg-uci-blue px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-uci-blue-dark"
                   >
                     <Lock className="h-4 w-4 shrink-0" aria-hidden="true" />
-                    Member Login
+                    Member login
                   </a>
                   <a
                     href="https://engineering.uci.edu"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 text-[11px] font-medium uppercase tracking-[0.16em] text-navy/55 dark:text-slate-400"
+                    className="block px-4 py-2 text-xs font-medium text-navy/65 dark:text-slate-400"
                   >
-                    <span className="grid h-4 w-4 place-items-center rounded-full bg-uci-blue text-[7px] font-bold leading-none text-white">
-                      UCI
-                    </span>
-                    UC Irvine · Samueli Engineering
+                    UC Irvine Samueli School of Engineering
                   </a>
                 </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.nav>
+      </nav>
     </>
   );
 }

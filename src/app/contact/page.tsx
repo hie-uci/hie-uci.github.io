@@ -7,70 +7,35 @@ import PageWrapper from '@/components/PageWrapper';
 import SectionHeader from '@/components/SectionHeader';
 import CircuitBackground from '@/components/CircuitBackground';
 
-function FloatingInput({ label, type = 'text', name, required }: { label: string; type?: string; name: string; required?: boolean }) {
-  const [focused, setFocused] = useState(false);
-  const [value, setValue] = useState('');
-  const isActive = focused || value.length > 0;
+const fieldClass =
+  'mt-1.5 w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-md outline-none transition-colors text-gray-800 focus:border-uci-blue focus:ring-2 focus:ring-uci-blue/20';
 
+function Field({ label, type = 'text', name, required }: { label: string; type?: string; name: string; required?: boolean }) {
   return (
-    <div className="relative">
+    <div>
+      <label htmlFor={`contact-${name}`} className="text-sm font-medium text-gray-700">{label}</label>
       <input
         id={`contact-${name}`}
         type={type}
         name={name}
         autoComplete={name === 'name' ? 'name' : name === 'email' ? 'email' : undefined}
         required={required}
-        value={value}
-        onChange={e => setValue(e.target.value)}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        className="w-full px-4 pt-6 pb-2 bg-white border-2 border-gray-200 rounded-xl outline-none transition-all duration-200 text-gray-800 focus:border-uci-blue focus:shadow-[0_0_0_3px_rgba(0,100,164,0.1)]"
+        className={fieldClass}
       />
-      <label
-        htmlFor={`contact-${name}`}
-        className={`absolute left-4 transition-all duration-200 pointer-events-none ${
-          isActive
-            ? 'top-2 text-xs font-semibold text-uci-blue'
-            : 'top-4 text-sm text-gray-400'
-        }`}
-      >
-        {label}
-      </label>
     </div>
   );
 }
 
-function FloatingTextarea({ label, name, required }: { label: string; name: string; required?: boolean }) {
-  const [focused, setFocused] = useState(false);
-  const [value, setValue] = useState('');
-  const isActive = focused || value.length > 0;
-
+function TextareaField({ label, name, required }: { label: string; name: string; required?: boolean }) {
   return (
-    <div className="relative">
-      <textarea
-        id={`contact-${name}`}
-        name={name}
-        required={required}
-        rows={5}
-        value={value}
-        onChange={e => setValue(e.target.value)}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        className="w-full px-4 pt-6 pb-2 bg-white border-2 border-gray-200 rounded-xl outline-none transition-all duration-200 text-gray-800 resize-none focus:border-uci-blue focus:shadow-[0_0_0_3px_rgba(0,100,164,0.1)]"
-      />
-      <label
-        htmlFor={`contact-${name}`}
-        className={`absolute left-4 transition-all duration-200 pointer-events-none ${
-          isActive
-            ? 'top-2 text-xs font-semibold text-uci-blue'
-            : 'top-4 text-sm text-gray-400'
-        }`}
-      >
-        {label}
-      </label>
+    <div>
+      <label htmlFor={`contact-${name}`} className="text-sm font-medium text-gray-700">{label}</label>
+      <textarea id={`contact-${name}`} name={name} required={required} rows={5} className={`${fieldClass} resize-none`} />
     </div>
   );
 }
+
+const MAP_URL = 'https://www.google.com/maps/search/?api=1&query=Engineering+Hall%2C+University+of+California%2C+Irvine';
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
@@ -116,88 +81,38 @@ export default function ContactPage() {
                 initial={{ opacity: 0, x: -30 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                className="glass rounded-2xl p-6 shadow-lg"
+                className="glass-ios rounded-2xl p-6"
               >
-                <h2 className="text-lg font-bold text-eng-blue mb-5">Contact Information</h2>
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-uci-blue/10 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-5 h-5 text-uci-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    </div>
-                    <div>
+                <h2 className="text-lg font-bold text-eng-blue mb-4">Contact information</h2>
+                <dl className="divide-y divide-panel-line border-y border-panel-line text-sm">
+                  <div className="grid grid-cols-[5.5rem_1fr] gap-x-3 py-3">
+                    <dt className="text-gray-500">Faculty</dt>
+                    <dd>
                       <p className="font-semibold text-gray-800">Hamidreza Aghasi</p>
-                      <p className="text-sm text-gray-500">Associate Professor, EECS</p>
-                    </div>
+                      <p className="text-gray-500">Associate Professor, EECS</p>
+                    </dd>
                   </div>
-
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-uci-blue/10 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-5 h-5 text-uci-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-gray-800 font-medium">haghasi@uci.edu</p>
-                      <p className="text-sm text-gray-500">Email</p>
-                    </div>
+                  <div className="grid grid-cols-[5.5rem_1fr] gap-x-3 py-3">
+                    <dt className="text-gray-500">Email</dt>
+                    <dd><a href="mailto:haghasi@uci.edu" className="font-medium text-uci-blue hover:underline underline-offset-4">haghasi@uci.edu</a></dd>
                   </div>
-
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-uci-blue/10 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-5 h-5 text-uci-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-gray-800 font-medium">(949) 824-8810</p>
-                      <p className="text-sm text-gray-500">Phone</p>
-                    </div>
+                  <div className="grid grid-cols-[5.5rem_1fr] gap-x-3 py-3">
+                    <dt className="text-gray-500">Phone</dt>
+                    <dd><a href="tel:+19498248810" className="font-medium text-gray-800 hover:text-uci-blue">(949) 824-8810</a></dd>
                   </div>
-
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-uci-blue/10 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-5 h-5 text-uci-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-gray-800 font-medium">University of California, Irvine</p>
-                      <p className="text-sm text-gray-500">Dept. of Electrical Engineering & Computer Science</p>
-                    </div>
+                  <div className="grid grid-cols-[5.5rem_1fr] gap-x-3 py-3">
+                    <dt className="text-gray-500">Address</dt>
+                    <dd>
+                      <p className="text-gray-800">Engineering Hall, University of California, Irvine</p>
+                      <p className="text-gray-500">Dept. of Electrical Engineering &amp; Computer Science, Irvine, CA 92697</p>
+                      <a href={MAP_URL} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block font-medium text-uci-blue hover:underline underline-offset-4">
+                        Open in Google Maps
+                        <span className="sr-only"> (opens in a new tab)</span>
+                      </a>
+                    </dd>
                   </div>
-                </div>
+                </dl>
               </motion.div>
-
-              {/* Map Placeholder */}
-              <motion.div
-                initial={{ opacity: 0, x: -30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.1 }}
-                className="glass rounded-2xl overflow-hidden shadow-lg"
-              >
-                <div className="relative h-48 bg-gradient-to-br from-uci-blue/5 to-eecs-teal/5 flex items-center justify-center">
-                  <div className="text-center">
-                    <svg className="w-10 h-10 text-uci-blue/40 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <p className="text-sm font-medium text-gray-600">Engineering Hall, UC Irvine</p>
-                    <p className="text-xs text-gray-400">Irvine, CA 92697</p>
-                  </div>
-                  {/* Decorative grid */}
-                  <div className="absolute inset-0 opacity-10">
-                    <div className="w-full h-full" style={{
-                      backgroundImage: 'linear-gradient(rgba(0,100,164,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(0,100,164,0.3) 1px, transparent 1px)',
-                      backgroundSize: '30px 30px',
-                    }} />
-                  </div>
-                </div>
-              </motion.div>
-
             </div>
 
             {/* Right - Form & Positions */}
@@ -207,9 +122,9 @@ export default function ContactPage() {
                 initial={{ opacity: 0, x: 30 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                className="glass rounded-2xl p-6 sm:p-8 shadow-lg"
+                className="glass-ios rounded-2xl p-6 sm:p-8"
               >
-                <h2 className="text-lg font-bold text-eng-blue mb-2">Prepare an Email</h2>
+                <h2 className="text-lg font-bold text-eng-blue mb-2">Prepare an email</h2>
                 <p className="mb-6 text-sm text-gray-500">
                   This form opens a pre-filled draft in your default email application; it does not send automatically.
                 </p>
@@ -219,11 +134,11 @@ export default function ContactPage() {
                     className="space-y-4"
                   >
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <FloatingInput label="Full Name" name="name" required />
-                      <FloatingInput label="Email Address" type="email" name="email" required />
+                      <Field label="Full name" name="name" required />
+                      <Field label="Email address" type="email" name="email" required />
                     </div>
-                    <FloatingInput label="Subject" name="subject" required />
-                    <FloatingTextarea label="Message" name="message" required />
+                    <Field label="Subject" name="subject" required />
+                    <TextareaField label="Message" name="message" required />
                     <button type="submit" className="btn btn-primary w-full">
                       Open Email Draft
                     </button>
@@ -258,16 +173,9 @@ export default function ContactPage() {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.1 }}
-                className="glass rounded-2xl p-6 sm:p-8 shadow-lg border border-uci-gold/20"
+                className="glass-ios rounded-2xl p-6 sm:p-8"
               >
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-10 rounded-lg bg-uci-gold/15 flex items-center justify-center">
-                    <svg className="w-5 h-5 text-uci-gold" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-2 .89-2 2v11c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z" />
-                    </svg>
-                  </div>
-                  <h2 className="text-lg font-bold text-eng-blue">Available Positions</h2>
-                </div>
+                <h2 className="text-lg font-bold text-eng-blue mb-3">Available positions</h2>
 
                 <p className="text-gray-600 leading-relaxed mb-5">
                   Review the current postdoctoral, graduate, and undergraduate research pathways,

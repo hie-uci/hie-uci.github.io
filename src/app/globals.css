@@ -284,14 +284,6 @@ h3 {
   animation: circuit-pulse 3s ease-in-out infinite;
 }
 
-/* Gradient text utility */
-.gradient-text {
-  background: linear-gradient(135deg, var(--uci-blue) 0%, var(--eecs-teal) 50%, var(--uci-gold) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
 /* Glow effects */
 .glow-blue {
   box-shadow: 0 0 20px rgba(0, 100, 164, 0.3), 0 0 60px rgba(0, 100, 164, 0.1);
@@ -299,12 +291,6 @@ h3 {
 
 .glow-gold {
   box-shadow: 0 0 20px rgba(255, 210, 0, 0.3), 0 0 60px rgba(255, 210, 0, 0.1);
-}
-
-/* Section divider */
-.section-divider {
-  height: 3px;
-  background: linear-gradient(90deg, transparent, var(--uci-blue), var(--uci-gold), var(--eecs-teal), transparent);
 }
 
 /* Card hover effects - more refined */
@@ -345,28 +331,6 @@ h3 {
   transform: translateY(20px);
 }
 
-/* ═══════ GradientMesh drift animations ═══════ */
-@keyframes drift-1 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  25% { transform: translate(30px, -40px) scale(1.05); }
-  50% { transform: translate(-20px, 20px) scale(0.95); }
-  75% { transform: translate(40px, 30px) scale(1.02); }
-}
-
-@keyframes drift-2 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  25% { transform: translate(-40px, 30px) scale(0.97); }
-  50% { transform: translate(30px, -20px) scale(1.04); }
-  75% { transform: translate(-20px, -40px) scale(1.01); }
-}
-
-@keyframes drift-3 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  25% { transform: translate(20px, 40px) scale(1.03); }
-  50% { transform: translate(-40px, -30px) scale(0.98); }
-  75% { transform: translate(30px, -20px) scale(1.05); }
-}
-
 /* ═══════ Chip gallery scan-line ═══════ */
 @keyframes scan-line {
   0% { top: -2px; opacity: 0; }
@@ -387,48 +351,6 @@ h3 {
 }
 
 /* ═══════ Chip marquee edge fade ═══════ */
-.chip-marquee {
-  --chip-edge-bg: rgba(232, 244, 249, 0.92);
-  --chip-edge-bg-soft: rgba(214, 235, 241, 0.55);
-  --chip-edge-line: rgba(0, 100, 164, 0.52);
-  --chip-edge-glow: rgba(0, 100, 164, 0.24);
-  background:
-    radial-gradient(circle at 18% 18%, rgba(0, 100, 164, 0.10), transparent 32%),
-    radial-gradient(circle at 82% 82%, rgba(82, 129, 136, 0.12), transparent 34%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.38), rgba(248, 249, 252, 0.20));
-}
-
-.dark .chip-marquee {
-  --chip-edge-bg: rgba(9, 14, 23, 0.90);
-  --chip-edge-bg-soft: rgba(15, 23, 42, 0.42);
-  --chip-edge-line: rgba(125, 211, 252, 0.48);
-  --chip-edge-glow: rgba(56, 189, 248, 0.22);
-  background:
-    radial-gradient(circle at 18% 18%, rgba(56, 189, 248, 0.12), transparent 34%),
-    radial-gradient(circle at 82% 82%, rgba(255, 210, 0, 0.07), transparent 36%),
-    linear-gradient(180deg, rgba(15, 23, 42, 0.60), rgba(9, 14, 23, 0.28));
-}
-
-.chip-marquee::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(rgba(0, 100, 164, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 100, 164, 0.06) 1px, transparent 1px);
-  background-size: 42px 42px;
-  mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
-  opacity: 0.9;
-}
-
-.dark .chip-marquee::before {
-  background-image:
-    linear-gradient(rgba(125, 211, 252, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(125, 211, 252, 0.08) 1px, transparent 1px);
-  opacity: 0.62;
-}
-
 .chip-marquee-row {
   overflow: hidden;
   mask-image: linear-gradient(
@@ -455,103 +377,6 @@ h3 {
   );
 }
 
-.chip-marquee-edge {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: min(8rem, 24vw);
-  z-index: 24;
-  pointer-events: none;
-  opacity: 0.82;
-}
-
-.chip-marquee-edge-left {
-  left: 0;
-  background:
-    radial-gradient(ellipse at left center, var(--chip-edge-glow), transparent 58%),
-    linear-gradient(90deg, var(--chip-edge-bg), var(--chip-edge-bg-soft) 42%, transparent 100%);
-}
-
-.chip-marquee-edge-right {
-  right: 0;
-  background:
-    radial-gradient(ellipse at right center, var(--chip-edge-glow), transparent 58%),
-    linear-gradient(270deg, var(--chip-edge-bg), var(--chip-edge-bg-soft) 42%, transparent 100%);
-}
-
-.chip-marquee-edge::before {
-  content: "";
-  position: absolute;
-  top: 13%;
-  bottom: 13%;
-  width: 1px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, transparent, var(--chip-edge-line), rgba(255, 210, 0, 0.45), var(--chip-edge-line), transparent);
-  box-shadow: 0 0 18px var(--chip-edge-glow), 0 0 36px var(--chip-edge-glow);
-  animation: chip-edge-pulse 2.6s ease-in-out infinite;
-}
-
-.chip-marquee-edge-left::before {
-  right: 1rem;
-}
-
-.chip-marquee-edge-right::before {
-  left: 1rem;
-}
-
-.chip-marquee-edge::after {
-  content: "";
-  position: absolute;
-  inset: 8% 0;
-  background: repeating-linear-gradient(180deg, transparent 0 22px, var(--chip-edge-line) 23px, transparent 25px);
-  opacity: 0.20;
-  animation: chip-edge-scan 4s linear infinite;
-}
-
-.chip-marquee-stream {
-  position: absolute;
-  z-index: 20;
-  width: 11rem;
-  height: 2px;
-  pointer-events: none;
-  background: linear-gradient(90deg, transparent, var(--chip-edge-line), rgba(255, 210, 0, 0.50), transparent);
-  filter: drop-shadow(0 0 10px var(--chip-edge-glow));
-  opacity: 0;
-}
-
-.chip-marquee-stream-left {
-  left: 0;
-  animation: chip-stream-left 3.4s linear infinite;
-}
-
-.chip-marquee-stream-right {
-  right: 0;
-  animation: chip-stream-right 3.4s linear infinite;
-}
-
-@keyframes chip-edge-pulse {
-  0%, 100% { opacity: 0.36; transform: scaleY(0.92); }
-  50% { opacity: 0.9; transform: scaleY(1); }
-}
-
-@keyframes chip-edge-scan {
-  0% { background-position-y: 0; }
-  100% { background-position-y: 48px; }
-}
-
-@keyframes chip-stream-left {
-  0% { opacity: 0; transform: translateX(-72px) scaleX(0.35); }
-  18% { opacity: 0.95; }
-  72% { opacity: 0.70; }
-  100% { opacity: 0; transform: translateX(240px) scaleX(1); }
-}
-
-@keyframes chip-stream-right {
-  0% { opacity: 0; transform: translateX(72px) scaleX(0.35); }
-  18% { opacity: 0.95; }
-  72% { opacity: 0.70; }
-  100% { opacity: 0; transform: translateX(-240px) scaleX(1); }
-}
 
 /* ═══════ Shared subpage visual system ═══════ */
 .subpage-shell section.bg-white,
@@ -608,23 +433,6 @@ h3 {
 
 .subpage-shell > .relative.z-10 > section:first-child [class*="border-white/"] {
   border-color: rgba(0, 100, 164, 0.14) !important;
-}
-
-.subpage-particle {
-  animation-name: subpage-particle-drift;
-  animation-timing-function: ease-in-out;
-  animation-iteration-count: infinite;
-}
-
-@keyframes subpage-particle-drift {
-  0%, 100% {
-    transform: translate3d(0, 0, 0) scale(0.85);
-    opacity: 0.24;
-  }
-  45% {
-    transform: translate3d(18px, -22px, 0) scale(1.25);
-    opacity: 0.8;
-  }
 }
 
 .dark .subpage-shell section.bg-white,

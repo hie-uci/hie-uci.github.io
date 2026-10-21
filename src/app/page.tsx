@@ -5,7 +5,6 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import GradientMesh from '@/components/GradientMesh';
 import WaveformDivider from '@/components/WaveformDivider';
 import SectionHeader from "@/components/SectionHeader";
 import ChipMarquee from '@/components/ChipMarquee';
@@ -175,18 +174,15 @@ export default function HomePage() {
       {/* Dot grid (static; the hero's motion now lives in the 3D die field) */}
       <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(rgba(0,100,164,0.16)_1.2px,transparent_1.8px)] bg-[size:55px_55px] dark:bg-[radial-gradient(rgba(56,189,248,0.38)_1.2px,transparent_1.8px)]" />
       
-      {/* Glowing Orbs for visionOS Glassmorphism Refraction */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-         <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full mix-blend-normal dark:mix-blend-screen opacity-60 dark:opacity-50 animate-pulse" style={{ animationDuration: '8s', background: 'radial-gradient(circle, var(--color-uci-blue) 0%, transparent 70%)' }} />
-         <div className="absolute bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] rounded-full mix-blend-normal dark:mix-blend-screen opacity-50 dark:opacity-40 animate-pulse" style={{ animationDuration: '12s', animationDelay: '2s', background: 'radial-gradient(circle, var(--color-eecs-teal) 0%, transparent 70%)' }} />
-         <div className="absolute top-[40%] left-[60%] w-[40vw] h-[40vw] rounded-full mix-blend-normal dark:mix-blend-screen opacity-40 dark:opacity-30 animate-pulse" style={{ animationDuration: '10s', animationDelay: '4s', background: 'radial-gradient(circle, var(--color-uci-gold) 0%, transparent 70%)' }} />
+      {/* Colour washes in the UCI palette. Held still: the hero's motion is the die field. */}
+      <div aria-hidden="true" className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+         <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full mix-blend-normal dark:mix-blend-screen opacity-60 dark:opacity-50" style={{ background: 'radial-gradient(circle, var(--color-uci-blue) 0%, transparent 70%)' }} />
+         <div className="absolute bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] rounded-full mix-blend-normal dark:mix-blend-screen opacity-50 dark:opacity-40" style={{ background: 'radial-gradient(circle, var(--color-eecs-teal) 0%, transparent 70%)' }} />
+         <div className="absolute top-[40%] left-[60%] w-[40vw] h-[40vw] rounded-full mix-blend-normal dark:mix-blend-screen opacity-40 dark:opacity-30" style={{ background: 'radial-gradient(circle, var(--color-uci-gold) 0%, transparent 70%)' }} />
       </div>
 
       {/* ═══════ HERO ═══════ */}
       <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Background layers */}
-        <GradientMesh />
-
         {/* Chip die photos: flat mosaic first, replaced by the 3D field once it is drawn */}
         <div aria-hidden="true" className={`absolute inset-0 z-[1] pointer-events-none overflow-hidden transition-opacity duration-1000 ${dieFieldShown ? 'opacity-0' : 'opacity-100'}`}>
           {HERO_DIES.map((die) => (
@@ -223,33 +219,33 @@ export default function HomePage() {
               alt="HIE Lab Logo"
               width={120}
               height={40}
-              className="object-contain dark:drop-shadow-[0_0_20px_rgba(56,189,248,0.2)]"
+              className="object-contain"
               priority
             />
           </motion.div>
 
-          {/* UCI Badge */}
-          <motion.div
+          {/* Affiliation, as a line of text rather than a pill */}
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
-            className="inline-flex items-center gap-3 px-5 py-2 rounded-full glass-ios mb-8 pointer-events-auto"
+            className="mb-6 text-sm font-medium text-slate-700 dark:text-slate-300 pointer-events-auto"
           >
-            <a href="https://engineering.uci.edu/dept/eecs" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-eng-blue dark:text-blue-300 hover:text-uci-blue transition-colors">UC Irvine EECS</a>
-            <div className="w-1.5 h-1.5 rounded-full bg-uci-gold" />
-            <a href="https://engineering.uci.edu" target="_blank" rel="noopener noreferrer" className="text-sm text-eecs-teal dark:text-teal-400 hover:text-uci-blue transition-colors">Samueli School of Engineering</a>
-          </motion.div>
+            <a href="https://engineering.uci.edu/dept/eecs" target="_blank" rel="noopener noreferrer" className="hover:text-uci-blue dark:hover:text-sky-300 transition-colors">Department of EECS</a>
+            {', '}
+            <a href="https://engineering.uci.edu" target="_blank" rel="noopener noreferrer" className="hover:text-uci-blue dark:hover:text-sky-300 transition-colors">UC Irvine Samueli School of Engineering</a>
+          </motion.p>
 
           {/* Title */}
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold tracking-[-0.04em] leading-[1.1] mb-6"
+            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold tracking-[-0.04em] leading-[1.1] mb-6 text-eng-blue dark:text-white"
           >
-            <span className="gradient-text">High-speed Integrated</span>
+            High-speed Integrated
             <br />
-            <span className="gradient-text">Electronics Laboratory</span>
+            Electronics Laboratory
           </motion.h1>
 
           {/* Subtitle */}
@@ -279,22 +275,6 @@ export default function HomePage() {
           </motion.div>
         </motion.div>
 
-        {/* Scroll indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.5 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 pointer-events-none"
-        >
-          <span className="text-xs text-gray-400 tracking-widest uppercase">Scroll</span>
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-            className="w-5 h-8 rounded-full border-2 border-gray-400 dark:border-gray-600 flex items-start justify-center p-1"
-          >
-            <motion.div className="w-1 h-2 rounded-full bg-uci-blue" />
-          </motion.div>
-        </motion.div>
       </section>
 
       {/* ═══════ ABOUT ═══════ */}
@@ -424,9 +404,9 @@ export default function HomePage() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeader
             title="Our Fabricated Chips"
-            subtitle="A selection of integrated circuits designed and fabricated by the HIE Lab -- from mm-wave radars to THz transmitters."
+            subtitle="A selection of integrated circuits designed and fabricated by the HIE Lab, from mm-wave radars to THz transmitters."
           />
-          <div className="mt-10 rounded-[28px] border border-uci-blue/10 bg-white/45 p-2 shadow-[0_18px_54px_rgba(0,56,109,0.08)] backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/30 dark:shadow-[0_0_55px_rgba(56,189,248,0.08)] sm:p-3">
+          <div className="mt-10 glass-ios rounded-2xl p-2 sm:p-3">
             <ChipMarquee />
           </div>
           <motion.div

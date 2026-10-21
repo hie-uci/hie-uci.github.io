@@ -19,8 +19,8 @@ const moreLinks = [
 export default function Footer() {
   return (
     <footer className="relative bg-gradient-to-b from-eng-blue to-navy text-white overflow-hidden">
-      {/* Decorative top border */}
-      <div className="h-1 bg-gradient-to-r from-uci-blue via-uci-gold to-eecs-teal" />
+      {/* One UCI Gold rule, the university's accent, in place of a rainbow gradient. */}
+      <div className="h-0.5 bg-uci-gold" />
 
       {/* Circuit pattern overlay */}
       <div className="absolute inset-0 opacity-5">
@@ -38,39 +38,25 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Lab Info */}
           <div className="lg:col-span-1">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-uci-blue to-eecs-teal flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-base tracking-wider">HIE</span>
-              </div>
-              <div>
-                <p className="font-bold text-white text-lg leading-tight">HIE Lab</p>
-                <p className="text-xs text-white/60">UC Irvine</p>
-              </div>
-            </div>
-            <p className="text-sm text-white/70 leading-relaxed mb-4">
-              High-speed Integrated Electronics Laboratory — Advancing mm-wave and terahertz circuit design for next-generation sensing, imaging, and communication systems.
+            <p className="font-bold text-white text-lg leading-tight">HIE Lab</p>
+            <p className="text-sm text-white/60 mb-4">UC Irvine</p>
+            <p className="text-sm text-white/70 leading-relaxed">
+              The High-speed Integrated Electronics Laboratory designs mm-wave and terahertz circuits for next-generation sensing, imaging, and communication systems.
             </p>
-            <a href="https://engineering.uci.edu/dept/eecs" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <div className="w-8 h-8 rounded-full bg-uci-gold/20 flex items-center justify-center">
-                <span className="text-[8px] font-bold text-uci-gold">UCI</span>
-              </div>
-              <span className="text-xs text-white/50 hover:text-white/70 transition-colors">EECS Department</span>
-            </a>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-sm font-semibold text-uci-gold mb-4 tracking-wider uppercase">
-              Quick Links
+            <h3 className="text-sm font-semibold text-uci-gold mb-4">
+              Quick links
             </h3>
             <ul className="space-y-2.5">
               {quickLinks.map((link) => (
                 <li key={link.name}>
                   <Link
                     href={link.href}
-                    className="text-sm text-white/70 hover:text-uci-gold transition-colors duration-200 flex items-center gap-2"
+                    className="text-sm text-white/70 hover:text-uci-gold transition-colors duration-200"
                   >
-                    <span className="w-1 h-1 rounded-full bg-eecs-teal" />
                     {link.name}
                   </Link>
                 </li>
@@ -80,7 +66,7 @@ export default function Footer() {
 
           {/* More Links */}
           <div>
-            <h3 className="text-sm font-semibold text-uci-gold mb-4 tracking-wider uppercase">
+            <h3 className="text-sm font-semibold text-uci-gold mb-4">
               More
             </h3>
             <ul className="space-y-2.5">
@@ -88,9 +74,8 @@ export default function Footer() {
                 <li key={link.name}>
                   <Link
                     href={link.href}
-                    className="text-sm text-white/70 hover:text-uci-gold transition-colors duration-200 flex items-center gap-2"
+                    className="text-sm text-white/70 hover:text-uci-gold transition-colors duration-200"
                   >
-                    <span className="w-1 h-1 rounded-full bg-eecs-teal" />
                     {link.name}
                   </Link>
                 </li>
@@ -100,7 +85,7 @@ export default function Footer() {
 
           {/* Contact */}
           <div>
-            <h3 className="text-sm font-semibold text-uci-gold mb-4 tracking-wider uppercase">
+            <h3 className="text-sm font-semibold text-uci-gold mb-4">
               Contact
             </h3>
             <div className="space-y-3">
