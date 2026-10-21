@@ -262,7 +262,7 @@ export default function TeamPage() {
       <section className="relative bg-gradient-to-b from-eng-blue via-navy to-eng-blue py-24 overflow-hidden">
         <CircuitBackground density={50} />
         <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6">
-          <SectionHeader as="h1" title="Our Team" subtitle="Meet the researchers driving innovation in high-frequency integrated electronics at UCI." badge="People" centered light />
+          <SectionHeader as="h1" title="Our Team" subtitle="Meet the researchers driving innovation in high-frequency integrated electronics at UCI." centered light />
         </div>
       </section>
 
@@ -341,7 +341,7 @@ export default function TeamPage() {
 
       {/* PhD Students */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 py-24">
-        <SectionHeader title="PhD Students" subtitle="Current doctoral researchers advancing the frontiers of integrated electronics." badge="Researchers" />
+        <SectionHeader title="PhD Students" subtitle="Current doctoral researchers advancing the frontiers of integrated electronics." />
         <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {phdStudents.map((m, i) => (
             <MemberCard key={m.name} member={m} index={i} />
@@ -352,7 +352,7 @@ export default function TeamPage() {
       {/* Undergraduate Researchers */}
       <section className="py-20 bg-white/35 dark:bg-transparent">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <SectionHeader title="Undergraduate Researchers" badge="Undergrads" />
+          <SectionHeader title="Undergraduate Researchers" />
           <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-3xl mx-auto">
             {undergradResearchers.map((m, i) => (
               <MemberCard key={m.name} member={m} index={i} label="Undergraduate Researcher" />
@@ -363,7 +363,7 @@ export default function TeamPage() {
 
       {/* PhD / Postdoc Alumni */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 py-24">
-        <SectionHeader title="PhD & Postdoc Alumni" badge="Alumni" />
+        <SectionHeader title="PhD & Postdoc Alumni" />
         <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {phdAlumni.map((a) => (
             <AlumnusCard key={a.name} alumnus={a} large />
@@ -374,7 +374,7 @@ export default function TeamPage() {
       {/* Other Alumni */}
       <section className="py-20 bg-white/35 dark:bg-transparent">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <SectionHeader title="Other Alumni" badge="Alumni" />
+          <SectionHeader title="Other Alumni" />
           <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {otherAlumni.map((a) => (
               <AlumnusCard key={a.name} alumnus={a} />

@@ -62,7 +62,6 @@ export default function ChipGalleryPage() {
             as="h1"
             title="Chip Gallery"
             subtitle="High-resolution die photographs of integrated circuits designed and fabricated by the HIE Lab"
-            badge="Silicon Showcase"
             centered
             light
           />

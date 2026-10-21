@@ -70,7 +70,6 @@ export default function AvailablePositionsPage() {
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <SectionHeader
             as="h1"
-            badge="Join Us"
             title="Available Positions"
             subtitle="Our laboratory always welcomes motivated and enthusiastic new members!"
           />
@@ -158,7 +157,7 @@ export default function AvailablePositionsPage() {
                   <div className="mt-7 flex flex-wrap gap-3">
                     <a
                       href={`mailto:haghasi@uci.edu?subject=${encodeURIComponent(pos.emailSubject)}`}
-                      className="inline-flex items-center rounded-xl bg-uci-blue px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-uci-blue-dark"
+                      className="btn btn-primary px-5 py-2.5 text-sm"
                     >
                       Email the lab
                     </a>
@@ -167,7 +166,7 @@ export default function AvailablePositionsPage() {
                         href={pos.applicationLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center rounded-xl border border-uci-blue/20 px-5 py-2.5 text-sm font-semibold text-uci-blue transition-colors hover:bg-uci-blue/5"
+                        className="btn btn-outline px-5 py-2.5 text-sm"
                       >
                         UCI graduate application
                       </a>
@@ -204,7 +203,7 @@ export default function AvailablePositionsPage() {
             <div className="flex flex-wrap items-center justify-center gap-4">
               <a
                 href="mailto:haghasi@uci.edu"
-                className="inline-flex items-center gap-2 px-7 py-3.5 bg-uci-gold text-eng-blue font-bold rounded-xl shadow-lg shadow-uci-gold/20 hover:shadow-xl hover:shadow-uci-gold/30 transition-all duration-300 hover:-translate-y-0.5"
+                className="btn btn-lg btn-gold"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
@@ -213,7 +212,7 @@ export default function AvailablePositionsPage() {
               </a>
               <Link
                 href="/contact"
-                className="inline-flex items-center gap-2 px-7 py-3.5 text-white font-semibold rounded-xl border border-white/20 hover:bg-white/10 transition-all duration-300"
+                className="btn btn-lg btn-on-dark"
               >
                 Contact Page
               </Link>

@@ -484,7 +484,6 @@ export default function ResearchPage() {
       <section className="relative py-24 lg:py-32 bg-white/20 backdrop-blur-[2px] dark:bg-transparent">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeader
-            badge="Our Focus Areas"
             title="Research in Detail"
             subtitle="Explore each of our five research thrusts, from fundamental device physics to AI-powered circuit design."
           />
@@ -522,16 +521,13 @@ export default function ResearchPage() {
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Link
                 href="/publications"
-                className="inline-flex items-center gap-2 px-7 py-3.5 bg-white text-eng-blue font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5"
+                className="btn btn-lg btn-gold"
               >
                 View Publications
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
               </Link>
               <Link
                 href="/contact"
-                className="inline-flex items-center gap-2 px-7 py-3.5 text-white font-semibold rounded-xl border border-white/20 hover:bg-white/10 transition-all duration-300"
+                className="btn btn-lg btn-on-dark"
               >
                 Contact Us
               </Link>

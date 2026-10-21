@@ -12,7 +12,7 @@
   --background: #ffffff;
   --foreground: #1a1a2e;
   --card-bg: rgba(255, 255, 255, 0.7);
-  --card-border: rgba(255, 255, 255, 0.4);
+  --card-border: rgba(0, 56, 109, 0.12);
 }
 
 .dark {
@@ -104,6 +104,8 @@
   --color-on-marker: var(--on-marker);
   /* White on a coloured fill. text-white would lose to the subpage hero rule, which recolours .text-white anywhere in a page's first section. */
   --color-on-accent: #ffffff;
+  /* The glass panel's edge, also used for dividers inside a panel. */
+  --color-panel-line: var(--card-border);
   --color-alert: var(--alert);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -180,72 +182,89 @@ h3 {
   border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
+/* Frosted panel: translucent fill and one plain edge. The rim highlight, noise
+   and drop shadow it used to stack on every card are gone on purpose. */
 .glass-ios {
   background: var(--card-bg);
-  backdrop-filter: blur(24px) saturate(200%);
-  -webkit-backdrop-filter: blur(24px) saturate(200%);
-  /* Dual borders for 3D thickness (Light top, dark bottom) */
-  box-shadow: 
-    inset 0 1px 1px rgba(255, 255, 255, 0.4),
-    inset 0 -1px 1px rgba(0, 0, 0, 0.05),
-    0 8px 32px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid var(--card-border);
   position: relative;
   overflow: hidden;
-  /* Instead of a solid border, we use a subtle gradient border via pseudo-element below */
-  border: none;
-}
-
-/* 3D Gradient Border Overlay */
-.glass-ios::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.5) 0%,
-    rgba(255, 255, 255, 0.0) 40%,
-    rgba(255, 255, 255, 0.0) 60%,
-    rgba(255, 255, 255, 0.2) 100%
-  );
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-}
-
-/* Subtle noise overlay for iOS glass */
-.glass-ios::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  opacity: 0.04;
-  pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  mix-blend-mode: overlay;
 }
 
 .dark .glass-ios {
   background: rgba(15, 23, 42, 0.45);
-  box-shadow: 
-    inset 0 1px 1px rgba(255, 255, 255, 0.15),
-    inset 0 -1px 1px rgba(0, 0, 0, 0.4),
-    0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
-.dark .glass-ios::after {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.2) 0%,
-    rgba(255, 255, 255, 0.0) 40%,
-    rgba(255, 255, 255, 0.0) 60%,
-    rgba(255, 255, 255, 0.05) 100%
-  );
-}
-
-.dark .glass-ios::before {
-  opacity: 0.08;
+/* Buttons: a solid fill or an outline, small radius, no gradient, glow or lift.
+   Layered so a utility (w-full, px-…) on the element still wins. Colours are
+   set here rather than with text-white, which the subpage hero rule recolours. */
+@layer components {
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.375rem;
+    border: 1px solid transparent;
+    border-radius: 0.375rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+  }
+  .btn:focus-visible {
+    outline: 2px solid #0077c2;
+    outline-offset: 2px;
+  }
+  /* The hero's and the closing bands' calls to action. */
+  .btn-lg {
+    padding: 0.875rem 1.75rem;
+    font-size: 1rem;
+  }
+  .btn-primary {
+    background: #0064a4;
+    color: #ffffff;
+  }
+  .btn-primary:hover {
+    background: #00386d;
+  }
+  .dark .btn-primary:hover {
+    background: #0077c2;
+  }
+  .btn-gold {
+    background: #ffd200;
+    color: #00386d;
+  }
+  .btn-gold:hover {
+    background: #ffe44d;
+  }
+  .btn-outline {
+    border-color: rgba(0, 56, 109, 0.28);
+    color: #00386d;
+  }
+  .btn-outline:hover {
+    border-color: rgba(0, 56, 109, 0.5);
+    background: rgba(0, 56, 109, 0.05);
+  }
+  .dark .btn-outline {
+    border-color: rgba(255, 255, 255, 0.22);
+    color: #f8f9fc;
+  }
+  .dark .btn-outline:hover {
+    border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.06);
+  }
+  /* Outline for the always-dark bands (Join CTA, research CTA). */
+  .btn-on-dark {
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+  }
+  .btn-on-dark:hover {
+    border-color: rgba(255, 255, 255, 0.55);
+    background: rgba(255, 255, 255, 0.08);
+  }
 }
 
 .glass-dark {
@@ -297,22 +316,27 @@ h3 {
   box-shadow: 0 20px 40px rgba(0, 56, 109, 0.1), 0 8px 16px rgba(0, 56, 109, 0.06);
 }
 
-/* Animated underline for links */
-.animated-underline {
-  position: relative;
+/* "View all …" link under a section: a plain underline, no arrow. */
+.link-more {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0064a4;
+  text-decoration: underline;
+  text-decoration-color: rgba(0, 100, 164, 0.35);
+  text-underline-offset: 5px;
+  transition: color 150ms ease, text-decoration-color 150ms ease;
 }
-.animated-underline::after {
-  content: '';
-  position: absolute;
-  width: 0;
-  height: 2px;
-  bottom: -2px;
-  left: 0;
-  background: linear-gradient(90deg, var(--uci-blue), var(--uci-gold));
-  transition: width 0.3s ease;
+.link-more:hover {
+  color: #00386d;
+  text-decoration-color: currentColor;
 }
-.animated-underline:hover::after {
-  width: 100%;
+.dark .link-more {
+  color: #7dd3fc;
+  text-decoration-color: rgba(125, 211, 252, 0.35);
+}
+.dark .link-more:hover {
+  color: #bae6fd;
+  text-decoration-color: currentColor;
 }
 
 /* Stagger animation helper */

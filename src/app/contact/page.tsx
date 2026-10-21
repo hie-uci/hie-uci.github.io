@@ -99,7 +99,6 @@ export default function ContactPage() {
             as="h1"
             title="Contact Us"
             subtitle="Get in touch with the HIE Lab at UC Irvine"
-            badge="Reach Out"
             centered
             light
           />
@@ -225,14 +224,9 @@ export default function ContactPage() {
                     </div>
                     <FloatingInput label="Subject" name="subject" required />
                     <FloatingTextarea label="Message" name="message" required />
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      type="submit"
-                      className="w-full py-3 bg-gradient-to-r from-uci-blue to-uci-blue-light text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-shadow"
-                    >
+                    <button type="submit" className="btn btn-primary w-full">
                       Open Email Draft
-                    </motion.button>
+                    </button>
                   </form>
                 ) : (
                   <motion.div
@@ -281,10 +275,9 @@ export default function ContactPage() {
                 </p>
                 <Link
                   href="/available-positions"
-                  className="inline-flex items-center gap-2 rounded-xl bg-uci-gold px-5 py-2.5 text-sm font-bold text-eng-blue transition-transform hover:-translate-y-0.5"
+                  className="btn btn-gold px-5 py-2.5 text-sm"
                 >
                   View positions and application details
-                  <span aria-hidden="true">→</span>
                 </Link>
               </motion.div>
             </div>

@@ -63,7 +63,6 @@ export default function RFToolboxPage() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeader
             as="h1"
-            badge="Engineering Resources"
             title="RF & Microwave Toolbox"
             subtitle="Professional calculators and reference formulas for high-frequency hardware design."
           />

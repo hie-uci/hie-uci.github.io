@@ -314,7 +314,6 @@ export default function PublicationsPage() {
             as="h1"
             title="Publications"
             subtitle="Peer-reviewed research in mm-wave, THz electronics, and machine-learning-driven IC design."
-            badge="Research Output"
             centered
             light
           />

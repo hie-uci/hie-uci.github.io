@@ -85,7 +85,6 @@ export default function TeachingPage() {
             as="h1"
             title="Teaching"
             subtitle="Courses taught at UC Irvine and Cornell University"
-            badge="Education"
             centered
             light
           />

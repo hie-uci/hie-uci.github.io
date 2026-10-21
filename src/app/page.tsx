@@ -6,13 +6,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import GradientMesh from '@/components/GradientMesh';
-import AnimatedResearchIcon from '@/components/AnimatedResearchIcon';
 import WaveformDivider from '@/components/WaveformDivider';
 import SectionHeader from "@/components/SectionHeader";
 import ChipMarquee from '@/components/ChipMarquee';
 import ResearchVisual from '@/components/ResearchVisual';
-import MagneticWrapper from '@/components/MagneticWrapper';
-import { labNews, newsCategoryLabels } from '@/data/news';
+import { labNews } from '@/data/news';
+import NewsPanel from '@/components/NewsPanel';
 import { HERO_DIE_DIR, HERO_DIES } from '@/components/home/heroDies';
 import RadarLiveLayer from '@/components/home/RadarLiveLayer';
 import { useMediaQuery } from '@/lib/useMediaQuery';
@@ -65,7 +64,7 @@ const researchAreas: ResearchArea[] = [
     projectId: 2,
     gradient: 'from-[#203043]/95 via-[#0064a4]/75 to-[#528188]/90',
     eyebrow: 'Beyond fmax',
-    metric: '0.32-0.92 THz',
+    metric: '0.32–0.92 THz',
   },
   {
     title: 'Wideband Signal Generation',
@@ -99,6 +98,63 @@ const researchAreas: ResearchArea[] = [
 const latestNewsItems = labNews.slice(0, 7);
 
 const venues = ['JSSC', 'ISSCC', 'NeurIPS', 'Nature Comm.', 'RFIC', 'ESSCIRC', 'TCAS'];
+
+interface Tutorial {
+  id: string;
+  /** Section id of the full write-up on /measurement-tutorial. */
+  anchor: string;
+  title: string;
+  note: string;
+  /** Running time from the video page. */
+  length: string;
+  /** Filmed upright on a phone; YouTube pillarboxes it inside a 16:9 thumbnail. */
+  portrait: boolean;
+  /** Grid cell: portrait clips flank the two landscape ones from lg up. */
+  placement: string;
+}
+
+const PORTRAIT_CELL = 'aspect-[9/16] lg:aspect-auto lg:row-span-2';
+const LANDSCAPE_CELL = 'col-span-2 aspect-video lg:col-span-1 lg:col-start-2';
+
+// DOM order puts the two upright clips side by side on phones.
+const tutorials: Tutorial[] = [
+  {
+    id: 'GuXS8jPgpSQ',
+    anchor: 'antenna-pattern',
+    title: '60 GHz radar antenna pattern',
+    note: 'Our 49–63 GHz FMCW radar transceiver on a rotary stage, measured against a V‑band horn.',
+    length: '0:20',
+    portrait: true,
+    placement: `${PORTRAIT_CELL} lg:col-start-1 lg:row-start-1`,
+  },
+  {
+    id: 'lKwzEgkpngI',
+    anchor: 'vco',
+    title: 'Wideband VCO, 3.1–4.66 GHz',
+    note: 'Tuning range, phase noise and output power on a spectrum analyzer.',
+    length: '2:19',
+    portrait: true,
+    placement: `${PORTRAIT_CELL} lg:col-start-3 lg:row-start-1`,
+  },
+  {
+    id: 'jyqjmBx2frc',
+    anchor: 'radar-demo',
+    title: '24 GHz radar target demo',
+    note: 'A XenP202TT module tracking a corner reflector in range and angle.',
+    length: '0:15',
+    portrait: false,
+    placement: `${LANDSCAPE_CELL} lg:row-start-1`,
+  },
+  {
+    id: 'cpQM-97AvMA',
+    anchor: 'hfss-kicad',
+    title: 'HFSS antenna to KiCad',
+    note: 'From an HFSS layout to a KiCad footprint and Gerber files.',
+    length: '9:03',
+    portrait: false,
+    placement: `${LANDSCAPE_CELL} lg:row-start-2`,
+  },
+];
 
 /* ──────────────────────────── component ──────────────────────────── */
 
@@ -214,28 +270,12 @@ export default function HomePage() {
             transition={{ delay: 0.8, duration: 0.5 }}
             className="flex flex-wrap items-center justify-center gap-4 pointer-events-auto"
           >
-            <MagneticWrapper strength={0.4}>
-              <Link
-                href="/research"
-                className="group inline-flex items-center gap-2 px-7 py-3.5 bg-gradient-to-r from-uci-blue to-eng-blue text-white font-semibold rounded-xl shadow-lg shadow-uci-blue/25 hover:shadow-xl hover:shadow-uci-blue/30 transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5"
-              >
-                Explore Research
-                <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </Link>
-            </MagneticWrapper>
-            <MagneticWrapper strength={0.4}>
-              <Link
-                href="/available-positions"
-                className="group inline-flex items-center gap-2 px-7 py-3.5 glass-ios text-foreground font-semibold rounded-xl transition-transform duration-300 hover:-translate-y-0.5"
-              >
-                Join Our Team
-                <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                </svg>
-              </Link>
-            </MagneticWrapper>
+            <Link href="/research" className="btn btn-lg btn-primary">
+              Explore Research
+            </Link>
+            <Link href="/available-positions" className="btn btn-lg btn-outline backdrop-blur-md">
+              Join Our Team
+            </Link>
           </motion.div>
         </motion.div>
 
@@ -261,9 +301,8 @@ export default function HomePage() {
       <section className="relative py-24 lg:py-32 bg-background relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeader
-            badge="About the Lab"
             title="Designing the Future of High-Frequency Electronics"
-            subtitle="We design, implement, and test mm-wave and terahertz electronic circuits and systems -- pushing the boundaries of what silicon can achieve."
+            subtitle="We design, implement, and test mm-wave and terahertz electronic circuits and systems, pushing the boundaries of what silicon can achieve."
           />
 
           <div className="mt-16 grid lg:grid-cols-5 gap-10 items-start">
@@ -275,8 +314,7 @@ export default function HomePage() {
               transition={{ duration: 0.7 }}
               className="lg:col-span-2"
             >
-              <div className="relative p-6 rounded-2xl bg-gradient-to-br from-eng-blue to-navy dark:from-slate-800 dark:to-slate-900 text-white overflow-hidden shadow-xl border border-white/10">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-uci-gold/20 to-transparent rounded-bl-full" />
+              <div className="relative p-6 rounded-2xl bg-gradient-to-br from-eng-blue to-navy dark:from-slate-800 dark:to-slate-900 text-white overflow-hidden border border-white/10">
                 <div className="relative z-10">
                   <div className="flex items-center gap-4 mb-5">
                     <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-lg flex-shrink-0">
@@ -297,7 +335,7 @@ export default function HomePage() {
                     <p className="leading-relaxed">Building next-generation mm-wave and terahertz circuits that push silicon beyond its limits.</p>
                     <div className="flex flex-wrap gap-2 pt-2">
                       {['Cornell PhD', 'NSF CAREER Award', 'IEEE Senior Member', '40+ Publications'].map((tag) => (
-                        <span key={tag} className="px-3 py-1 rounded-full text-xs bg-white/10 border border-white/15 font-medium">
+                        <span key={tag} className="px-2.5 py-1 rounded-md text-xs border border-white/20 font-medium">
                           {tag}
                         </span>
                       ))}
@@ -313,7 +351,7 @@ export default function HomePage() {
               whileInView="visible"
               viewport={{ once: true, margin: '-80px' }}
               variants={stagger}
-              className="lg:col-span-3 grid sm:grid-cols-2 gap-4"
+              className="lg:col-span-3 grid sm:grid-cols-2 rounded-2xl glass-ios"
             >
               {[
                 {
@@ -363,9 +401,9 @@ export default function HomePage() {
                   key={theme.label}
                   variants={fadeUp}
                   custom={i}
-                  className="group p-5 rounded-xl glass-ios hover:border-uci-blue/30 hover:shadow-lg hover:shadow-uci-blue/10 transition-all duration-300"
+                  className={`p-6 border-panel-line ${i > 0 ? 'border-t' : ''} ${i === 1 ? 'sm:border-t-0' : ''} ${i % 2 === 1 ? 'sm:border-l' : ''}`}
                 >
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-uci-blue/10 to-eecs-teal/10 flex items-center justify-center text-uci-blue dark:text-blue-400 mb-3 group-hover:from-uci-blue/20 group-hover:to-eecs-teal/20 transition-colors">
+                  <div className="text-uci-blue dark:text-blue-400 mb-3">
                     {theme.icon}
                   </div>
                   <h3 className="font-semibold text-eng-blue dark:text-gray-100 mb-1">{theme.label}</h3>
@@ -385,7 +423,6 @@ export default function HomePage() {
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeader
-            badge="Silicon Showcase"
             title="Our Fabricated Chips"
             subtitle="A selection of integrated circuits designed and fabricated by the HIE Lab -- from mm-wave radars to THz transmitters."
           />
@@ -399,14 +436,8 @@ export default function HomePage() {
             transition={{ delay: 0.3 }}
             className="text-center mt-8"
           >
-            <Link
-              href="/chip-gallery"
-              className="inline-flex items-center gap-2 text-sm font-medium text-uci-blue dark:text-blue-400 hover:text-eng-blue dark:hover:text-blue-300 transition-colors animated-underline"
-            >
+            <Link href="/chip-gallery" className="link-more">
               View full chip gallery
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
             </Link>
           </motion.div>
         </div>
@@ -421,39 +452,48 @@ export default function HomePage() {
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeader
-            badge="Resources"
             title="Measurements & Design Tutorials"
-            subtitle="Explore our video guides covering VNA calibration, active circuit characterization, radar demos, and HFSS to PCB workflows."
+            subtitle="Videos recorded at our bench: an antenna pattern sweep, a radar target demo, a VCO measurement, and an HFSS-to-KiCad walkthrough."
           />
+          {/* Each clip keeps its own shape: the two filmed upright on a phone stand
+              upright either side of the two landscape ones, instead of being
+              pillarboxed into identical 16:9 cards. */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2, duration: 0.6 }}
-            className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-6"
+            className="mt-12 grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-[2fr_3fr_2fr] lg:grid-rows-2"
           >
-            {[
-              { title: "60GHz Radar Antenna Pattern", img: "GuXS8jPgpSQ" },
-              { title: "24GHz Radar Target Demo", img: "jyqjmBx2frc" },
-              { title: "Wideband VCO Characterization", img: "lKwzEgkpngI" },
-              { title: "HFSS Antenna PCB Integration", img: "cpQM-97AvMA" }
-            ].map((video, idx) => (
-               <Link key={idx} href="/measurement-tutorial" className="group relative rounded-2xl overflow-hidden glass-ios border border-white/40 dark:border-white/10 hover:shadow-lg hover:border-uci-blue/30 transition-all duration-300">
-                  <div className="aspect-video bg-slate-200 dark:bg-slate-800 relative">
-                     <Image 
-                       src={`https://img.youtube.com/vi/${video.img}/maxresdefault.jpg`} 
-                       alt={video.title}
-                       fill
-                       className="object-cover group-hover:scale-105 transition-transform duration-500" 
-                     />
-                     <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center">
-                        <svg className="w-12 h-12 text-white/80 group-hover:text-white group-hover:scale-110 transition-all duration-300 drop-shadow-md" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-                     </div>
-                  </div>
-                  <div className="p-4">
-                     <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-200 line-clamp-2 group-hover:text-uci-blue transition-colors">{video.title}</h3>
-                  </div>
-               </Link>
+            {tutorials.map((video) => (
+              <Link
+                key={video.id}
+                href={`/measurement-tutorial#${video.anchor}`}
+                className={`group relative block overflow-hidden rounded-xl bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-uci-blue-light ${video.placement}`}
+              >
+                <Image
+                  src={`https://img.youtube.com/vi/${video.id}/maxresdefault.jpg`}
+                  alt=""
+                  fill
+                  sizes={video.portrait ? '(min-width: 1024px) 28vw, 50vw' : '(min-width: 1024px) 42vw, 100vw'}
+                  className="object-cover transition-[filter] duration-300 group-hover:brightness-110"
+                />
+                <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
+                <span className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded bg-black/70 px-2 py-1 text-xs font-medium tabular-nums text-white">
+                  <svg aria-hidden="true" className="h-2.5 w-2.5" viewBox="0 0 10 10" fill="currentColor"><path d="M2 1v8l7-4z" /></svg>
+                  <span className="sr-only">Video, </span>
+                  {video.length}
+                </span>
+                <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
+                  <h3 className="font-semibold leading-snug text-white [text-wrap:balance] group-hover:underline group-hover:decoration-white/50 group-hover:underline-offset-4">
+                    {video.title}
+                  </h3>
+                  {/* An upright tile is too narrow on a phone for more than its title. */}
+                  <p className={`mt-1.5 text-sm leading-snug text-white/75 [text-wrap:pretty] ${video.portrait ? 'hidden sm:block' : ''}`}>
+                    {video.note}
+                  </p>
+                </div>
+              </Link>
             ))}
           </motion.div>
           <motion.div
@@ -463,14 +503,8 @@ export default function HomePage() {
             transition={{ delay: 0.4 }}
             className="text-center mt-10"
           >
-            <Link
-              href="/measurement-tutorial"
-              className="inline-flex items-center gap-2 text-sm font-medium text-uci-blue dark:text-blue-400 hover:text-eng-blue transition-colors animated-underline"
-            >
+            <Link href="/measurement-tutorial" className="link-more">
               Watch full tutorials
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
             </Link>
           </motion.div>
         </div>
@@ -487,7 +521,6 @@ export default function HomePage() {
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeader
-            badge="Research"
             title="Research Highlights"
             subtitle="Five active research thrusts spanning circuit innovation, system design, and computational intelligence."
           />
@@ -504,15 +537,11 @@ export default function HomePage() {
                 key={area.title}
                 variants={fadeUp}
                 custom={i}
-                whileHover={{
-                  y: -10,
-                }}
                 onHoverStart={() => setLiveCard(i)}
                 onHoverEnd={() => setLiveCard((c) => (c === i ? null : c))}
                 onFocus={() => setLiveCard(i)}
                 onBlur={() => setLiveCard((c) => (c === i ? null : c))}
-                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                className={`group relative flex min-h-[470px] flex-col overflow-hidden rounded-2xl border border-white/70 bg-white/90 shadow-[0_18px_60px_rgba(0,56,109,0.10)] backdrop-blur-xl transition-[transform,box-shadow,border-color] duration-500 dark:border-white/10 dark:bg-slate-950/75 dark:shadow-[0_18px_60px_rgba(0,0,0,0.30)] hover:border-uci-blue/35 hover:shadow-[0_24px_70px_rgba(0,100,164,0.18)] ${
+                className={`group relative flex flex-col overflow-hidden rounded-2xl border border-panel-line bg-white/90 backdrop-blur-xl transition-colors duration-300 dark:bg-slate-950/75 hover:border-uci-blue/40 dark:hover:border-blue-300/30 ${
                   i < 2 ? 'lg:col-span-3' : 'lg:col-span-2'
                 } ${
                   i === 4 ? 'md:col-span-2 lg:col-span-2' : ''
@@ -524,24 +553,7 @@ export default function HomePage() {
                 </div>
 
                 <div className="relative flex flex-1 flex-col p-6">
-                  <div className="mb-5 flex items-start justify-between gap-4">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <div aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-uci-blue/10 bg-uci-blue/5 text-uci-blue dark:border-blue-300/15 dark:bg-blue-300/10 dark:text-blue-200">
-                        <AnimatedResearchIcon variant={area.iconVariant} className="h-6 w-6" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
-                          {area.eyebrow}
-                        </div>
-                        <div className="mt-1 inline-flex w-fit items-center rounded-md border border-uci-blue/10 bg-uci-blue/5 px-2.5 py-1 text-xs font-semibold text-uci-blue dark:border-blue-300/15 dark:bg-blue-300/10 dark:text-blue-200">
-                          {area.metric}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-xs font-bold text-slate-500 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
-                      {String(area.projectId).padStart(2, '0')}
-                    </div>
-                  </div>
+                  <p className="mb-2 text-sm font-semibold text-uci-blue dark:text-sky-300">{area.metric}</p>
                   <h3 className="mb-2 text-xl font-bold text-eng-blue transition-colors duration-300 [text-wrap:pretty] group-hover:text-uci-blue dark:text-gray-100 dark:group-hover:text-blue-300">
                     {area.title}
                   </h3>
@@ -549,12 +561,9 @@ export default function HomePage() {
                   <Link
                     href={`/research#project-${area.projectId}`}
                     aria-label={`Explore ${area.title}`}
-                    className="mt-auto inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-uci-blue transition-[color,transform] duration-300 hover:translate-x-0.5 hover:text-eng-blue dark:text-blue-300 dark:hover:text-blue-200"
+                    className="link-more mt-auto w-fit"
                   >
                     Explore {area.eyebrow}
-                    <svg className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
                   </Link>
                 </div>
               </motion.div>
@@ -567,56 +576,19 @@ export default function HomePage() {
       <section className="relative py-24 lg:py-32 bg-background z-10 border-t border-gray-200 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeader
-            badge="News"
             title="Latest News"
             subtitle="Recent highlights and achievements from the HIE Lab."
           />
 
+          {/* One panel, one row per item: the date is a column, not a box inside a box. */}
           <motion.div
-            initial="hidden"
-            whileInView="visible"
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-60px' }}
-            variants={stagger}
-            className="max-w-3xl mx-auto space-y-4"
+            transition={{ duration: 0.6 }}
+            className="max-w-3xl mx-auto"
           >
-            {latestNewsItems.map((item, i) => (
-              <motion.div
-                key={i}
-                variants={fadeUp}
-                custom={i}
-                className="group flex gap-5 p-5 rounded-xl glass-ios hover:border-uci-blue/20 transition-all duration-300"
-              >
-                <div className="shrink-0 flex flex-col items-center justify-center w-16 h-16 rounded-xl bg-gradient-to-br from-uci-blue/5 to-eecs-teal/5 border border-uci-blue/10 dark:border-white/5">
-                  <span className="text-[11px] font-bold text-uci-blue dark:text-blue-400 uppercase leading-tight">{item.date.split(' ')[0]}</span>
-                  <span className="text-xs text-slate-800 dark:text-slate-300">{item.date.split(' ')[1]}</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                      item.category === 'award'
-                        ? 'bg-uci-gold/15 text-yellow-700 dark:text-yellow-500'
-                        : item.category === 'milestone'
-                        ? 'bg-eecs-teal/10 text-eecs-teal dark:text-teal-400'
-                        : 'bg-uci-blue/10 text-uci-blue dark:text-blue-400'
-                    }`}>
-                      {newsCategoryLabels[item.category]}
-                    </span>
-                  </div>
-                  {item.link ? (
-                    <a
-                      href={item.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-slate-950 dark:text-slate-100 leading-relaxed hover:text-uci-blue dark:hover:text-blue-300 hover:underline underline-offset-2"
-                    >
-                      {item.title}
-                    </a>
-                  ) : (
-                    <p className="text-sm text-slate-950 dark:text-slate-100 leading-relaxed">{item.title}</p>
-                  )}
-                </div>
-              </motion.div>
-            ))}
+            <NewsPanel items={latestNewsItems} />
           </motion.div>
 
           <motion.div
@@ -626,14 +598,8 @@ export default function HomePage() {
             transition={{ delay: 0.5 }}
             className="text-center mt-10"
           >
-            <Link
-              href="/news"
-              className="inline-flex items-center gap-2 text-sm font-medium text-uci-blue dark:text-blue-400 hover:text-eng-blue transition-colors animated-underline"
-            >
+            <Link href="/news" className="link-more">
               View all news
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
             </Link>
           </motion.div>
         </div>
@@ -646,30 +612,24 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(0,100,164,0.04),transparent_60%)] pointer-events-none" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <SectionHeader
-            badge="Publications"
             title="Impactful Research Output"
             subtitle="Our work is published in the most prestigious venues in electronics and computer science."
           />
 
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
+          {/* Venue names as type, in their own casing (NeurIPS, not NEURIPS). */}
+          <motion.ul
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
             viewport={{ once: true, margin: '-40px' }}
-            variants={stagger}
-            className="mt-12 flex flex-wrap items-center justify-center gap-3 mb-10"
+            transition={{ duration: 0.6 }}
+            className="mt-12 mb-12 flex flex-wrap items-baseline justify-center gap-x-10 gap-y-4"
           >
-            {venues.map((venue, i) => (
-              <motion.span
-                key={venue}
-                variants={fadeUp}
-                custom={i}
-                className="px-5 py-2.5 rounded-xl glass-ios text-sm font-bold text-eng-blue dark:text-slate-200 tracking-wide uppercase hover:text-uci-blue dark:hover:text-blue-400 hover:border-uci-blue/30 transition-all duration-400 cursor-default"
-                style={{ letterSpacing: '0.08em' }}
-              >
+            {venues.map((venue) => (
+              <li key={venue} className="text-xl font-semibold tracking-tight text-eng-blue/75 sm:text-2xl dark:text-slate-300">
                 {venue}
-              </motion.span>
+              </li>
             ))}
-          </motion.div>
+          </motion.ul>
 
           <motion.div
             initial={{ opacity: 0 }}
@@ -677,14 +637,8 @@ export default function HomePage() {
             viewport={{ once: true }}
             transition={{ delay: 0.4 }}
           >
-            <Link
-              href="/publications"
-              className="inline-flex items-center gap-2 px-6 py-3 glass-ios text-foreground font-semibold rounded-xl transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
-            >
+            <Link href="/publications" className="btn btn-outline">
               Browse All Publications
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
             </Link>
           </motion.div>
         </div>
@@ -733,31 +687,19 @@ export default function HomePage() {
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
           >
-            <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold tracking-wider uppercase bg-white/10 text-white/80 border border-white/15 mb-6">
-              Open Positions
-            </span>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight mb-4">
               Join the HIE Lab
             </h2>
-            <p className="text-lg text-white/60 max-w-2xl mx-auto mb-10 leading-relaxed">
-              We are looking for passionate and talented researchers at all levels --
-              PhD students, MS students, and undergraduate researchers -- to push the
-              boundaries of high-speed electronics.
+            <p className="text-lg text-white/70 max-w-2xl mx-auto mb-10 leading-relaxed">
+              We are looking for passionate and talented researchers at all levels, from
+              PhD and MS students to undergraduates, to push the boundaries of high-speed
+              electronics.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">
-              <Link
-                href="/available-positions"
-                className="group inline-flex items-center gap-2 px-7 py-3.5 bg-uci-gold text-eng-blue font-bold rounded-xl shadow-lg shadow-uci-gold/20 hover:shadow-xl hover:shadow-uci-gold/30 transition-all duration-300 hover:-translate-y-0.5 hover:glow-gold"
-              >
+              <Link href="/available-positions" className="btn btn-lg btn-gold">
                 View Open Positions
-                <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
               </Link>
-              <Link
-                href="/contact"
-                className="inline-flex items-center gap-2 px-7 py-3.5 text-white font-semibold rounded-xl border border-white/20 hover:bg-white/10 transition-all duration-300"
-              >
+              <Link href="/contact" className="btn btn-lg btn-on-dark">
                 Contact Us
               </Link>
             </div>
