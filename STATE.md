@@ -1,6 +1,14 @@
 # STATE — HIE Lab public website
 
-Last updated: 2026-09-24
+Last updated: 2026-10-21
+
+> **2026-10-21: a design pass waits on branch `design/fewer-boxes`, not deployed**
+> (`3196ae1`, `4da3c35`, `bbddb1b`). It strips template chrome (caps pill badges, gradient
+> bars and text, glow buttons, card stacks, particles) but keeps the palette, glass panels
+> and centred headings, and adds ten chip-application line drawings beside Home's section
+> headings (`src/components/home/vignettes/`). The maintainer approved the direction; deploy
+> only on their word. UCI's official colours (`#255799`, `#fecc07`) and Montserrat were
+> previewed, not adopted.
 
 > **2026-09-24: a full visual redesign was deployed and then reverted the same day** at
 > the maintainer's request; they prefer the existing style. The site's tree is identical
@@ -213,6 +221,12 @@ element grid size and travelling rings are decorative, the FMCW magnifier states
   Fix: `gh run rerun <run-id>` on the deploy workflow — a fresh Pages deployment purges the
   CDN. Do not declare a deploy done until the CSS referenced by the live HTML returns 200
   from every `dig +short hie.eng.uci.edu` IP (`curl --resolve hie.eng.uci.edu:443:<ip>`).
+- **`.glass-ios` is unlayered CSS**, so its `border` beats any `border-*` utility on the same
+  element; its edge colour is `--card-border` (`border-panel-line`, `divide-panel-line`).
+  Buttons are `.btn` plus `.btn-primary|gold|outline|on-dark` in `@layer components`, so a
+  utility on the element still wins.
+- **Home's vignettes draw on the client only.** Node and Chrome can differ in the last
+  digits of `Math.sin`; a server-rendered SVG attribute that differed broke hydration.
 - **`.claude/settings.local.json` is not tracked**, and should not be re-added. It
   accumulates machine-local permission entries, including absolute paths to other
   checkouts.
@@ -226,6 +240,11 @@ element grid size and travelling rings are decorative, the FMCW magnifier states
 - [ ] The S-parameter viewer's Smith Chart toggle is white on emerald-600: 3.65:1 in both
       themes, below WCAG AA (4.5:1). emerald-700 would give about 5.4:1; it is a visual
       change, so preview it first.
+- [ ] Decide on UCI's official colours and Montserrat (brand.uci.edu, verified 2026-10-21).
+- [ ] Team and Publications heroes stay dark in light mode: their JSON-LD `<script>` is the
+      first child, so the light-hero rule's `section:first-child` misses them.
+- [ ] Content to confirm: Allen Huang's bio starts "received the B.S."; the tutorials
+      subtitle promises VNA calibration videos that do not exist yet.
 - [ ] More 3D / animated visuals. Deployed 2026-09-24: the Home hero die field and the
       radar card's live scene. Candidates not yet picked, and the constraints, are in
       `HANDOFF.md`.
