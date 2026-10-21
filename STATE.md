@@ -8,8 +8,8 @@ Last updated: 2026-10-21
 > and centred headings, and adds ten chip-application line drawings beside Home's section
 > headings (`src/components/home/vignettes/`). The maintainer approved the direction; deploy
 > only on their word. UCI's official colours (`#255799`, `#fecc07`) and Montserrat were
-> previewed; Montserrat headings are now on the branch (`text stays in the system face`),
-> the colours are not.
+> previewed; Montserrat headings are now on the branch (text stays in the system face), the
+> colours are not.
 
 > **2026-09-24: a full visual redesign was deployed and then reverted the same day** at
 > the maintainer's request; they prefer the existing style. The site's tree is identical
